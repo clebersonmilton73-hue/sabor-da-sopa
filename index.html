@@ -86,8 +86,7 @@
 
 
     <div class="toolbar">
-      <span class="pill">📲 WhatsApp: 81 99728-4466</span>
-      <span class="mini">Dica: escolha a quantidade e toque em “Pedir”.</span>
+      <span class="mini">Dica: adicione no carrinho e finalize no WhatsApp.</span>
     </div>
   </div>
 
@@ -113,7 +112,7 @@
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js";
   import { getFirestore, collection, getDocs, query, orderBy } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js";
 
-  const WHATSAPP = "5581997284466";
+  const WHATSAPP = atob("NTU4MTk5NzI4NDQ2Ng==");
   const firebaseConfig = {
   "apiKey": "AIzaSyAzD2_niY8a3Q7rO0V41j56ZwpeVTriKCw",
   "authDomain": "sabor-da-sopa.firebaseapp.com",
@@ -388,12 +387,22 @@
       return;
     }
 
-    const nome = (cliNome?.value || "").trim();
-    const tel = (cliTelefone?.value || "").trim();
-    const end = (cliEndereco?.value || "").trim();
+    const cadastro = (()=>{ try{ return JSON.parse(localStorage.getItem(CLIENT_KEY)||"null"); }catch(e){ return null; } })();
+    if(!cadastro || !cadastro.savedAt){
+      alert("⚠️ Primeiro faça o cadastro e clique em \"Salvar dados\".");
+      return;
+    }
+
+    const nome = (cadastro.nome || "").trim();
+    const tel = (cadastro.telefone || "").trim();
+    const end = (cadastro.endereco || "").trim();
 
     if(!end){
-      alert("⚠️ Informe o endereço para finalizar.");
+      alert("⚠️ Endereço vazio. Atualize o cadastro e clique em \"Salvar dados\".");
+      return;
+    }
+    if(!nome || !tel){
+      alert("⚠️ Nome ou telefone vazio. Atualize o cadastro e clique em \"Salvar dados\".");
       return;
     }
 
