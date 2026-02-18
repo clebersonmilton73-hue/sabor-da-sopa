@@ -55,22 +55,56 @@
         <input id="busca" placeholder="Ex: sopa, caldo, empada..." />
       </div>
       <div>
-        <label>🚚 Taxa de entrega (opcional)</label>
-        <input id="taxaEntrega" type="number" step="0.01" placeholder="Ex: 5.00 (deixe vazio se não tiver)" />
+        <label>🛒 Carrinho</label>
+        <input id="cartResumo" disabled placeholder="0 itens • R$ 0,00" />
       </div>
     </div>
 
     <label style="margin-top:10px">📝 Observação do pedido (opcional)</label>
     <textarea id="obsGeral" placeholder="Ex: sem pimenta / bem quente / mandar colher / etc."></textarea>
 
+    <div class="panel" style="margin-top:12px">
+      <div style="font-weight:900; margin-bottom:8px">👤 Cadastro do Cliente</div>
+      <div class="row">
+        <div>
+          <label>Nome</label>
+          <input id="cliNome" placeholder="Ex: Cleyton" />
+        </div>
+        <div>
+          <label>Telefone / WhatsApp</label>
+          <input id="cliTelefone" placeholder="Ex: (81) 9xxxx-xxxx" />
+        </div>
+      </div>
+      <label style="margin-top:10px">Endereço</label>
+      <textarea id="cliEndereco" placeholder="Rua, número, bairro, ponto de referência..."></textarea>
+      <div class="mini" style="margin-top:8px">Frete: <b>a combinar</b></div>
+      <div class="toolbar" style="justify-content:space-between">
+        <span class="mini" id="cliStatus">Preencha e clique em “Salvar dados”.</span>
+        <button class="btn" id="btnSalvarCliente" type="button">Salvar dados</button>
+      </div>
+    </div>
+
+
     <div class="toolbar">
-      <span class="pill">📲 WhatsApp: 5581996604169</span>
+      <span class="pill">📲 WhatsApp: 81 99728-4466</span>
       <span class="mini">Dica: escolha a quantidade e toque em “Pedir”.</span>
     </div>
   </div>
 
   <div id="msg"></div>
   <div id="app"><div class="empty">Carregando cardápio...</div></div>
+
+  <div id="cartPanel" class="panel">
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap">
+      <div style="font-weight:900">🛒 Carrinho</div>
+      <button class="btn" id="btnFinalizar" type="button">Finalizar no WhatsApp</button>
+    </div>
+    <div class="mini" style="margin-top:6px">Revise seus itens e finalize. O frete será combinado no WhatsApp.</div>
+    <div id="cartItens" style="margin-top:10px"></div>
+    <div style="margin-top:10px;font-weight:900" id="cartTotal">Total: R$ 0,00</div>
+    <div class="mini" style="margin-top:6px" id="cartHint"></div>
+  </div>
+
 </div>
 
 <div class="footer">© Sabor da Sopa</div>
@@ -79,7 +113,7 @@
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js";
   import { getFirestore, collection, getDocs, query, orderBy } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js";
 
-  const WHATSAPP = "5581996604169";
+  const WHATSAPP = "5581997284466";
   const firebaseConfig = {
   "apiKey": "AIzaSyAzD2_niY8a3Q7rO0V41j56ZwpeVTriKCw",
   "authDomain": "sabor-da-sopa.firebaseapp.com",
@@ -94,8 +128,25 @@
   const el = document.getElementById("app");
   const msg = document.getElementById("msg");
   const busca = document.getElementById("busca");
-  const taxaInput = document.getElementById("taxaEntrega");
   const obsInput = document.getElementById("obsGeral");
+
+
+  const cartResumo = document.getElementById("cartResumo");
+  const cartPanel = document.getElementById("cartPanel");
+  const cartItens = document.getElementById("cartItens");
+  const cartTotal = document.getElementById("cartTotal");
+  const cartHint = document.getElementById("cartHint");
+  const btnFinalizar = document.getElementById("btnFinalizar");
+
+  const cliNome = document.getElementById("cliNome");
+  const cliTelefone = document.getElementById("cliTelefone");
+  const cliEndereco = document.getElementById("cliEndereco");
+  const cliStatus = document.getElementById("cliStatus");
+  const btnSalvarCliente = document.getElementById("btnSalvarCliente");
+
+  const CLIENT_KEY = "sabor_cliente_v1";
+  const CART_KEY = "sabor_carrinho_v1";
+
 
   const formatBRL = (v)=> Number(v||0).toLocaleString("pt-BR",{style:"currency",currency:"BRL"});
   const esc = (s)=> String(s||"").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;").replaceAll("'","&#39;");
@@ -178,7 +229,7 @@
             ${desc}
             <div class="buyrow">
               <input class="qty" id="${qid}" type="number" min="1" value="1">
-              <button class="btn" onclick="window.pedir('${it.id}')">Pedir</button>
+              <button class="btn" onclick="window.addToCart('${it.id}')">Adicionar</button>
             </div>
           </div>
         `;
@@ -188,38 +239,201 @@
     }).join("");
   }
 
-  window.pedir = (id) => {
+  
+  function loadCliente(){
+    try{
+      const d = JSON.parse(localStorage.getItem(CLIENT_KEY) || "null");
+      if(!d) return;
+      cliNome.value = d.nome || "";
+      cliTelefone.value = d.telefone || "";
+      cliEndereco.value = d.endereco || "";
+      if(cliStatus) cliStatus.textContent = "✅ Dados do cliente carregados.";
+    }catch(e){}
+  }
+
+  function saveCliente(){
+    const d = {
+      nome: (cliNome.value||"").trim(),
+      telefone: (cliTelefone.value||"").trim(),
+      endereco: (cliEndereco.value||"").trim()
+    };
+    localStorage.setItem(CLIENT_KEY, JSON.stringify(d));
+    if(cliStatus) cliStatus.textContent = "✅ Dados salvos.";
+  }
+
+  if(btnSalvarCliente){
+    btnSalvarCliente.addEventListener("click", saveCliente);
+  }
+
+  let cart = [];
+
+  function loadCart(){
+    try{
+      cart = JSON.parse(localStorage.getItem(CART_KEY) || "[]");
+      if(!Array.isArray(cart)) cart = [];
+    }catch(e){
+      cart = [];
+    }
+  }
+
+  function saveCart(){
+    localStorage.setItem(CART_KEY, JSON.stringify(cart));
+  }
+
+  function cartSubtotal(){
+    let total = 0;
+    for(const c of cart){
+      total += Number(c.preco||0) * Number(c.qtd||0);
+    }
+    return total;
+  }
+
+  function cartCount(){
+    return cart.reduce((a,c)=>a + Number(c.qtd||0), 0);
+  }
+
+  function updateCartResumo(){
+    if(!cartResumo) return;
+    const count = cartCount();
+    const sub = cartSubtotal();
+    cartResumo.value = `${count} itens • ${formatBRL(sub)}`;
+  }
+
+  function renderCart(){
+    if(!cartItens || !cartTotal) return;
+
+    if(!cart.length){
+      cartItens.innerHTML = `<div class="empty">Seu carrinho está vazio.</div>`;
+      cartTotal.textContent = `Total: ${formatBRL(0)}`;
+      if(cartHint) cartHint.textContent = "Adicione itens no cardápio para finalizar.";
+      updateCartResumo();
+      return;
+    }
+
+    const rows = cart.map((c, idx) => {
+      const lineTotal = Number(c.preco||0) * Number(c.qtd||0);
+      return `
+        <div class="panel" style="margin:10px 0;padding:10px;border-radius:14px">
+          <div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-start;flex-wrap:wrap">
+            <div>
+              <div style="font-weight:900">${esc(c.nome||"")}</div>
+              <div class="mini">${esc(c.categoria||"")}</div>
+              <div class="mini">${formatBRL(c.preco)} • Linha: ${formatBRL(lineTotal)}</div>
+            </div>
+            <div style="display:flex;gap:8px;align-items:center">
+              <input style="width:90px;padding:10px 12px;border-radius:12px;border:0;outline:none" type="number" min="1" value="${Number(c.qtd||1)}" data-q="${idx}">
+              <button class="btn" style="padding:10px 12px" data-del="${idx}">Remover</button>
+            </div>
+          </div>
+        </div>
+      `;
+    }).join("");
+
+    cartItens.innerHTML = rows;
+
+    // bind qty change
+    cartItens.querySelectorAll("[data-q]").forEach(inp=>{
+      inp.addEventListener("input", ()=>{
+        const i = Number(inp.getAttribute("data-q"));
+        const v = Math.max(1, parseInt(inp.value||"1",10));
+        cart[i].qtd = v;
+        saveCart();
+        renderCart();
+      });
+    });
+
+    // bind remove
+    cartItens.querySelectorAll("[data-del]").forEach(btn=>{
+      btn.addEventListener("click", ()=>{
+        const i = Number(btn.getAttribute("data-del"));
+        cart.splice(i,1);
+        saveCart();
+        renderCart();
+      });
+    });
+
+    const sub = cartSubtotal();
+    cartTotal.textContent = `Total: ${formatBRL(sub)}`;
+    if(cartHint) cartHint.textContent = "Frete: a combinar no WhatsApp.";
+    updateCartResumo();
+  }
+
+  window.addToCart = (id) => {
     const it = allItems.find(x => x.id === id);
     if(!it) return;
 
     const qid = `q_${it.id}`;
-    const q = Math.max(1, parseInt(document.getElementById(qid).value || "1", 10));
-    const preco = Number(it.preco||0);
-    const subtotal = preco * q;
+    const qtd = Math.max(1, parseInt(document.getElementById(qid).value || "1", 10));
 
-    const taxa = Number(taxaInput.value || 0);
-    const total = subtotal + (taxa > 0 ? taxa : 0);
+    const existente = cart.find(c => c.id === it.id);
+    if(existente){
+      existente.qtd = Number(existente.qtd||0) + qtd;
+    }else{
+      cart.push({
+        id: it.id,
+        nome: it.nome || "",
+        categoria: it.categoria || "Outros",
+        preco: Number(it.preco||0),
+        qtd
+      });
+    }
+    saveCart();
+    renderCart();
+    if(cartPanel) cartPanel.scrollIntoView({behavior:"smooth", block:"start"});
+  };
+
+  function finalizarWhats(){
+    if(!cart.length){
+      alert("Seu carrinho está vazio.");
+      return;
+    }
+
+    const nome = (cliNome?.value || "").trim();
+    const tel = (cliTelefone?.value || "").trim();
+    const end = (cliEndereco?.value || "").trim();
+
+    if(!end){
+      alert("⚠️ Informe o endereço para finalizar.");
+      return;
+    }
 
     const obs = (obsInput.value || "").trim();
-    const obsTxt = obs ? `\nObservação: ${obs}` : "";
-    const taxaTxt = taxa > 0 ? `\nTaxa de entrega: ${formatBRL(taxa)}` : "";
+    const obsTxt = obs ? `
+Observação: ${obs}` : "";
+
+    const linhas = cart.map(c => {
+      const lt = Number(c.preco||0) * Number(c.qtd||0);
+      return `- ${c.qtd}x ${c.nome} (${formatBRL(c.preco)}) = ${formatBRL(lt)}`;
+    }).join("
+");
+
+    const subtotal = cartSubtotal();
 
     const text =
 `Olá! Quero pedir na *Sabor da Sopa*:
 
-Categoria: ${it.categoria || "Outros"}
-Item: ${q}x ${it.nome || ""}
-Valor unitário: ${formatBRL(preco)}
-Subtotal: ${formatBRL(subtotal)}${taxaTxt}
-Total: ${formatBRL(total)}${obsTxt}
+Itens:
+${linhas}
 
-Meu nome:
-Endereço:`;
+Subtotal: ${formatBRL(subtotal)}
+Frete: a combinar${obsTxt}
+
+Meu nome: ${nome}
+Telefone: ${tel}
+Endereço: ${end}`;
 
     abrirWhats(text);
-  };
+  }
+
+  if(btnFinalizar){
+    btnFinalizar.addEventListener("click", finalizarWhats);
+  }
+
 
   busca.addEventListener("input", render);
+  loadCliente();
+  loadCart();
+  renderCart();
   carregar();
 </script>
 
