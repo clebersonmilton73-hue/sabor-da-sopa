@@ -1,52 +1,226 @@
 <!doctype html>
 <html lang="pt-br">
 <head>
-<meta charset="UTF-8">
-<title>Admin - Sabor da Sopa</title>
-<style>
-body{font-family:Arial;background:#0f4d2e;color:white;margin:0;padding:0}
-.box{background:#1e7a47;padding:20px;margin:50px auto;width:300px;border-radius:12px;text-align:center}
-input{width:100%;padding:10px;margin:5px 0;border-radius:8px;border:none}
-button{background:#ffd400;border:none;padding:10px;border-radius:8px;font-weight:bold;cursor:pointer}
-</style>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Admin - Sabor da Sopa</title>
+  <style>
+    :root{--bg:#0f4d2e;--card:#1e7a47;--accent:#ffd400;--txt:#fff;}
+    body{margin:0;font-family:Arial,Helvetica,sans-serif;background:var(--bg);color:var(--txt);}
+    header{padding:16px;text-align:center;background:rgba(0,0,0,.18);}
+    .wrap{max-width:980px;margin:0 auto;padding:14px;}
+    .box{background:var(--card);padding:14px;border-radius:14px;box-shadow:0 8px 16px rgba(0,0,0,.25);margin-bottom:12px;}
+    input,select{width:100%;padding:10px;border-radius:10px;border:0;margin:6px 0;}
+    button{background:var(--accent);border:0;padding:10px 14px;border-radius:10px;font-weight:900;cursor:pointer;}
+    table{width:100%;border-collapse:collapse;}
+    th,td{padding:10px;border-bottom:1px solid rgba(255,255,255,.15);text-align:left;vertical-align:top;}
+    img{border-radius:10px;display:block;object-fit:cover;}
+    .mini{font-size:12px;opacity:.9;}
+    .row{display:grid;grid-template-columns:1fr 160px 1fr;gap:10px;}
+    @media(max-width:800px){ .row{grid-template-columns:1fr;} }
+  </style>
 </head>
 <body>
+<header>
+  <h1>🔒 Admin — Sabor da Sopa</h1>
+  <div class="mini" id="who"></div>
+</header>
 
-<div class="box">
-<h2>Login Admin</h2>
-<input id="email" placeholder="Email">
-<input id="senha" type="password" placeholder="Senha">
-<button onclick="login()">Entrar</button>
+<div class="wrap">
+
+  <!-- LOGIN -->
+  <div class="box" id="loginBox">
+    <h2>Entrar</h2>
+    <input id="email" placeholder="Email" />
+    <input id="senha" type="password" placeholder="Senha" />
+    <button id="btnLogin">Entrar</button>
+    <p class="mini" id="loginMsg"></p>
+  </div>
+
+  <!-- PAINEL -->
+  <div class="box" id="painel" style="display:none">
+    <h2>Adicionar item (com foto)</h2>
+
+    <div class="row">
+      <div>
+        <label class="mini">Categoria</label>
+        <select id="categoria">
+          <option>Sopas</option>
+          <option>Caldos</option>
+          <option>Salgados</option>
+          <option>Doces</option>
+        </select>
+
+        <label class="mini">Nome</label>
+        <input id="nome" placeholder="Ex: Sopa 350ml" />
+
+        <label class="mini">Preço</label>
+        <input id="preco" type="number" step="0.01" placeholder="Ex: 18.00" />
+
+        <label class="mini">Descrição (opcional)</label>
+        <input id="descricao" placeholder="Ex: bem quentinha" />
+      </div>
+
+      <div>
+        <label class="mini">Foto (opcional)</label>
+        <input id="foto" type="file" accept="image/*" />
+        <p class="mini" id="statusFoto">Nenhuma foto selecionada.</p>
+
+        <button id="btnAdd" style="width:100%;margin-top:8px">Adicionar</button>
+        <button id="btnLogout" style="width:100%;margin-top:8px">Sair</button>
+      </div>
+
+      <div>
+        <p class="mini">
+          ✅ Depois de adicionar, o item já aparece no cardápio do cliente.<br>
+          ✅ Foto sobe no Storage e salva o link no Firestore.
+        </p>
+        <p class="mini" id="adminWarn"></p>
+      </div>
+    </div>
+
+    <h3 style="margin-top:18px">Itens cadastrados</h3>
+    <table>
+      <thead>
+        <tr><th>Foto</th><th>Categoria / Item</th><th>Preço</th><th>Ação</th></tr>
+      </thead>
+      <tbody id="tb"></tbody>
+    </table>
+  </div>
+
 </div>
 
 <script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js";
-import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-auth.js";
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js";
+  import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-auth.js";
+  import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, query, orderBy } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js";
+  import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-storage.js";
 
+  const firebaseConfig = {
+    apiKey: "AIzaSyAzD2_niY8a3Q7rO0V41j56ZwpeVTriKCw",
+    authDomain: "sabor-da-sopa.firebaseapp.com",
+    projectId: "sabor-da-sopa",
+    storageBucket: "sabor-da-sopa.firebasestorage.app",
+    messagingSenderId: "437365944053",
+    appId: "1:437365944053:web:69d942143b7575bdf19fbc"
+  };
 
-const firebaseConfig = {
-  apiKey: "AIzaSyAzD2_niY8a3Q7rO0V41j56ZwpeVTriKCw",
-  authDomain: "sabor-da-sopa.firebaseapp.com",
-  projectId: "sabor-da-sopa",
-  storageBucket: "sabor-da-sopa.firebasestorage.app",
-  messagingSenderId: "437365944053",
-  appId: "1:437365944053:web:69d942143b7575bdf19fbc"
-};
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db = getFirestore(app);
+  const storage = getStorage(app);
 
+  const loginBox = document.getElementById("loginBox");
+  const painel = document.getElementById("painel");
+  const tb = document.getElementById("tb");
+  const who = document.getElementById("who");
+  const loginMsg = document.getElementById("loginMsg");
+  const fotoInput = document.getElementById("foto");
+  const statusFoto = document.getElementById("statusFoto");
+  const adminWarn = document.getElementById("adminWarn");
 
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
+  fotoInput.addEventListener("change", ()=>{
+    statusFoto.textContent = fotoInput.files?.[0]?.name ? ("Foto: " + fotoInput.files[0].name) : "Nenhuma foto selecionada.";
+  });
 
-window.login = async () => {
-  const email = document.getElementById("email").value;
-  const senha = document.getElementById("senha").value;
-  try {
-    await signInWithEmailAndPassword(auth, email, senha);
-    alert("Login realizado com sucesso!");
-  } catch (error) {
-    alert("Erro: " + error.message);
+  const fmt = (v)=> Number(v||0).toLocaleString("pt-BR",{style:"currency",currency:"BRL"});
+
+  async function carregar(){
+    tb.innerHTML = "";
+    const snap = await getDocs(query(collection(db,"menuItems"), orderBy("categoria"), orderBy("nome")));
+    snap.forEach(d=>{
+      const it = d.data();
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td style="width:90px">
+          ${it.imageUrl ? `<img src="${it.imageUrl}" width="80" height="80">` : `<span class="mini">Sem foto</span>`}
+        </td>
+        <td>
+          <b>${it.categoria||""}</b><br>
+          ${it.nome||""}<br>
+          <span class="mini">${it.descricao||""}</span>
+        </td>
+        <td>${fmt(it.preco)}</td>
+        <td><button>Excluir</button></td>
+      `;
+      tr.querySelector("button").onclick = async () => {
+        await deleteDoc(doc(db,"menuItems", d.id));
+        carregar();
+      };
+      tb.appendChild(tr);
+    });
   }
-};
+
+  async function uploadFotoSeTiver(nomeItem){
+    const file = fotoInput.files?.[0];
+    if(!file) return "";
+
+    const safe = (nomeItem || "item").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/(^-|-$)/g,"");
+    const ext = (file.name.split(".").pop() || "jpg").toLowerCase();
+    const path = `menuImages/${Date.now()}-${safe}.${ext}`;
+
+    statusFoto.textContent = "Enviando foto...";
+    const storageRef = ref(storage, path);
+    await uploadBytes(storageRef, file);
+    const url = await getDownloadURL(storageRef);
+    statusFoto.textContent = "Foto enviada ✅";
+    return url;
+  }
+
+  document.getElementById("btnLogin").onclick = async () => {
+    loginMsg.textContent = "";
+    const email = document.getElementById("email").value.trim();
+    const senha = document.getElementById("senha").value;
+    try{
+      await signInWithEmailAndPassword(auth, email, senha);
+      // quem libera o painel é o onAuthStateChanged (abaixo)
+    }catch(e){
+      loginMsg.textContent = "Erro: " + (e?.message || e);
+    }
+  };
+
+  document.getElementById("btnAdd").onclick = async () => {
+    const categoria = document.getElementById("categoria").value;
+    const nome = document.getElementById("nome").value.trim();
+    const preco = Number(document.getElementById("preco").value || 0);
+    const descricao = document.getElementById("descricao").value.trim();
+
+    if(!nome || preco<=0) return alert("Preencha nome e preço.");
+
+    try{
+      const imageUrl = await uploadFotoSeTiver(nome);
+      await addDoc(collection(db,"menuItems"), { categoria, nome, preco, descricao, imageUrl });
+
+      document.getElementById("nome").value="";
+      document.getElementById("preco").value="";
+      document.getElementById("descricao").value="";
+      fotoInput.value="";
+      statusFoto.textContent="Nenhuma foto selecionada.";
+
+      carregar();
+    }catch(e){
+      alert("Não salvou. Se aparecer 'Missing or insufficient permissions', falta liberar admin no Firestore (coleção admins com seu UID).");
+      console.error(e);
+    }
+  };
+
+  document.getElementById("btnLogout").onclick = async () => {
+    await signOut(auth);
+  };
+
+  onAuthStateChanged(auth, async (user)=>{
+    if(user){
+      who.textContent = "Logado: " + (user.email || "");
+      loginBox.style.display = "none";
+      painel.style.display = "block";
+      adminWarn.textContent = "Se não conseguir salvar itens, confira se seu UID está na coleção 'admins' no Firestore.";
+      await carregar();
+    }else{
+      who.textContent = "";
+      loginBox.style.display = "block";
+      painel.style.display = "none";
+    }
+  });
 </script>
 
 </body>
