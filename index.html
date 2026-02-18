@@ -63,32 +63,6 @@
     <label style="margin-top:10px">📝 Observação do pedido (opcional)</label>
     <textarea id="obsGeral" placeholder="Ex: sem pimenta / bem quente / mandar colher / etc."></textarea>
 
-    <!-- ✅ CADASTRO DO CLIENTE (com Firestore) -->
-    <div class="panel" style="margin-top:12px">
-      <div style="font-weight:900; margin-bottom:8px">👤 Cadastro do Cliente</div>
-      <div class="row">
-        <div>
-          <label>Nome</label>
-          <input id="cliNome" placeholder="Ex: Cleyton" />
-        </div>
-        <div>
-          <label>Telefone / WhatsApp</label>
-          <input id="cliTelefone" placeholder="Ex: (81) 9xxxx-xxxx" />
-        </div>
-      </div>
-      <label style="margin-top:10px">Endereço</label>
-      <textarea id="cliEndereco" placeholder="Rua, número, bairro, ponto de referência..."></textarea>
-
-      <div class="toolbar" style="justify-content:space-between">
-        <span class="mini" id="cliStatus">Preencha e clique em “Salvar dados”.</span>
-        <button class="btn" id="btnSalvarCliente" type="button">Salvar dados</button>
-      </div>
-      <div class="mini" style="margin-top:8px;opacity:.9">
-        *Os dados ficam salvos no aparelho e também no sistema (Firestore).*
-      </div>
-    </div>
-    <!-- ✅ FIM CADASTRO -->
-
     <div class="toolbar">
       <span class="pill">📲 WhatsApp: 5581996604169</span>
       <span class="mini">Dica: escolha a quantidade e toque em “Pedir”.</span>
@@ -103,27 +77,17 @@
 
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js";
-  import {
-    getFirestore,
-    collection,
-    getDocs,
-    query,
-    orderBy,
-    doc,
-    setDoc,
-    serverTimestamp
-  } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js";
+  import { getFirestore, collection, getDocs, query, orderBy } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js";
 
   const WHATSAPP = "5581996604169";
   const firebaseConfig = {
-    "apiKey": "AIzaSyAzD2_niY8a3Q7rO0V41j56ZwpeVTriKCw",
-    "authDomain": "sabor-da-sopa.firebaseapp.com",
-    "projectId": "sabor-da-sopa",
-    "storageBucket": "sabor-da-sopa.firebasestorage.app",
-    "messagingSenderId": "437365944053",
-    "appId": "1:437365944053:web:69d942143b7575bdf19fbc"
-  };
-
+  "apiKey": "AIzaSyAzD2_niY8a3Q7rO0V41j56ZwpeVTriKCw",
+  "authDomain": "sabor-da-sopa.firebaseapp.com",
+  "projectId": "sabor-da-sopa",
+  "storageBucket": "sabor-da-sopa.firebasestorage.app",
+  "messagingSenderId": "437365944053",
+  "appId": "1:437365944053:web:69d942143b7575bdf19fbc"
+};
   const app = initializeApp(firebaseConfig);
   const db = getFirestore(app);
 
@@ -132,15 +96,6 @@
   const busca = document.getElementById("busca");
   const taxaInput = document.getElementById("taxaEntrega");
   const obsInput = document.getElementById("obsGeral");
-
-  // ✅ CADASTRO CLIENTE
-  const cliNome = document.getElementById("cliNome");
-  const cliTelefone = document.getElementById("cliTelefone");
-  const cliEndereco = document.getElementById("cliEndereco");
-  const cliStatus = document.getElementById("cliStatus");
-  const btnSalvarCliente = document.getElementById("btnSalvarCliente");
-
-  const CLIENT_KEY = "sabor_cliente_v2";
 
   const formatBRL = (v)=> Number(v||0).toLocaleString("pt-BR",{style:"currency",currency:"BRL"});
   const esc = (s)=> String(s||"").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;").replaceAll("'","&#39;");
@@ -158,55 +113,6 @@
     const url = `https://wa.me/${WHATSAPP}?text=${encodeURIComponent(text)}`;
     window.open(url, "_blank");
   }
-
-  function normalizarTelefone(t){
-    return String(t||"").replace(/\D+/g,""); // só números
-  }
-
-  function loadCliente(){
-    try{
-      const data = JSON.parse(localStorage.getItem(CLIENT_KEY) || "null");
-      if(!data) return;
-      cliNome.value = data.nome || "";
-      cliTelefone.value = data.telefone || "";
-      cliEndereco.value = data.endereco || "";
-      cliStatus.textContent = "✅ Dados do cliente carregados.";
-    }catch(e){}
-  }
-
-  async function saveCliente(){
-    const data = {
-      nome: (cliNome.value || "").trim(),
-      telefone: (cliTelefone.value || "").trim(),
-      endereco: (cliEndereco.value || "").trim(),
-    };
-
-    // salva no aparelho
-    localStorage.setItem(CLIENT_KEY, JSON.stringify(data));
-
-    // salva no Firestore (id pelo telefone, se tiver)
-    const telId = normalizarTelefone(data.telefone);
-    const docId = telId ? telId : ("cli_" + Math.random().toString(16).slice(2));
-
-    try{
-      await setDoc(doc(db, "clientes", docId), {
-        ...data,
-        telefoneNumeros: telId,
-        lastUpdate: serverTimestamp(),
-        createdAt: serverTimestamp(),
-        origem: "cardapio-online"
-      }, { merge: true });
-
-      cliStatus.textContent = "✅ Dados salvos (aparelho + sistema).";
-    }catch(e){
-      console.error(e);
-      cliStatus.textContent = "⚠️ Salvei no aparelho, mas não consegui salvar no sistema.";
-    }
-  }
-
-  btnSalvarCliente.addEventListener("click", saveCliente);
-  loadCliente();
-  // ✅ FIM CADASTRO
 
   let allItems = [];
 
@@ -286,10 +192,6 @@
     const it = allItems.find(x => x.id === id);
     if(!it) return;
 
-    const nomeCliente = (cliNome.value || "").trim();
-    const telCliente = (cliTelefone.value || "").trim();
-    const endCliente = (cliEndereco.value || "").trim();
-
     const qid = `q_${it.id}`;
     const q = Math.max(1, parseInt(document.getElementById(qid).value || "1", 10));
     const preco = Number(it.preco||0);
@@ -311,9 +213,8 @@ Valor unitário: ${formatBRL(preco)}
 Subtotal: ${formatBRL(subtotal)}${taxaTxt}
 Total: ${formatBRL(total)}${obsTxt}
 
-Meu nome: ${nomeCliente || ""}
-Telefone: ${telCliente || ""}
-Endereço: ${endCliente || ""}`;
+Meu nome:
+Endereço:`;
 
     abrirWhats(text);
   };
