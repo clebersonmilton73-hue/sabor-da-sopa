@@ -14,6 +14,8 @@
   header{padding:18px 14px;text-align:center;background:rgba(0,0,0,.18);position:sticky;top:0;backdrop-filter:blur(6px);z-index:2}
   header h1{margin:0;font-size:28px;letter-spacing:.3px}
   header p{margin:6px 0 0;color:var(--muted)}
+  .cover{margin-top:12px;border-radius:16px;overflow:hidden;border:1px solid rgba(255,255,255,.10);box-shadow:var(--shadow)}
+  .cover img{width:100%;height:210px;object-fit:cover;display:block}
   .wrap{max-width:1050px;margin:0 auto;padding:14px}
   .panel{background:rgba(0,0,0,.18);border:1px solid rgba(255,255,255,.08);padding:12px;border-radius:16px;box-shadow:var(--shadow);margin-bottom:12px}
   .row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
@@ -25,13 +27,14 @@
   .pill{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.14);padding:8px 10px;border-radius:999px;color:var(--txt);font-size:13px}
   .btn{background:var(--accent);border:0;padding:10px 14px;border-radius:12px;font-weight:900;cursor:pointer}
   .btn:active{transform:translateY(1px)}
-  .btnGhost{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.22);color:var(--txt)}
+  .btn2{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.18);padding:10px 14px;border-radius:12px;font-weight:900;cursor:pointer;color:var(--txt)}
+  .btn2:active{transform:translateY(1px)}
   .mini{font-size:12px;color:var(--muted)}
   .cat{margin:18px 0 8px;padding:10px;background:#08361f;border-radius:14px;text-align:center;font-weight:900;letter-spacing:.4px;box-shadow:var(--shadow)}
   .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:12px}
   .card{background:var(--card);padding:14px;border-radius:16px;box-shadow:var(--shadow);border:1px solid rgba(255,255,255,.08)}
-  /* imagens mais visíveis, porém menores */
-  .img{width:100%;height:110px;object-fit:cover;border-radius:14px;margin-bottom:10px;background:rgba(0,0,0,.18)}
+  /* imagens menores, mas bem visíveis */
+  .img{width:100%;height:120px;object-fit:cover;border-radius:14px;margin-bottom:10px;background:rgba(0,0,0,.18)}
   .title{margin:0;font-size:18px}
   .price{font-weight:900;font-size:18px;margin:6px 0}
   .desc{color:rgba(255,255,255,.9);font-size:13px;line-height:1.25}
@@ -40,65 +43,57 @@
   .empty{text-align:center;padding:18px;color:var(--muted)}
   .error{background:rgba(255,0,0,.14);border:1px solid rgba(255,0,0,.25);padding:12px;border-radius:14px;margin:12px 0}
   .footer{text-align:center;padding:18px;color:var(--muted)}
-
-  /* navegação por categoria (página) */
-  .catsWrap{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
-  .catCard{background:rgba(255,255,255,.10);border:1px solid rgba(255,255,255,.16);padding:14px;border-radius:16px;box-shadow:var(--shadow);cursor:pointer}
-  .catCard:hover{transform:translateY(-1px)}
-  .catTitle{font-weight:900;font-size:16px;margin:0 0 6px}
-  .topbar{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:10px}
-  .tag{background:rgba(0,0,0,.18);border:1px solid rgba(255,255,255,.14);padding:6px 10px;border-radius:999px;font-size:12px;color:var(--muted)}
-  .hr{height:1px;background:rgba(255,255,255,.10);margin:10px 0;border-radius:999px}
-
-  /* modal de finalização */
-  .overlay{position:fixed;inset:0;background:rgba(0,0,0,.55);display:none;align-items:center;justify-content:center;padding:14px;z-index:50}
-  .modal{width:min(560px,100%);background:linear-gradient(180deg,rgba(0,0,0,.25),rgba(0,0,0,.18));border:1px solid rgba(255,255,255,.14);border-radius:18px;box-shadow:var(--shadow);padding:14px}
-  .modal h2{margin:0 0 10px;font-size:18px}
-  .modal .row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-  @media(max-width:520px){.modal .row2{grid-template-columns:1fr}}
-  .closeX{float:right;background:transparent;border:0;color:var(--txt);font-size:18px;cursor:pointer}
-  .sum{background:rgba(255,255,255,.10);border:1px solid rgba(255,255,255,.14);border-radius:14px;padding:10px;font-size:13px;line-height:1.35}
-  .warn{background:rgba(255,212,0,.14);border:1px solid rgba(255,212,0,.35);padding:10px;border-radius:14px;margin-top:10px}
+  .hide{display:none !important}
+  .catsNav{display:flex;gap:10px;flex-wrap:wrap}
+  .catsNav .pill{cursor:pointer;user-select:none}
+  .catsNav .pill.active{background:rgba(255,212,0,.22);border-color:rgba(255,212,0,.55)}
+  .cartLine{display:flex;gap:10px;justify-content:space-between;align-items:flex-start;padding:10px 0;border-bottom:1px solid rgba(255,255,255,.12)}
+  .cartLine:last-child{border-bottom:0}
+  .cartName{font-weight:900}
+  .cartSub{color:var(--muted);font-size:12px;margin-top:2px}
+  .totalRow{display:flex;justify-content:space-between;align-items:center;margin-top:10px;font-weight:900}
 </style>
 </head>
 <body>
 
 <header>
   <h1>🍲 Sabor da Sopa</h1>
-  <p>Cardápio Online • Peça pelo WhatsApp</p>
+  <p>Cardápio Online • Finalize no app e fale com a loja no WhatsApp</p>
+
+  <!-- Foto na capa do cardápio -->
+  <div class="cover" aria-label="Foto do cardápio">
+    <img src="https://images.unsplash.com/photo-1540189549336-e6e99c3679fe?auto=format&fit=crop&w=1400&q=80" alt="Foto do cardápio">
+  </div>
 </header>
 
 <div class="wrap">
-  <!-- Cadastro do cliente (obrigatório para pedir) -->
-  <div class="panel" id="cadastro">
-    <div class="topbar">
-      <div style="font-weight:900">🧾 Cadastro do Cliente (obrigatório)</div>
-      <span class="tag" id="statusCliente">Cliente: não cadastrado</span>
-    </div>
+  <!-- Cadastro obrigatório -->
+  <div id="cadastroPanel" class="panel">
+    <b>🧾 Cadastro do Cliente (obrigatório)</b>
+    <div class="mini" style="margin-top:6px">Você só consegue fazer pedido depois de se cadastrar.</div>
 
-    <div class="row">
+    <div class="row" style="margin-top:10px">
       <div>
-        <label>👤 Nome</label>
-        <input id="cliNome" placeholder="Seu nome" />
+        <label>Nome</label>
+        <input id="cadNome" placeholder="Ex: Cleyton" />
       </div>
       <div>
-        <label>📱 WhatsApp</label>
-        <input id="cliFone" placeholder="(81) 9xxxx-xxxx" />
+        <label>Telefone</label>
+        <input id="cadTel" placeholder="Ex: (81) 9xxxx-xxxx" />
       </div>
     </div>
 
-    <label style="margin-top:10px">📍 Endereço</label>
-    <textarea id="cliEnd" placeholder="Rua, número, bairro, ponto de referência..."></textarea>
+    <label style="margin-top:10px">Endereço</label>
+    <input id="cadEnd" placeholder="Rua, nº, bairro..." />
 
     <div class="toolbar">
-      <button class="btn" id="btnSalvarCliente">Salvar cadastro</button>
-      <button class="btn btnGhost" id="btnLimparCliente" type="button">Limpar</button>
-      <span class="mini">Só dá pra fazer pedido depois de cadastrar.</span>
+      <button class="btn" id="btnCadastrar">Cadastrar</button>
+      <span class="mini">Se precisar alterar depois, clique em “Editar cadastro” no final.</span>
     </div>
   </div>
 
-  <!-- Busca -->
-  <div class="panel">
+  <!-- Conteúdo do cardápio -->
+  <div id="catalogoPanel" class="panel hide">
     <div class="row">
       <div>
         <label>🔎 Buscar item</label>
@@ -106,48 +101,55 @@
       </div>
       <div>
         <label>📝 Observação do pedido (opcional)</label>
-        <input id="obsGeral" placeholder="Ex: sem pimenta / bem quente / mandar colher / etc." />
+        <input id="obsGeral" placeholder="Ex: sem pimenta / bem quente / etc." />
+      </div>
+    </div>
+
+    <!-- Categorias em página -->
+    <div class="toolbar" style="justify-content:space-between">
+      <div class="catsNav" id="catsNav"></div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap">
+        <button class="btn2" id="btnVoltarCats" title="Voltar para categorias">⬅️ Categorias</button>
+        <button class="btn" id="btnCheckout">Finalizar Pedido</button>
       </div>
     </div>
 
     <div class="toolbar">
-      <span class="pill">📲 WhatsApp: 5581997284466</span>
-      <span class="mini">Dica: toque na categoria, escolha o item e finalize.</span>
+      <span class="pill" id="waPill">📲 WhatsApp: 81997284466</span>
+      <span class="mini">Dica: escolha a quantidade e toque em “Adicionar”.</span>
     </div>
   </div>
 
   <div id="msg"></div>
   <div id="app"><div class="empty">Carregando cardápio...</div></div>
+
+  <!-- Finalização dentro do app -->
+  <div id="checkoutPanel" class="panel hide">
+    <b>✅ Finalização do Pedido</b>
+    <div class="mini" style="margin-top:6px">Confira seu pedido e depois clique em <b>Falar com a loja</b>.</div>
+
+    <div id="checkoutList" style="margin-top:10px"></div>
+    <div class="totalRow">
+      <span>Total</span>
+      <span id="checkoutTotal">R$ 0,00</span>
+    </div>
+
+    <div class="toolbar" style="margin-top:12px">
+      <button class="btn" id="btnFalarLoja">Falar com a loja</button>
+      <button class="btn2" id="btnVoltar">Voltar</button>
+      <button class="btn2" id="btnEditarCadastro">Editar cadastro</button>
+      <button class="btn2" id="btnLimpar">Limpar pedido</button>
+    </div>
+  </div>
 </div>
 
 <div class="footer">© Sabor da Sopa</div>
-
-<!-- Modal Finalização -->
-<div class="overlay" id="overlay">
-  <div class="modal" role="dialog" aria-modal="true" aria-label="Finalização do pedido">
-    <button class="closeX" id="closeModal" aria-label="Fechar">✕</button>
-    <h2>✅ Finalização do pedido</h2>
-
-    <div class="sum" id="sumBox">...</div>
-
-    <div class="hr"></div>
-
-    <label>📝 Observação (opcional)</label>
-    <textarea id="obsFinal" placeholder="Ex: sem pimenta / bem quente / etc."></textarea>
-
-    <div class="toolbar" style="justify-content:flex-end;margin-top:10px">
-      <button class="btn btnGhost" id="btnCancelar" type="button">Cancelar</button>
-      <button class="btn" id="btnFinalizar" type="button">Finalizar no WhatsApp</button>
-    </div>
-
-    <div class="mini" style="margin-top:10px">Ao finalizar, abre o WhatsApp com a mensagem pronta.</div>
-  </div>
-</div>
 
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js";
   import { getFirestore, collection, getDocs, query, orderBy } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js";
 
+  // ✅ Número atualizado
   const WHATSAPP = "5581997284466";
 
   const firebaseConfig = {
@@ -159,29 +161,36 @@
     "appId": "1:437365944053:web:69d942143b7575bdf19fbc"
   };
 
-  const app = initializeApp(firebaseConfig);
-  const db = getFirestore(app);
+  const appFB = initializeApp(firebaseConfig);
+  const db = getFirestore(appFB);
 
   const el = document.getElementById("app");
   const msg = document.getElementById("msg");
+
+  const cadastroPanel = document.getElementById("cadastroPanel");
+  const catalogoPanel = document.getElementById("catalogoPanel");
+  const checkoutPanel = document.getElementById("checkoutPanel");
+
   const busca = document.getElementById("busca");
-  const obsGeral = document.getElementById("obsGeral");
+  const obsInput = document.getElementById("obsGeral");
+  const catsNav = document.getElementById("catsNav");
+  const btnVoltarCats = document.getElementById("btnVoltarCats");
+  const btnCheckout = document.getElementById("btnCheckout");
 
-  // cadastro
-  const cliNome = document.getElementById("cliNome");
-  const cliFone = document.getElementById("cliFone");
-  const cliEnd  = document.getElementById("cliEnd");
-  const statusCliente = document.getElementById("statusCliente");
-  const btnSalvarCliente = document.getElementById("btnSalvarCliente");
-  const btnLimparCliente = document.getElementById("btnLimparCliente");
+  const cadNome = document.getElementById("cadNome");
+  const cadTel  = document.getElementById("cadTel");
+  const cadEnd  = document.getElementById("cadEnd");
+  const btnCadastrar = document.getElementById("btnCadastrar");
 
-  // modal finalização
-  const overlay = document.getElementById("overlay");
-  const closeModal = document.getElementById("closeModal");
-  const btnCancelar = document.getElementById("btnCancelar");
-  const btnFinalizar = document.getElementById("btnFinalizar");
-  const sumBox = document.getElementById("sumBox");
-  const obsFinal = document.getElementById("obsFinal");
+  const checkoutList = document.getElementById("checkoutList");
+  const checkoutTotal = document.getElementById("checkoutTotal");
+  const btnFalarLoja = document.getElementById("btnFalarLoja");
+  const btnVoltar = document.getElementById("btnVoltar");
+  const btnEditarCadastro = document.getElementById("btnEditarCadastro");
+  const btnLimpar = document.getElementById("btnLimpar");
+
+  const waPill = document.getElementById("waPill");
+  waPill.textContent = "📲 WhatsApp: 81997284466";
 
   const formatBRL = (v)=> Number(v||0).toLocaleString("pt-BR",{style:"currency",currency:"BRL"});
   const esc = (s)=> String(s||"").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;").replaceAll("'","&#39;");
@@ -200,83 +209,243 @@
     window.open(url, "_blank");
   }
 
+  // ===== Cadastro obrigatório =====
   function getCliente(){
-    try{
-      const raw = localStorage.getItem("cliente_cadastro");
-      return raw ? JSON.parse(raw) : null;
-    }catch{ return null; }
+    try{ return JSON.parse(localStorage.getItem("cliente") || "null"); }catch{ return null; }
   }
-  function setCliente(obj){
-    localStorage.setItem("cliente_cadastro", JSON.stringify(obj));
+  function setCliente(c){
+    localStorage.setItem("cliente", JSON.stringify(c));
   }
-  function clearCliente(){
-    localStorage.removeItem("cliente_cadastro");
-  }
-  function refreshClienteUI(){
+  function isCadastrado(){
     const c = getCliente();
-    if(c && c.nome){
-      statusCliente.textContent = `Cliente: ${c.nome}`;
-      cliNome.value = c.nome || "";
-      cliFone.value = c.fone || "";
-      cliEnd.value  = c.end || "";
-    }else{
-      statusCliente.textContent = "Cliente: não cadastrado";
-    }
-  }
-  function validarCadastro(){
-    const nome = (cliNome.value || "").trim();
-    const fone = (cliFone.value || "").trim();
-    const end  = (cliEnd.value  || "").trim();
-    if(!nome || !fone || !end) return null;
-    return { nome, fone, end };
+    return !!(c && c.nome && c.tel);
   }
 
-  btnSalvarCliente.addEventListener("click", ()=>{
-    const c = validarCadastro();
-    if(!c){
-      msg.innerHTML = `<div class="warn">⚠️ Preencha <b>Nome</b>, <b>WhatsApp</b> e <b>Endereço</b> para salvar.</div>`;
-      document.getElementById("cadastro").scrollIntoView({behavior:"smooth", block:"start"});
+  function mostrarCadastro(){
+    cadastroPanel.classList.remove("hide");
+    catalogoPanel.classList.add("hide");
+    checkoutPanel.classList.add("hide");
+  }
+  function mostrarCatalogo(){
+    cadastroPanel.classList.add("hide");
+    catalogoPanel.classList.remove("hide");
+    checkoutPanel.classList.add("hide");
+  }
+
+  btnCadastrar.addEventListener("click", ()=>{
+    const nome = (cadNome.value || "").trim();
+    const tel  = (cadTel.value  || "").trim();
+    const end  = (cadEnd.value  || "").trim();
+
+    if(!nome || !tel){
+      alert("Preencha Nome e Telefone.");
       return;
     }
-    setCliente(c);
-    msg.innerHTML = `<div class="warn">✅ Cadastro salvo! Agora você já pode fazer seu pedido.</div>`;
-    refreshClienteUI();
+    setCliente({nome, tel, end});
+    mostrarCatalogo();
   });
 
-  btnLimparCliente.addEventListener("click", ()=>{
-    clearCliente();
-    cliNome.value = "";
-    cliFone.value = "";
-    cliEnd.value  = "";
-    refreshClienteUI();
-    msg.innerHTML = `<div class="warn">Cadastro limpo.</div>`;
+  btnEditarCadastro.addEventListener("click", ()=>{
+    const c = getCliente() || {};
+    cadNome.value = c.nome || "";
+    cadTel.value  = c.tel  || "";
+    cadEnd.value  = c.end  || "";
+    mostrarCadastro();
   });
 
-  function exigirCadastroOuAvisar(){
-    const c = getCliente();
-    if(c && c.nome && c.fone && c.end) return true;
-    msg.innerHTML = `<div class="warn">⚠️ Para pedir, faça o <b>cadastro do cliente</b> acima.</div>`;
-    document.getElementById("cadastro").scrollIntoView({behavior:"smooth", block:"start"});
-    return false;
-  }
-
-  // estado
+  // ===== Cardápio por categoria (página) =====
   let allItems = [];
-  let currentCat = null;
-  let pending = null; // {it, q, subtotal}
+  let activeCat = null;
 
-  // helpers de "página"
-  function goHome(){
-    currentCat = null;
-    render();
-    window.scrollTo({top:0, behavior:"smooth"});
-  }
-  function goCat(cat){
-    currentCat = cat;
-    render();
-    window.scrollTo({top:0, behavior:"smooth"});
+  // ===== Pedido (carrinho simples) =====
+  let cart = [];
+
+  function addToCart(it, q){
+    if(!isCadastrado()){
+      alert("Você precisa se cadastrar para fazer pedido.");
+      mostrarCadastro();
+      return;
+    }
+    const qty = Math.max(1, parseInt(q || "1", 10));
+    const found = cart.find(x => x.id === it.id);
+    if(found) found.q += qty;
+    else cart.push({id:it.id, nome:it.nome||"", categoria:it.categoria||"Outros", preco:Number(it.preco||0), q:qty});
+    alert("Adicionado ao pedido!");
   }
 
+  function buildCats(items){
+    const set = new Set();
+    for(const it of items) set.add(it.categoria || "Outros");
+    return Array.from(set).sort((a,b)=>a.localeCompare(b,"pt-BR"));
+  }
+
+  function renderCatsNav(cats){
+    const pills = cats.map(c=>{
+      const isActive = (activeCat === c);
+      return `<span class="pill ${isActive ? "active":""}" data-cat="${esc(c)}">📁 ${esc(c)}</span>`;
+    }).join("");
+    catsNav.innerHTML = pills || `<span class="mini">Sem categorias.</span>`;
+
+    catsNav.querySelectorAll("[data-cat]").forEach(p=>{
+      p.addEventListener("click", ()=>{
+        activeCat = p.getAttribute("data-cat");
+        render();
+        window.scrollTo({top:0, behavior:"smooth"});
+      });
+    });
+  }
+
+  function render(){
+    const q = (busca.value || "").trim().toLowerCase();
+
+    const filtered = allItems.filter(it => {
+      // filtro por categoria (página)
+      const cat = it.categoria || "Outros";
+      if(activeCat && cat !== activeCat) return false;
+
+      if(!q) return true;
+      const hay = `${it.categoria||""} ${it.nome||""} ${it.descricao||""}`.toLowerCase();
+      return hay.includes(q);
+    });
+
+    if(!filtered.length){
+      el.innerHTML = `<div class="empty">Nenhum item encontrado.</div>`;
+      return;
+    }
+
+    // Render da categoria ativa (uma página)
+    const grupos = {};
+    for (const it of filtered){
+      const cat = it.categoria || "Outros";
+      (grupos[cat] ||= []).push(it);
+    }
+
+    const cats = Object.keys(grupos).sort((a,b)=>a.localeCompare(b,"pt-BR"));
+
+    el.innerHTML = cats.map(cat => {
+      const items = grupos[cat].sort((a,b)=>String(a.nome||"").localeCompare(String(b.nome||""),"pt-BR"));
+      const cards = items.map(it => {
+        const preco = Number(it.preco||0);
+        const qid = `q_${it.id}`;
+        const img = it.imageUrl ? `<img class="img" src="${esc(it.imageUrl)}" alt="${esc(it.nome||"")}">` : "";
+        const desc = it.descricao ? `<div class="desc">${esc(it.descricao)}</div>` : "";
+        return `
+          <div class="card">
+            ${img}
+            <h3 class="title">${esc(it.nome || "")}</h3>
+            <div class="price">${formatBRL(preco)}</div>
+            ${desc}
+            <div class="buyrow">
+              <input class="qty" id="${qid}" type="number" min="1" value="1">
+              <button class="btn" onclick="window.addItem('${it.id}')">Adicionar</button>
+            </div>
+          </div>
+        `;
+      }).join("");
+
+      return `<div class="cat">${esc(cat)}</div><div class="grid">${cards}</div>`;
+    }).join("");
+  }
+
+  window.addItem = (id)=>{
+    const it = allItems.find(x=>x.id===id);
+    if(!it) return;
+    const qid = `q_${it.id}`;
+    const q = document.getElementById(qid)?.value || "1";
+    addToCart(it, q);
+  };
+
+  // ===== Finalização no app =====
+  function calcTotal(){
+    return cart.reduce((acc, it)=> acc + (Number(it.preco||0) * Number(it.q||0)), 0);
+  }
+
+  function renderCheckout(){
+    if(!cart.length){
+      checkoutList.innerHTML = `<div class="empty">Seu pedido está vazio.</div>`;
+      checkoutTotal.textContent = formatBRL(0);
+      return;
+    }
+    checkoutList.innerHTML = cart.map(it=>{
+      const sub = Number(it.preco||0) * Number(it.q||0);
+      return `
+        <div class="cartLine">
+          <div>
+            <div class="cartName">${esc(it.q)}x ${esc(it.nome)}</div>
+            <div class="cartSub">${esc(it.categoria)} • ${formatBRL(it.preco)} cada</div>
+          </div>
+          <div style="font-weight:900">${formatBRL(sub)}</div>
+        </div>
+      `;
+    }).join("");
+    checkoutTotal.textContent = formatBRL(calcTotal());
+  }
+
+  btnCheckout.addEventListener("click", ()=>{
+    if(!isCadastrado()){
+      alert("Você precisa se cadastrar para fazer pedido.");
+      mostrarCadastro();
+      return;
+    }
+    if(!cart.length){
+      alert("Adicione itens ao pedido primeiro.");
+      return;
+    }
+    renderCheckout();
+    catalogoPanel.classList.add("hide");
+    checkoutPanel.classList.remove("hide");
+    window.scrollTo({top:0, behavior:"smooth"});
+  });
+
+  btnVoltar.addEventListener("click", ()=>{
+    checkoutPanel.classList.add("hide");
+    catalogoPanel.classList.remove("hide");
+  });
+
+  btnLimpar.addEventListener("click", ()=>{
+    if(confirm("Limpar o pedido?")){
+      cart = [];
+      renderCheckout();
+    }
+  });
+
+  btnFalarLoja.addEventListener("click", ()=>{
+    if(!cart.length){
+      alert("Seu pedido está vazio.");
+      return;
+    }
+    const c = getCliente() || {};
+    const obs = (obsInput.value || "").trim();
+
+    const linhas = cart.map(it=>{
+      const sub = Number(it.preco||0) * Number(it.q||0);
+      return `- ${it.q}x ${it.nome} (${formatBRL(it.preco)}) = ${formatBRL(sub)}`;
+    }).join("\n");
+
+    const text =
+`Olá! Quero fazer um pedido:
+
+${linhas}
+
+Total: ${formatBRL(calcTotal())}${obs ? `\nObs: ${obs}` : ""}
+
+Cliente: ${c.nome || ""}
+Telefone: ${c.tel || ""}
+Endereço: ${c.end || ""}`.trim();
+
+    abrirWhats(text);
+  });
+
+  btnVoltarCats.addEventListener("click", ()=>{
+    activeCat = null;
+    // se não tiver categoria selecionada, vai para primeira (opcional). aqui voltamos para lista (sem filtro)
+    render();
+    // destaque none
+    catsNav.querySelectorAll(".pill").forEach(p=>p.classList.remove("active"));
+    window.scrollTo({top:0, behavior:"smooth"});
+  });
+
+  // ===== Carregar itens do Firestore =====
   async function carregar(){
     msg.innerHTML = "";
     el.innerHTML = `<div class="empty">Carregando cardápio...</div>`;
@@ -294,6 +463,11 @@
         el.innerHTML = `<div class="empty">Cardápio vazio. Cadastre itens no Admin.</div>`;
         return;
       }
+
+      // montar navegação de categorias (página)
+      const cats = buildCats(allItems);
+      renderCatsNav(cats);
+
       render();
     } catch(e) {
       console.error(e);
@@ -302,160 +476,19 @@
     }
   }
 
-  function getFiltered(){
-    const q = (busca.value || "").trim().toLowerCase();
-    return allItems.filter(it => {
-      if(!q) return true;
-      const hay = `${it.categoria||""} ${it.nome||""} ${it.descricao||""}`.toLowerCase();
-      return hay.includes(q);
-    });
+  busca?.addEventListener("input", render);
+
+  // ===== Boot =====
+  const c0 = getCliente();
+  if(c0){
+    cadNome.value = c0.nome || "";
+    cadTel.value  = c0.tel  || "";
+    cadEnd.value  = c0.end  || "";
   }
 
-  function render(){
-    const filtered = getFiltered();
+  if(isCadastrado()) mostrarCatalogo();
+  else mostrarCadastro();
 
-    if(!filtered.length){
-      el.innerHTML = `<div class="empty">Nenhum item encontrado.</div>`;
-      return;
-    }
-
-    // agrupar categorias
-    const grupos = {};
-    for (const it of filtered){
-      const cat = it.categoria || "Outros";
-      (grupos[cat] ||= []).push(it);
-    }
-    const cats = Object.keys(grupos).sort((a,b)=>a.localeCompare(b,"pt-BR"));
-
-    // "Página" de categorias
-    if(!currentCat){
-      const cards = cats.map(cat=>{
-        const qtd = grupos[cat].length;
-        return `
-          <div class="catCard" onclick="window.abrirCategoria('${esc(cat)}')">
-            <div class="catTitle">📌 ${esc(cat)}</div>
-            <div class="mini">${qtd} item(ns)</div>
-          </div>
-        `;
-      }).join("");
-
-      el.innerHTML = `
-        <div class="panel" style="margin-bottom:12px">
-          <div class="topbar">
-            <div style="font-weight:900">📂 Categorias</div>
-            <span class="mini">Toque para abrir uma categoria.</span>
-          </div>
-          <div class="catsWrap">${cards}</div>
-        </div>
-      `;
-      return;
-    }
-
-    // "Página" de uma categoria
-    const items = (grupos[currentCat] || []).sort((a,b)=>String(a.nome||"").localeCompare(String(b.nome||""),"pt-BR"));
-
-    const cards = items.map(it => {
-      const preco = Number(it.preco||0);
-      const qid = `q_${it.id}`;
-      const img = it.imageUrl ? `<img class="img" src="${esc(it.imageUrl)}" alt="${esc(it.nome||"")}">`
-                              : `<div class="img" style="display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,.7);font-size:12px">Sem imagem</div>`;
-      const desc = it.descricao ? `<div class="desc">${esc(it.descricao)}</div>` : "";
-      return `
-        <div class="card">
-          ${img}
-          <h3 class="title">${esc(it.nome || "")}</h3>
-          <div class="price">${formatBRL(preco)}</div>
-          ${desc}
-          <div class="buyrow">
-            <input class="qty" id="${qid}" type="number" min="1" value="1">
-            <button class="btn" onclick="window.pedir('${it.id}')">Pedir</button>
-          </div>
-        </div>
-      `;
-    }).join("");
-
-    el.innerHTML = `
-      <div class="panel">
-        <div class="topbar">
-          <button class="btn btnGhost" onclick="window.voltarCategorias()">← Voltar</button>
-          <div class="pill">📂 ${esc(currentCat)}</div>
-          <span class="mini">${items.length} item(ns)</span>
-        </div>
-      </div>
-      <div class="grid">${cards}</div>
-    `;
-  }
-
-  // navegação por categoria
-  window.abrirCategoria = (cat) => { goCat(cat); };
-  window.voltarCategorias = () => { goHome(); };
-
-  function openModal(){
-    overlay.style.display = "flex";
-    obsFinal.value = (obsGeral.value || "").trim();
-    setTimeout(()=>obsFinal.focus(), 50);
-  }
-  function closeModalFn(){
-    overlay.style.display = "none";
-    pending = null;
-  }
-
-  closeModal.addEventListener("click", closeModalFn);
-  btnCancelar.addEventListener("click", closeModalFn);
-  overlay.addEventListener("click", (e)=>{ if(e.target === overlay) closeModalFn(); });
-
-  // pedir (só se cadastrado)
-  window.pedir = (id) => {
-    if(!exigirCadastroOuAvisar()) return;
-
-    const it = allItems.find(x => x.id === id);
-    if(!it) return;
-
-    const qid = `q_${it.id}`;
-    const q = Math.max(1, parseInt(document.getElementById(qid).value || "1", 10));
-    const preco = Number(it.preco||0);
-    const subtotal = preco * q;
-
-    pending = { it, q, preco, subtotal, categoria: it.categoria || "Outros" };
-
-    sumBox.innerHTML = `
-      <b>Categoria:</b> ${esc(pending.categoria)}<br>
-      <b>Item:</b> ${esc(pending.q)}x ${esc(it.nome || "")}<br>
-      <b>Valor unitário:</b> ${formatBRL(preco)}<br>
-      <b>Total:</b> ${formatBRL(subtotal)}
-    `;
-
-    openModal();
-  };
-
-  btnFinalizar.addEventListener("click", ()=>{
-    if(!pending) return;
-    if(!exigirCadastroOuAvisar()) { closeModalFn(); return; }
-
-    const c = getCliente();
-    const obs = (obsFinal.value || "").trim();
-    const obsTxt = obs ? `\nObservação: ${obs}` : "";
-
-    const text =
-`Olá! Quero pedir na *Sabor da Sopa*:
-
-Categoria: ${pending.categoria}
-Item: ${pending.q}x ${pending.it.nome || ""}
-Valor unitário: ${formatBRL(pending.preco)}
-Total: ${formatBRL(pending.subtotal)}${obsTxt}
-
-Cliente: ${c.nome}
-WhatsApp: ${c.fone}
-Endereço: ${c.end}`;
-
-    closeModalFn();
-    abrirWhats(text);
-  });
-
-  busca.addEventListener("input", render);
-
-  // init
-  refreshClienteUI();
   carregar();
 </script>
 
