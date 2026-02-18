@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<title>Admin - Sabor da Sopa</title>
+<style>
+body{font-family:Arial;background:#0f4d2e;color:white;margin:0;padding:0}
+.box{background:#1e7a47;padding:20px;margin:50px auto;width:300px;border-radius:12px;text-align:center}
+input{width:100%;padding:10px;margin:5px 0;border-radius:8px;border:none}
+button{background:#ffd400;border:none;padding:10px;border-radius:8px;font-weight:bold;cursor:pointer}
+</style>
+</head>
+<body>
+
+<div class="box">
+<h2>Login Admin</h2>
+<input id="email" placeholder="Email">
+<input id="senha" type="password" placeholder="Senha">
+<button onclick="login()">Entrar</button>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js";
+import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-auth.js";
+
+
+const firebaseConfig = {
+  apiKey: "AIzaSyAzD2_niY8a3Q7rO0V41j56ZwpeVTriKCw",
+  authDomain: "sabor-da-sopa.firebaseapp.com",
+  projectId: "sabor-da-sopa",
+  storageBucket: "sabor-da-sopa.firebasestorage.app",
+  messagingSenderId: "437365944053",
+  appId: "1:437365944053:web:69d942143b7575bdf19fbc"
+};
+
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+
+window.login = async () => {
+  const email = document.getElementById("email").value;
+  const senha = document.getElementById("senha").value;
+  try {
+    await signInWithEmailAndPassword(auth, email, senha);
+    alert("Login realizado com sucesso!");
+  } catch (error) {
+    alert("Erro: " + error.message);
+  }
+};
+</script>
+
+</body>
+</html>

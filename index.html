@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sabor da Sopa</title>
+<style>
+body{font-family:Arial;background:#0f4d2e;color:white;margin:0;padding:0}
+header{text-align:center;padding:20px;background:#08361f}
+.card{background:#1e7a47;margin:15px;padding:15px;border-radius:12px}
+img{width:100%;border-radius:10px}
+button{background:#ffd400;border:none;padding:10px;border-radius:8px;font-weight:bold;cursor:pointer}
+</style>
+</head>
+<body>
+
+<header>
+<h1>🍲 Sabor da Sopa</h1>
+</header>
+
+<div id="app"></div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js";
+import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js";
+
+
+const firebaseConfig = {
+  apiKey: "AIzaSyAzD2_niY8a3Q7rO0V41j56ZwpeVTriKCw",
+  authDomain: "sabor-da-sopa.firebaseapp.com",
+  projectId: "sabor-da-sopa",
+  storageBucket: "sabor-da-sopa.firebasestorage.app",
+  messagingSenderId: "437365944053",
+  appId: "1:437365944053:web:69d942143b7575bdf19fbc"
+};
+
+
+const WHATSAPP = "5581996604169";
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+const container = document.getElementById("app");
+
+const snap = await getDocs(collection(db,"menuItems"));
+const items = snap.docs.map(doc=>doc.data());
+
+container.innerHTML = items.map(item => `
+<div class="card">
+  ${item.imageUrl ? `<img src="${item.imageUrl}">` : ""}
+  <h3>${item.nome}</h3>
+  <p>R$ ${Number(item.preco).toFixed(2)}</p>
+  <button onclick="window.pedir('${item.nome}', ${item.preco})">Pedir</button>
+</div>
+`).join("");
+
+window.pedir = (nome, preco) => {
+  const msg = `Olá! Quero pedir na Sabor da Sopa:\n${nome} - R$ ${Number(preco).toFixed(2)}`;
+  window.open(`https://wa.me/${WHATSAPP}?text=${encodeURIComponent(msg)}`, "_blank");
+};
+</script>
+
+</body>
+</html>
