@@ -4,61 +4,283 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>Sabor da Sopa - Cardápio Online</title>
-
 <style>
-body{margin:0;font-family:Arial;background:#0f4d2e;color:#fff}
-/* 🔹 Botão pequeno flutuante */
-.whats-float{
-position:fixed;
-bottom:15px;
-right:15px;
-width:50px;
-height:50px;
-border-radius:50%;
-background:#25D366;
-display:flex;
-align-items:center;
-justify-content:center;
-box-shadow:0 5px 15px rgba(0,0,0,.3);
-cursor:pointer;
-z-index:999;
-}
-.whats-float img{
-width:28px;
-height:28px;
-}
-.whats-float:active{transform:scale(.95)}
-</style>
+  :root{
+    --bg:#0f4d2e; --bg2:#0b3a22; --card:#1e7a47; --accent:#ffd400; --txt:#ffffff;
+    --muted:rgba(255,255,255,.75); --shadow:0 10px 22px rgba(0,0,0,.28);
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:Arial,Helvetica,sans-serif;background:linear-gradient(180deg,var(--bg2),var(--bg));color:var(--txt)}
+  header{padding:18px 14px;text-align:center;background:rgba(0,0,0,.18);position:sticky;top:0;backdrop-filter:blur(6px);z-index:2}
+  header h1{margin:0;font-size:28px;letter-spacing:.3px}
+  header p{margin:6px 0 0;color:var(--muted)}
+  .wrap{max-width:1050px;margin:0 auto;padding:14px}
+  .panel{background:rgba(0,0,0,.18);border:1px solid rgba(255,255,255,.08);padding:12px;border-radius:16px;box-shadow:var(--shadow);margin-bottom:12px}
+  .row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  @media(max-width:820px){.row{grid-template-columns:1fr}}
+  label{display:block;text-align:left;margin:4px 0 6px;font-weight:800;font-size:13px;opacity:.95}
+  input,textarea{width:100%;padding:10px 12px;border-radius:12px;border:0;outline:none}
+  textarea{min-height:70px;resize:vertical}
+  .toolbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:10px}
+  .pill{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.14);padding:8px 10px;border-radius:999px;color:var(--txt);font-size:13px}
+  .btn{background:var(--accent);border:0;padding:10px 14px;border-radius:12px;font-weight:900;cursor:pointer}
+  .btn:active{transform:translateY(1px)}
+  .mini{font-size:12px;color:var(--muted)}
+  .cat{margin:18px 0 8px;padding:10px;background:#08361f;border-radius:14px;text-align:center;font-weight:900;letter-spacing:.4px;box-shadow:var(--shadow)}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:12px}
+  .card{background:var(--card);padding:14px;border-radius:16px;box-shadow:var(--shadow);border:1px solid rgba(255,255,255,.08)}
+  .img{width:100%;height:170px;object-fit:cover;border-radius:14px;margin-bottom:10px;background:rgba(0,0,0,.18)}
+  .title{margin:0;font-size:18px}
+  .price{font-weight:900;font-size:18px;margin:6px 0}
+  .desc{color:rgba(255,255,255,.9);font-size:13px;line-height:1.25}
+  .buyrow{display:flex;gap:8px;align-items:center;margin-top:10px}
+  .qty{width:92px}
+  .empty{text-align:center;padding:18px;color:var(--muted)}
+  .error{background:rgba(255,0,0,.14);border:1px solid rgba(255,0,0,.25);padding:12px;border-radius:14px;margin:12px 0}
+  .footer{text-align:center;padding:18px;color:var(--muted)}
 
+/* ✅ CAPA (topo) */
+.cover{
+  margin: 0 0 12px 0;
+  border-radius: 16px;
+  overflow: hidden;
+  position: relative;
+  box-shadow: var(--shadow);
+  border: 1px solid rgba(255,255,255,.08);
+  background: rgba(0,0,0,.18);
+}
+.cover img{
+  width: 100%;
+  height: 240px;
+  object-fit: cover;
+  display:block;
+}
+@media(min-width:820px){
+  .cover img{ height: 280px; }
+}
+.cover::after{
+  content:"";
+  position:absolute; inset:0;
+  background: linear-gradient(180deg, rgba(0,0,0,.10), rgba(0,0,0,.55));
+}
+.cover .cover-text{
+  position:absolute; left:14px; right:14px; bottom:12px;
+  z-index:1;
+  display:flex; align-items:flex-end; justify-content:space-between; gap:12px; flex-wrap:wrap;
+}
+.cover .brand{
+  font-weight: 900;
+  letter-spacing:.3px;
+  font-size: 18px;
+  text-shadow: 0 8px 18px rgba(0,0,0,.35);
+}
+.cover .tag{
+  font-size: 12px;
+  color: rgba(255,255,255,.88);
+  background: rgba(0,0,0,.28);
+  border: 1px solid rgba(255,255,255,.14);
+  padding: 6px 10px;
+  border-radius: 999px;
+  backdrop-filter: blur(6px);
+}
+
+
+/* ✅ Esconde qualquer texto/linha de WhatsApp na tela (número fica oculto) */
+#zapPill, .pill { display:none !important; }
+
+</style>
 </head>
 <body>
 
-<!-- Seu sistema permanece igual -->
+<header>
+  <h1>🍲 Sabor da Sopa</h1>
+  <p>Cardápio Online • Peça pelo WhatsApp</p>
+</header>
 
-<!-- ✅ Ícone pequeno WhatsApp -->
-<div class="whats-float" id="btnWhats" style="display:none;">
-  <img src="https://cdn-icons-png.flaticon.com/512/733/733585.png">
+<div class="wrap">
+
+  <!-- ✅ CAPA DO SABOR DA SOPA -->
+  <div class="cover">
+    <img src="capa.jpg" alt="Sabor da Sopa - Capa" />
+    <div class="cover-text">
+      <div class="brand">🍲 Sabor da Sopa</div>
+      <div class="tag">Cardápio Online • Caldos e Sopas</div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="row">
+      <div>
+        <label>🔎 Buscar item</label>
+        <input id="busca" placeholder="Ex: sopa, caldo, empada..." />
+      </div>
+      <div>
+        <label>🚚 Taxa de entrega (opcional)</label>
+        <input id="taxaEntrega" type="number" step="0.01" placeholder="Ex: 5.00 (deixe vazio se não tiver)" />
+      </div>
+    </div>
+
+    <label style="margin-top:10px">📝 Observação do pedido (opcional)</label>
+    <textarea id="obsGeral" placeholder="Ex: sem pimenta / bem quente / mandar colher / etc."></textarea>
+
+    <div class="toolbar">
+      <span class="pill">📲 WhatsApp: 5581996604169</span>
+      <span class="mini">Dica: escolha a quantidade e toque em “Pedir”.</span>
+    </div>
+  </div>
+
+  <div id="msg"></div>
+  <div id="app"><div class="empty">Carregando cardápio...</div></div>
 </div>
 
-<script>
-const WHATSAPP = "5581997284466";
+<div class="footer">© Sabor da Sopa</div>
 
-function finalizarPedido(mensagem){
-  const url = "https://wa.me/"+WHATSAPP+"?text="+encodeURIComponent(mensagem);
-  window.open(url,"_blank");
-}
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js";
+  import { getFirestore, collection, getDocs, query, orderBy } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js";
 
-const btnWhats = document.getElementById("btnWhats");
+  const WHATSAPP = "5581996604169";
+  const firebaseConfig = {
+  "apiKey": "AIzaSyAzD2_niY8a3Q7rO0V41j56ZwpeVTriKCw",
+  "authDomain": "sabor-da-sopa.firebaseapp.com",
+  "projectId": "sabor-da-sopa",
+  "storageBucket": "sabor-da-sopa.firebasestorage.app",
+  "messagingSenderId": "437365944053",
+  "appId": "1:437365944053:web:69d942143b7575bdf19fbc"
+};
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
 
-function mostrarBotao(){
-  btnWhats.style.display="flex";
-}
+  const el = document.getElementById("app");
+  const msg = document.getElementById("msg");
+  const busca = document.getElementById("busca");
+  const taxaInput = document.getElementById("taxaEntrega");
+  const obsInput = document.getElementById("obsGeral");
 
-btnWhats.addEventListener("click",function(){
-  finalizarPedido("Olá! Estou finalizando meu pedido.");
-});
+  const formatBRL = (v)=> Number(v||0).toLocaleString("pt-BR",{style:"currency",currency:"BRL"});
+  const esc = (s)=> String(s||"").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;").replaceAll("'","&#39;");
 
-// ⚠️ Você deve chamar mostrarBotao() após cadastro + carrinho válido
+  function showError(text, extra=""){
+    msg.innerHTML = `
+      <div class="error">
+        <b>⚠️ Não consegui carregar o cardápio.</b><br>
+        <div class="mini">${esc(text)}</div>
+        ${extra ? `<div class="mini" style="margin-top:6px">${esc(extra)}</div>` : ""}
+      </div>`;
+  }
+
+  function abrirWhats(text){
+    const url = `https://wa.me/${WHATSAPP}?text=${encodeURIComponent(text)}`;
+    window.open(url, "_blank");
+  }
+
+  let allItems = [];
+
+  async function carregar(){
+    msg.innerHTML = "";
+    el.innerHTML = `<div class="empty">Carregando cardápio...</div>`;
+
+    try {
+      let snap;
+      try {
+        snap = await getDocs(query(collection(db,"menuItems"), orderBy("categoria"), orderBy("nome")));
+      } catch (e) {
+        snap = await getDocs(collection(db,"menuItems"));
+      }
+      allItems = snap.docs.map(d => ({ id:d.id, ...d.data() }));
+
+      if(!allItems.length){
+        el.innerHTML = `<div class="empty">Cardápio vazio. Cadastre itens no Admin.</div>`;
+        return;
+      }
+      render();
+    } catch(e) {
+      console.error(e);
+      showError(e?.message || String(e), "Dica: confira se existe a coleção 'menuItems' no Firestore.");
+      el.innerHTML = "";
+    }
+  }
+
+  function render(){
+    const q = (busca.value || "").trim().toLowerCase();
+
+    const filtered = allItems.filter(it => {
+      if(!q) return true;
+      const hay = `${it.categoria||""} ${it.nome||""} ${it.descricao||""}`.toLowerCase();
+      return hay.includes(q);
+    });
+
+    if(!filtered.length){
+      el.innerHTML = `<div class="empty">Nenhum item encontrado.</div>`;
+      return;
+    }
+
+    const grupos = {};
+    for (const it of filtered){
+      const cat = it.categoria || "Outros";
+      (grupos[cat] ||= []).push(it);
+    }
+
+    const cats = Object.keys(grupos).sort((a,b)=>a.localeCompare(b,"pt-BR"));
+
+    el.innerHTML = cats.map(cat => {
+      const items = grupos[cat].sort((a,b)=>String(a.nome||"").localeCompare(String(b.nome||""),"pt-BR"));
+      const cards = items.map(it => {
+        const preco = Number(it.preco||0);
+        const qid = `q_${it.id}`;
+        const img = it.imageUrl ? `<img class="img" src="${esc(it.imageUrl)}" alt="${esc(it.nome||"")}">` : "";
+        const desc = it.descricao ? `<div class="desc">${esc(it.descricao)}</div>` : "";
+        return `
+          <div class="card">
+            ${img}
+            <h3 class="title">${esc(it.nome || "")}</h3>
+            <div class="price">${formatBRL(preco)}</div>
+            ${desc}
+            <div class="buyrow">
+              <input class="qty" id="${qid}" type="number" min="1" value="1">
+              <button class="btn" onclick="window.pedir('${it.id}')">Pedir</button>
+            </div>
+          </div>
+        `;
+      }).join("");
+
+      return `<div class="cat">${esc(cat)}</div><div class="grid">${cards}</div>`;
+    }).join("");
+  }
+
+  window.pedir = (id) => {
+    const it = allItems.find(x => x.id === id);
+    if(!it) return;
+
+    const qid = `q_${it.id}`;
+    const q = Math.max(1, parseInt(document.getElementById(qid).value || "1", 10));
+    const preco = Number(it.preco||0);
+    const subtotal = preco * q;
+
+    const taxa = Number(taxaInput.value || 0);
+    const total = subtotal + (taxa > 0 ? taxa : 0);
+
+    const obs = (obsInput.value || "").trim();
+    const obsTxt = obs ? `\nObservação: ${obs}` : "";
+    const taxaTxt = taxa > 0 ? `\nTaxa de entrega: ${formatBRL(taxa)}` : "";
+
+    const text =
+`Olá! Quero pedir na *Sabor da Sopa*:
+
+Categoria: ${it.categoria || "Outros"}
+Item: ${q}x ${it.nome || ""}
+Valor unitário: ${formatBRL(preco)}
+Subtotal: ${formatBRL(subtotal)}${taxaTxt}
+Total: ${formatBRL(total)}${obsTxt}
+
+Meu nome:
+Endereço:`;
+
+    abrirWhats(text);
+  };
+
+  busca.addEventListener("input", render);
+  carregar();
 </script>
 
 </body>
