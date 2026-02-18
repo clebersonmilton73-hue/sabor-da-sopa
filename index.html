@@ -69,6 +69,38 @@
     </div>
   </div>
 
+  <!-- ✅ CADASTRO DO CLIENTE (NOVO) -->
+  <div class="panel">
+    <h2 style="margin:0 0 10px">👤 Cadastro do Cliente</h2>
+
+    <div class="row">
+      <div>
+        <label>Nome</label>
+        <input id="cliNome" placeholder="Ex: Cleyton" maxlength="60" />
+      </div>
+      <div>
+        <label>WhatsApp (com DDD)</label>
+        <input id="cliWhats" placeholder="Ex: 81996604169" maxlength="20" />
+      </div>
+    </div>
+
+    <div class="row" style="margin-top:10px">
+      <div>
+        <label>Cidade</label>
+        <input id="cliCidade" placeholder="Ex: Jaboatão dos Guararapes" maxlength="60" />
+      </div>
+      <div>
+        <label>Endereço</label>
+        <input id="cliEnd" placeholder="Rua, nº, bairro..." maxlength="120" />
+      </div>
+    </div>
+
+    <div class="toolbar">
+      <button id="btnSalvarCliente" class="btn" type="button">✅ Salvar cadastro</button>
+      <span class="mini" id="cliStatus"></span>
+    </div>
+  </div>
+
   <div id="msg"></div>
   <div id="app"><div class="empty">Carregando cardápio...</div></div>
 </div>
@@ -81,13 +113,14 @@
 
   const WHATSAPP = "5581996604169";
   const firebaseConfig = {
-  "apiKey": "AIzaSyAzD2_niY8a3Q7rO0V41j56ZwpeVTriKCw",
-  "authDomain": "sabor-da-sopa.firebaseapp.com",
-  "projectId": "sabor-da-sopa",
-  "storageBucket": "sabor-da-sopa.firebasestorage.app",
-  "messagingSenderId": "437365944053",
-  "appId": "1:437365944053:web:69d942143b7575bdf19fbc"
-};
+    "apiKey": "AIzaSyAzD2_niY8a3Q7rO0V41j56ZwpeVTriKCw",
+    "authDomain": "sabor-da-sopa.firebaseapp.com",
+    "projectId": "sabor-da-sopa",
+    "storageBucket": "sabor-da-sopa.firebasestorage.app",
+    "messagingSenderId": "437365944053",
+    "appId": "1:437365944053:web:69d942143b7575bdf19fbc"
+  };
+
   const app = initializeApp(firebaseConfig);
   const db = getFirestore(app);
 
@@ -97,8 +130,19 @@
   const taxaInput = document.getElementById("taxaEntrega");
   const obsInput = document.getElementById("obsGeral");
 
+  // ✅ Cadastro do cliente (salva no navegador)
+  const cliNome = document.getElementById("cliNome");
+  const cliWhats = document.getElementById("cliWhats");
+  const cliCidade = document.getElementById("cliCidade");
+  const cliEnd = document.getElementById("cliEnd");
+  const btnSalvarCliente = document.getElementById("btnSalvarCliente");
+  const cliStatus = document.getElementById("cliStatus");
+  const CLIENTE_KEY = "sabor_sopa_cliente";
+
   const formatBRL = (v)=> Number(v||0).toLocaleString("pt-BR",{style:"currency",currency:"BRL"});
   const esc = (s)=> String(s||"").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;").replaceAll("'","&#39;");
+
+  function safeDigits(v){ return String(v||"").replace(/\D+/g,""); }
 
   function showError(text, extra=""){
     msg.innerHTML = `
@@ -113,6 +157,41 @@
     const url = `https://wa.me/${WHATSAPP}?text=${encodeURIComponent(text)}`;
     window.open(url, "_blank");
   }
+
+  function loadCliente(){
+    try{
+      const v = localStorage.getItem(CLIENTE_KEY);
+      return v ? JSON.parse(v) : null;
+    }catch{ return null; }
+  }
+
+  function fillCliente(){
+    const c = loadCliente();
+    if(!c) return;
+    cliNome.value = c.nome || "";
+    cliWhats.value = c.whats || "";
+    cliCidade.value = c.cidade || "";
+    cliEnd.value = c.end || "";
+  }
+
+  function saveCliente(){
+    const nome = (cliNome.value || "").trim();
+    const whats = safeDigits(cliWhats.value || "");
+    const cidade = (cliCidade.value || "").trim();
+    const end = (cliEnd.value || "").trim();
+
+    if(!nome || !whats){
+      cliStatus.textContent = "❌ Informe nome e WhatsApp.";
+      return;
+    }
+
+    localStorage.setItem(CLIENTE_KEY, JSON.stringify({ nome, whats, cidade, end }));
+    cliStatus.textContent = "✅ Cadastro salvo!";
+    setTimeout(()=>{ if(cliStatus.textContent==="✅ Cadastro salvo!") cliStatus.textContent=""; }, 3000);
+  }
+
+  btnSalvarCliente.addEventListener("click", saveCliente);
+  fillCliente();
 
   let allItems = [];
 
@@ -192,6 +271,15 @@
     const it = allItems.find(x => x.id === id);
     if(!it) return;
 
+    // ✅ exige cadastro mínimo
+    const nomeOk = (cliNome.value || "").trim();
+    const whatsOk = safeDigits(cliWhats.value || "");
+    if(!nomeOk || !whatsOk){
+      alert("Preencha e salve seu cadastro (Nome e WhatsApp) antes de pedir.");
+      cliNome.focus();
+      return;
+    }
+
     const qid = `q_${it.id}`;
     const q = Math.max(1, parseInt(document.getElementById(qid).value || "1", 10));
     const preco = Number(it.preco||0);
@@ -213,8 +301,10 @@ Valor unitário: ${formatBRL(preco)}
 Subtotal: ${formatBRL(subtotal)}${taxaTxt}
 Total: ${formatBRL(total)}${obsTxt}
 
-Meu nome:
-Endereço:`;
+Meu nome: ${cliNome.value || ""}
+WhatsApp: ${cliWhats.value || ""}
+Cidade: ${cliCidade.value || ""}
+Endereço: ${cliEnd.value || ""}`;
 
     abrirWhats(text);
   };
