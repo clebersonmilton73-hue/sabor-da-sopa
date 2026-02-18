@@ -38,6 +38,57 @@
   .empty{text-align:center;padding:18px;color:var(--muted)}
   .error{background:rgba(255,0,0,.14);border:1px solid rgba(255,0,0,.25);padding:12px;border-radius:14px;margin:12px 0}
   .footer{text-align:center;padding:18px;color:var(--muted)}
+
+  .cartbtn{
+    border:0; cursor:pointer; padding:10px 12px; border-radius:14px;
+    background:rgba(255,255,255,.12); color:var(--txt); font-weight:800;
+    box-shadow:0 6px 14px rgba(0,0,0,.18);
+    display:inline-flex; gap:8px; align-items:center;
+  }
+  .cartbtn:hover{ background:rgba(255,255,255,.16); }
+  .badge{
+    background:var(--accent); color:#1b1b1b; font-weight:900;
+    border-radius:999px; padding:2px 8px; font-size:12px;
+    min-width:24px; text-align:center;
+  }
+  .overlay{
+    position:fixed; inset:0; background:rgba(0,0,0,.55);
+    display:flex; align-items:flex-end; justify-content:center;
+    padding:14px; z-index:9999;
+  }
+  .cart{
+    width:min(760px, 100%); background:linear-gradient(180deg, rgba(30,122,71,.98), rgba(15,77,46,.98));
+    border:1px solid rgba(255,255,255,.14); border-radius:18px;
+    box-shadow:0 18px 40px rgba(0,0,0,.35);
+    overflow:hidden;
+  }
+  .carthead{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:14px 14px 10px; border-bottom:1px dashed rgba(255,255,255,.22);
+  }
+  .xbtn{
+    border:0; cursor:pointer; border-radius:12px; padding:8px 10px;
+    background:rgba(0,0,0,.18); color:var(--txt); font-weight:900;
+  }
+  .cartitems{ max-height:min(52vh, 420px); overflow:auto; padding:12px 14px; }
+  .citem{
+    display:grid; grid-template-columns: 1fr auto; gap:10px;
+    padding:10px 0; border-bottom:1px solid rgba(255,255,255,.10);
+  }
+  .citem:last-child{ border-bottom:0; }
+  .cname{ font-weight:900; }
+  .cmeta{ color:var(--muted); font-size:13px; margin-top:2px; }
+  .cactions{ display:flex; gap:8px; align-items:center; justify-content:flex-end; }
+  .cqty{ width:78px; padding:8px 10px; border-radius:12px; border:1px solid rgba(255,255,255,.18); background:rgba(0,0,0,.18); color:var(--txt); font-weight:800; }
+  .rmbtn{
+    border:0; cursor:pointer; border-radius:12px; padding:8px 10px;
+    background:rgba(255,255,255,.10); color:var(--txt); font-weight:800;
+  }
+  .cartfoot{
+    display:flex; align-items:center; justify-content:space-between; gap:12px;
+    padding:12px 14px; border-top:1px dashed rgba(255,255,255,.22);
+    background:rgba(0,0,0,.10);
+  }
 </style>
 </head>
 <body>
@@ -81,12 +132,37 @@
 
     <div class="toolbar">
       <span class="pill">📲 WhatsApp: 5581997284466</span>
-      <span class="mini">Dica: escolha a quantidade e toque em “Pedir”.</span>
+      <button class="cartbtn" type="button" onclick="window.abrirCarrinho()">🛒 Carrinho <span id="cartCount" class="badge">0</span></button>
+      <span class="mini">Dica: adicione itens no carrinho e finalize o pedido.</span>
     </div>
   </div>
 
   <div id="msg"></div>
   <div id="app"><div class="empty">Carregando cardápio...</div></div>
+</div>
+
+
+<!-- Carrinho -->
+<div id="cartOverlay" class="overlay" style="display:none" onclick="window.fecharCarrinho(event)">
+  <div class="cart" onclick="event.stopPropagation()">
+    <div class="carthead">
+      <div>
+        <div style="font-weight:800;font-size:18px">🛒 Seu carrinho</div>
+        <div class="mini" style="margin-top:2px">Revise os itens e finalize no WhatsApp (delivery calcula o frete).</div>
+      </div>
+      <button class="xbtn" type="button" onclick="window.fecharCarrinho()">✕</button>
+    </div>
+
+    <div id="cartItems" class="cartitems"></div>
+
+    <div class="cartfoot">
+      <div>
+        <div class="mini">Total</div>
+        <div id="cartTotal" style="font-weight:900;font-size:20px">R$ 0,00</div>
+      </div>
+      <button class="btn" type="button" onclick="window.finalizarPedido()">Finalizar pedido</button>
+    </div>
+  </div>
 </div>
 
 <div class="footer">© Sabor da Sopa</div>
@@ -201,7 +277,151 @@ const obsInput = document.getElementById("obsGeral");
     window.open(url, "_blank");
   }
 
+  
+  const CART_KEY = "sdsp_cart_v1";
+
+  function loadCart(){
+    try{ return JSON.parse(localStorage.getItem(CART_KEY) || "{}"); }
+    catch(e){ return {}; }
+  }
+  function saveCart(cart){
+    localStorage.setItem(CART_KEY, JSON.stringify(cart || {}));
+    updateCartBadge();
+  }
+  function cartCount(cart){
+    return Object.values(cart||{}).reduce((a,b)=>a + (Number(b?.q||0)||0), 0);
+  }
+  function updateCartBadge(){
+    const cart = loadCart();
+    const n = cartCount(cart);
+    const cc = document.getElementById("cartCount");
+    if(cc) cc.textContent = String(n);
+  }
+
+  window.abrirCarrinho = ()=>{
+    updateCartUI();
+    const ov = document.getElementById("cartOverlay");
+    if(ov) ov.style.display = "flex";
+  };
+  window.fecharCarrinho = (ev)=>{
+    const ov = document.getElementById("cartOverlay");
+    if(!ov) return;
+    // se clicar fora ou no X
+    if(!ev || ev.target === ov) ov.style.display = "none";
+  };
+
+  function calcCartTotals(cart){
+    let total = 0;
+    const lines = [];
+    for(const [id, entry] of Object.entries(cart||{})){
+      const it = allItems.find(x=>x.id===id);
+      if(!it) continue;
+      const q = Math.max(1, parseInt(entry.q||1,10));
+      const preco = Number(it.preco||0);
+      const sub = preco * q;
+      total += sub;
+      lines.push({it, q, preco, sub});
+    }
+    return { total, lines };
+  }
+
+  function updateCartUI(){
+    const cart = loadCart();
+    const { total, lines } = calcCartTotals(cart);
+
+    const wrap = document.getElementById("cartItems");
+    const totalEl = document.getElementById("cartTotal");
+
+    if(totalEl) totalEl.textContent = formatBRL(total);
+
+    if(!wrap) return;
+
+    if(!lines.length){
+      wrap.innerHTML = `<div class="empty" style="margin:6px 0">Seu carrinho está vazio. Adicione itens no cardápio.</div>`;
+      return;
+    }
+
+    wrap.innerHTML = lines.map(({it,q,preco,sub})=>`
+      <div class="citem">
+        <div>
+          <div class="cname">${esc(it.nome||"")}</div>
+          <div class="cmeta">${esc(it.categoria||"Outros")} • ${formatBRL(preco)} cada • Subtotal: <b>${formatBRL(sub)}</b></div>
+        </div>
+        <div class="cactions">
+          <input class="cqty" type="number" min="1" value="${q}" onchange="window.atualizarQtdCarrinho('${it.id}', this.value)">
+          <button class="rmbtn" type="button" onclick="window.removerCarrinho('${it.id}')">Remover</button>
+        </div>
+      </div>
+    `).join("");
+  }
+
+  window.addCarrinho = (id)=>{
+    const it = allItems.find(x=>x.id===id);
+    if(!it) return;
+
+    const qid = `q_${it.id}`;
+    const q = Math.max(1, parseInt(document.getElementById(qid)?.value || "1", 10));
+
+    const cart = loadCart();
+    const cur = cart[id]?.q ? parseInt(cart[id].q,10) : 0;
+    cart[id] = { q: (cur + q) };
+    saveCart(cart);
+    updateCartUI();
+  };
+
+  window.removerCarrinho = (id)=>{
+    const cart = loadCart();
+    delete cart[id];
+    saveCart(cart);
+    updateCartUI();
+  };
+
+  window.atualizarQtdCarrinho = (id, value)=>{
+    const cart = loadCart();
+    const q = Math.max(1, parseInt(value||"1",10));
+    if(!cart[id]) cart[id] = { q };
+    cart[id].q = q;
+    saveCart(cart);
+    updateCartUI();
+  };
+
+  window.finalizarPedido = ()=>{
+    const cad = exigirCadastro();
+    if(!cad) return;
+
+    const cart = loadCart();
+    const { total, lines } = calcCartTotals(cart);
+
+    if(!lines.length){
+      alert("Seu carrinho está vazio. Adicione itens antes de finalizar.");
+      return;
+    }
+
+    const obs = (obsInput.value || "").trim();
+    const obsTxt = obs ? `\nObservação: ${obs}` : "";
+
+    const itensTxt = lines.map(({it,q,preco,sub}) =>
+      `- ${q}x ${it.nome || ""} (${formatBRL(preco)}): ${formatBRL(sub)}`
+    ).join("\n");
+
+    const text =
+`Olá! Quero pedir na *Sabor da Sopa*:\n\n` +
+`Itens:\n${itensTxt}\n\n` +
+`Total: ${formatBRL(total)}${obsTxt}\n\n` +
+`Meu nome: ${cad.nome}\n` +
+`WhatsApp: ${cad.zap}\n` +
+`Endereço: ${cad.endereco}\n\n` +
+`(Frete calculado pelo delivery)`;
+
+    abrirWhats(text);
+
+    // opcional: limpar carrinho após abrir o Whats
+    // saveCart({});
+    // const ov = document.getElementById("cartOverlay"); if(ov) ov.style.display="none";
+  };
+
   let allItems = [];
+
 
   async function carregar(){
     msg.innerHTML = "";
@@ -307,6 +527,7 @@ Endereço: ${cad.endereco}`;
 
   busca.addEventListener("input", render);
   carregarCadastro();
+  updateCartBadge();
   carregar();
 </script>
 
