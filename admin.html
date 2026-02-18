@@ -84,7 +84,7 @@
 
         <label class="status" style="margin:0">Foto por link (URL) — opcional</label>
         <input id="fotoUrl" placeholder="Ex: https://meusite.com/imagens/sopa.jpg" />
-        <div class="status" id="statusFoto">Cole um link direto da imagem (jpg/png/webp).</div>
+        <div class="status" id="statusFoto">Cole um link direto da imagem (http/https).</div>
 
         <div class="rowBtns" style="margin-top:10px">
           <button id="btnSalvar">Salvar</button>
@@ -108,7 +108,7 @@
         <div class="hint" style="margin-top:10px">
           <div class="pill">Dica foto</div>
           <div class="status">
-            Use link direto de imagem (terminando em .jpg/.png/.webp). Link de Google Drive/Instagram geralmente não funciona direto.
+            Use link direto de imagem. Link de Google Drive/Instagram geralmente não funciona direto.
           </div>
         </div>
       </div>
@@ -195,7 +195,7 @@
     precoEl.value = "";
     descEl.value = "";
     fotoUrlEl.value = "";
-    statusFoto.textContent = "Cole um link direto da imagem (jpg/png/webp).";
+    statusFoto.textContent = "Cole um link direto da imagem (http/https).";
     setStatus(saveMsg, "");
     btnSalvar.textContent = "Salvar";
   }
@@ -306,7 +306,6 @@
     const nome = nomeEl.value.trim();
     const preco = Number(precoEl.value || 0);
     const descricao = descEl.value.trim();
-
     const imageUrl = fotoUrlEl.value.trim();
 
     if(!nome || preco <= 0){
