@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>Sabor da Sopa - Cardápio Online</title>
 <style>
+
   :root{
     --bg:#0f4d2e; --bg2:#0b3a22; --card:#1e7a47; --accent:#ffd400; --txt:#ffffff;
     --muted:rgba(255,255,255,.75); --shadow:0 10px 22px rgba(0,0,0,.28);
@@ -38,16 +39,35 @@
   .empty{text-align:center;padding:18px;color:var(--muted)}
   .error{background:rgba(255,0,0,.14);border:1px solid rgba(255,0,0,.25);padding:12px;border-radius:14px;margin:12px 0}
   .footer{text-align:center;padding:18px;color:var(--muted)}
+
+
+/* ✅ Extras (carrinho) */
+.cart-head{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.cart-badge{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.14);padding:6px 10px;border-radius:999px;font-weight:900}
+.cart-list{margin-top:10px;display:grid;gap:10px}
+.cart-item{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.10);padding:10px;border-radius:14px}
+.cart-line{display:flex;justify-content:space-between;gap:10px}
+.cart-name{font-weight:900}
+.cart-mini{font-size:12px;color:var(--muted);margin-top:4px}
+.cart-actions{display:flex;gap:8px;align-items:center;margin-top:8px;flex-wrap:wrap}
+.cart-actions button{background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.18);color:#fff;padding:8px 10px;border-radius:12px;cursor:pointer;font-weight:900}
+.cart-actions button:active{transform:translateY(1px)}
+.cart-actions .danger{background:rgba(255,0,0,.18);border-color:rgba(255,0,0,.25)}
+.cart-total{margin-top:10px;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+.cart-total b{font-size:18px}
+.hidden{display:none!important}
 </style>
 </head>
 <body>
 
 <header>
   <h1>🍲 Sabor da Sopa</h1>
-  <p>Cardápio Online • Peça pelo WhatsApp</p>
+  <p>Cardápio Online • Monte seu carrinho e finalize no WhatsApp</p>
 </header>
 
 <div class="wrap">
+
+  <!-- ✅ BUSCA + OBS -->
   <div class="panel">
     <div class="row">
       <div>
@@ -55,55 +75,66 @@
         <input id="busca" placeholder="Ex: sopa, caldo, empada..." />
       </div>
       <div>
-        <label>🛒 Carrinho</label>
-        <input id="cartResumo" disabled placeholder="0 itens • R$ 0,00" />
+        <!-- espaço mantido para não quebrar layout em telas grandes -->
+        <div class="mini" style="margin-top:22px">💡 Dica: adicione itens no carrinho.</div>
       </div>
     </div>
 
     <label style="margin-top:10px">📝 Observação do pedido (opcional)</label>
     <textarea id="obsGeral" placeholder="Ex: sem pimenta / bem quente / mandar colher / etc."></textarea>
+  </div>
 
-    <div class="panel" style="margin-top:12px">
-      <div style="font-weight:900; margin-bottom:8px">👤 Cadastro do Cliente</div>
-      <div class="row">
-        <div>
-          <label>Nome</label>
-          <input id="cliNome" placeholder="Ex: Cleyton" />
-        </div>
-        <div>
-          <label>Telefone / WhatsApp</label>
-          <input id="cliTelefone" placeholder="Ex: (81) 9xxxx-xxxx" />
-        </div>
+  <!-- ✅ CADASTRO DO CLIENTE -->
+  <div class="panel" id="panelCadastro">
+    <div class="cart-head">
+      <div style="font-weight:900">👤 Cadastro do Cliente</div>
+      <span class="mini" id="cliStatus">Preencha e clique em “Salvar dados”.</span>
+    </div>
+
+    <div class="row" style="margin-top:10px">
+      <div>
+        <label>Nome</label>
+        <input id="cliNome" placeholder="Ex: Cleyton" />
       </div>
-      <label style="margin-top:10px">Endereço</label>
-      <textarea id="cliEndereco" placeholder="Rua, número, bairro, ponto de referência..."></textarea>
-      <div class="mini" style="margin-top:8px">Frete: <b>a combinar</b></div>
-      <div class="toolbar" style="justify-content:space-between">
-        <span class="mini" id="cliStatus">Preencha e clique em “Salvar dados”.</span>
-        <button class="btn" id="btnSalvarCliente" type="button">Salvar dados</button>
+      <div>
+        <label>Telefone / WhatsApp</label>
+        <input id="cliTelefone" placeholder="Ex: (81) 9xxxx-xxxx" />
       </div>
     </div>
 
+    <label style="margin-top:10px">Endereço</label>
+    <textarea id="cliEndereco" placeholder="Rua, número, bairro, ponto de referência..."></textarea>
 
-    <div class="toolbar">
-      <span class="mini">Dica: adicione no carrinho e finalize no WhatsApp.</span>
+    <div class="toolbar" style="justify-content:flex-end">
+      <button class="btn" id="btnSalvarCliente" type="button">Salvar dados</button>
+    </div>
+
+    <div class="mini" style="opacity:.9">*Frete a combinar no WhatsApp.*</div>
+  </div>
+
+  <!-- ✅ CARRINHO -->
+  <div class="panel" id="panelCarrinho">
+    <div class="cart-head">
+      <div style="font-weight:900">🛒 Carrinho</div>
+      <span class="cart-badge" id="cartBadge">0 itens</span>
+    </div>
+
+    <div id="cartEmpty" class="empty" style="padding:12px">Seu carrinho está vazio.</div>
+    <div id="cartList" class="cart-list"></div>
+
+    <div class="cart-total">
+      <div class="mini">Subtotal do carrinho (sem frete)</div>
+      <b id="cartTotal">R$ 0,00</b>
+    </div>
+
+    <div class="toolbar" style="justify-content:space-between">
+      <span class="mini" id="finalHint">Finalize após cadastrar e adicionar itens.</span>
+      <button class="btn" id="btnFinalizar" type="button" disabled>Finalizar no WhatsApp</button>
     </div>
   </div>
 
   <div id="msg"></div>
   <div id="app"><div class="empty">Carregando cardápio...</div></div>
-
-  <div id="cartPanel" class="panel">
-    <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap">
-      <div style="font-weight:900">🛒 Carrinho</div>
-      <button class="btn" id="btnFinalizar" type="button">Finalizar no WhatsApp</button>
-    </div>
-    <div class="mini" style="margin-top:6px">Revise seus itens e finalize. O frete será combinado no WhatsApp.</div>
-    <div id="cartItens" style="margin-top:10px"></div>
-    <div style="margin-top:10px;font-weight:900" id="cartTotal">Total: R$ 0,00</div>
-    <div class="mini" style="margin-top:6px" id="cartHint"></div>
-  </div>
-
 </div>
 
 <div class="footer">© Sabor da Sopa</div>
@@ -112,40 +143,36 @@
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js";
   import { getFirestore, collection, getDocs, query, orderBy } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js";
 
-  const WHATSAPP = atob("NTU4MTk5NzI4NDQ2Ng==");
-  const firebaseConfig = {
-  "apiKey": "AIzaSyAzD2_niY8a3Q7rO0V41j56ZwpeVTriKCw",
-  "authDomain": "sabor-da-sopa.firebaseapp.com",
-  "projectId": "sabor-da-sopa",
-  "storageBucket": "sabor-da-sopa.firebasestorage.app",
-  "messagingSenderId": "437365944053",
-  "appId": "1:437365944053:web:69d942143b7575bdf19fbc"
-};
-  const app = initializeApp(firebaseConfig);
-  const db = getFirestore(app);
+  // ✅ WhatsApp (OCULTO) — só é usado ao finalizar o carrinho
+  const WHATSAPP = "5581997284466"; // 55 + DDD + número
+
+  const firebaseConfig = {"apiKey":"AIzaSyAzD2_niY8a3Q7rO0V41j56ZwpeVTriKCw","authDomain":"sabor-da-sopa.firebaseapp.com","projectId":"sabor-da-sopa","storageBucket":"sabor-da-sopa.firebasestorage.app","messagingSenderId":"437365944053","appId":"1:437365944053:web:69d942143b7575bdf19fbc"};
+
+  const appFB = initializeApp(firebaseConfig);
+  const db = getFirestore(appFB);
 
   const el = document.getElementById("app");
   const msg = document.getElementById("msg");
   const busca = document.getElementById("busca");
   const obsInput = document.getElementById("obsGeral");
 
-
-  const cartResumo = document.getElementById("cartResumo");
-  const cartPanel = document.getElementById("cartPanel");
-  const cartItens = document.getElementById("cartItens");
-  const cartTotal = document.getElementById("cartTotal");
-  const cartHint = document.getElementById("cartHint");
-  const btnFinalizar = document.getElementById("btnFinalizar");
-
+  // ✅ Cadastro
   const cliNome = document.getElementById("cliNome");
   const cliTelefone = document.getElementById("cliTelefone");
   const cliEndereco = document.getElementById("cliEndereco");
   const cliStatus = document.getElementById("cliStatus");
   const btnSalvarCliente = document.getElementById("btnSalvarCliente");
 
-  const CLIENT_KEY = "sabor_cliente_v1";
-  const CART_KEY = "sabor_carrinho_v1";
+  // ✅ Carrinho
+  const cartBadge = document.getElementById("cartBadge");
+  const cartEmpty = document.getElementById("cartEmpty");
+  const cartList = document.getElementById("cartList");
+  const cartTotalEl = document.getElementById("cartTotal");
+  const btnFinalizar = document.getElementById("btnFinalizar");
+  const finalHint = document.getElementById("finalHint");
 
+  const CLIENT_KEY = "sabor_cliente_v5";
+  const CART_KEY = "sabor_cart_v1";
 
   const formatBRL = (v)=> Number(v||0).toLocaleString("pt-BR",{style:"currency",currency:"BRL"});
   const esc = (s)=> String(s||"").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;").replaceAll("'","&#39;");
@@ -164,6 +191,126 @@
     window.open(url, "_blank");
   }
 
+  // ---------- Cadastro (localStorage) ----------
+  function loadCliente(){
+    try{
+      const data = JSON.parse(localStorage.getItem(CLIENT_KEY) || "null");
+      if(!data) return false;
+      cliNome.value = data.nome || "";
+      cliTelefone.value = data.telefone || "";
+      cliEndereco.value = data.endereco || "";
+      cliStatus.textContent = "✅ Dados do cliente carregados.";
+      return Boolean((data.nome||"").trim() && (data.endereco||"").trim());
+    }catch(e){ return false; }
+  }
+
+  function saveCliente(){
+    const data = {
+      nome: (cliNome.value || "").trim(),
+      telefone: (cliTelefone.value || "").trim(),
+      endereco: (cliEndereco.value || "").trim(),
+    };
+    localStorage.setItem(CLIENT_KEY, JSON.stringify(data));
+    cliStatus.textContent = "✅ Dados salvos.";
+    updateFinalizeState();
+  }
+
+  btnSalvarCliente.addEventListener("click", saveCliente);
+
+  function clienteOk(){
+    const nome = (cliNome.value || "").trim();
+    const end = (cliEndereco.value || "").trim();
+    return Boolean(nome && end);
+  }
+
+  // ---------- Carrinho ----------
+  let cart = {}; // id -> {id, nome, preco, categoria, qty}
+
+  function loadCart(){
+    try{
+      cart = JSON.parse(localStorage.getItem(CART_KEY) || "{}") || {};
+    }catch(e){ cart = {}; }
+  }
+
+  function saveCart(){
+    localStorage.setItem(CART_KEY, JSON.stringify(cart));
+  }
+
+  function cartCount(){
+    return Object.values(cart).reduce((a,it)=>a + (Number(it.qty)||0), 0);
+  }
+
+  function cartSubtotal(){
+    return Object.values(cart).reduce((a,it)=>a + (Number(it.preco)||0) * (Number(it.qty)||0), 0);
+  }
+
+  function renderCart(){
+    const items = Object.values(cart).filter(x => (Number(x.qty)||0) > 0);
+    const count = cartCount();
+    cartBadge.textContent = `${count} item${count===1?"":"s"}`;
+
+    const subtotal = cartSubtotal();
+    cartTotalEl.textContent = formatBRL(subtotal);
+
+    if(!items.length){
+      cartEmpty.classList.remove("hidden");
+      cartList.innerHTML = "";
+    } else {
+      cartEmpty.classList.add("hidden");
+      cartList.innerHTML = items.map(it => `
+        <div class="cart-item">
+          <div class="cart-line">
+            <div>
+              <div class="cart-name">${esc(it.nome||"")}</div>
+              <div class="cart-mini">${esc(it.categoria||"")} • ${formatBRL(it.preco)} cada</div>
+            </div>
+            <div style="font-weight:900">${formatBRL((Number(it.preco)||0)*(Number(it.qty)||0))}</div>
+          </div>
+
+          <div class="cart-actions">
+            <button data-dec="${it.id}">-</button>
+            <span style="min-width:34px;text-align:center;font-weight:900">${Number(it.qty)||1}</span>
+            <button data-inc="${it.id}">+</button>
+            <button class="danger" data-del="${it.id}">Remover</button>
+          </div>
+        </div>
+      `).join("");
+
+      cartList.querySelectorAll("[data-inc]").forEach(b=>b.addEventListener("click", ()=>{
+        const id = b.getAttribute("data-inc");
+        if(cart[id]) cart[id].qty = (Number(cart[id].qty)||0) + 1;
+        saveCart(); renderCart(); updateFinalizeState();
+      }));
+
+      cartList.querySelectorAll("[data-dec]").forEach(b=>b.addEventListener("click", ()=>{
+        const id = b.getAttribute("data-dec");
+        if(cart[id]) cart[id].qty = Math.max(1, (Number(cart[id].qty)||1) - 1);
+        saveCart(); renderCart(); updateFinalizeState();
+      }));
+
+      cartList.querySelectorAll("[data-del]").forEach(b=>b.addEventListener("click", ()=>{
+        const id = b.getAttribute("data-del");
+        delete cart[id];
+        saveCart(); renderCart(); updateFinalizeState();
+      }));
+    }
+
+    updateFinalizeState();
+  }
+
+  function updateFinalizeState(){
+    const okCliente = clienteOk();
+    const okCart = cartCount() > 0;
+
+    btnFinalizar.disabled = !(okCliente && okCart);
+
+    if(!okCliente && !okCart) finalHint.textContent = "Cadastre seus dados e adicione itens no carrinho.";
+    else if(!okCliente) finalHint.textContent = "Cadastre seus dados (Nome + Endereço) e clique em Salvar.";
+    else if(!okCart) finalHint.textContent = "Adicione itens no carrinho para finalizar.";
+    else finalHint.textContent = "✅ Tudo certo! Clique em Finalizar no WhatsApp.";
+  }
+
+  // ---------- Cardápio ----------
   let allItems = [];
 
   async function carregar(){
@@ -228,7 +375,7 @@
             ${desc}
             <div class="buyrow">
               <input class="qty" id="${qid}" type="number" min="1" value="1">
-              <button class="btn" onclick="window.addToCart('${it.id}')">Adicionar</button>
+              <button class="btn" onclick="window.addCarrinho('${it.id}')">Adicionar</button>
             </div>
           </div>
         `;
@@ -238,211 +385,71 @@
     }).join("");
   }
 
-  
-  function loadCliente(){
-    try{
-      const d = JSON.parse(localStorage.getItem(CLIENT_KEY) || "null");
-      if(!d) return;
-      cliNome.value = d.nome || "";
-      cliTelefone.value = d.telefone || "";
-      cliEndereco.value = d.endereco || "";
-      if(cliStatus) cliStatus.textContent = "✅ Dados do cliente carregados.";
-    }catch(e){}
-  }
-
-  function saveCliente(){
-    const d = {
-      nome: (cliNome.value||"").trim(),
-      telefone: (cliTelefone.value||"").trim(),
-      endereco: (cliEndereco.value||"").trim()
-    };
-    localStorage.setItem(CLIENT_KEY, JSON.stringify(d));
-    if(cliStatus) cliStatus.textContent = "✅ Dados salvos.";
-  }
-
-  if(btnSalvarCliente){
-    btnSalvarCliente.addEventListener("click", saveCliente);
-  }
-
-  let cart = [];
-
-  function loadCart(){
-    try{
-      cart = JSON.parse(localStorage.getItem(CART_KEY) || "[]");
-      if(!Array.isArray(cart)) cart = [];
-    }catch(e){
-      cart = [];
-    }
-  }
-
-  function saveCart(){
-    localStorage.setItem(CART_KEY, JSON.stringify(cart));
-  }
-
-  function cartSubtotal(){
-    let total = 0;
-    for(const c of cart){
-      total += Number(c.preco||0) * Number(c.qtd||0);
-    }
-    return total;
-  }
-
-  function cartCount(){
-    return cart.reduce((a,c)=>a + Number(c.qtd||0), 0);
-  }
-
-  function updateCartResumo(){
-    if(!cartResumo) return;
-    const count = cartCount();
-    const sub = cartSubtotal();
-    cartResumo.value = `${count} itens • ${formatBRL(sub)}`;
-  }
-
-  function renderCart(){
-    if(!cartItens || !cartTotal) return;
-
-    if(!cart.length){
-      cartItens.innerHTML = `<div class="empty">Seu carrinho está vazio.</div>`;
-      cartTotal.textContent = `Total: ${formatBRL(0)}`;
-      if(cartHint) cartHint.textContent = "Adicione itens no cardápio para finalizar.";
-      updateCartResumo();
-      return;
-    }
-
-    const rows = cart.map((c, idx) => {
-      const lineTotal = Number(c.preco||0) * Number(c.qtd||0);
-      return `
-        <div class="panel" style="margin:10px 0;padding:10px;border-radius:14px">
-          <div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-start;flex-wrap:wrap">
-            <div>
-              <div style="font-weight:900">${esc(c.nome||"")}</div>
-              <div class="mini">${esc(c.categoria||"")}</div>
-              <div class="mini">${formatBRL(c.preco)} • Linha: ${formatBRL(lineTotal)}</div>
-            </div>
-            <div style="display:flex;gap:8px;align-items:center">
-              <input style="width:90px;padding:10px 12px;border-radius:12px;border:0;outline:none" type="number" min="1" value="${Number(c.qtd||1)}" data-q="${idx}">
-              <button class="btn" style="padding:10px 12px" data-del="${idx}">Remover</button>
-            </div>
-          </div>
-        </div>
-      `;
-    }).join("");
-
-    cartItens.innerHTML = rows;
-
-    // bind qty change
-    cartItens.querySelectorAll("[data-q]").forEach(inp=>{
-      inp.addEventListener("input", ()=>{
-        const i = Number(inp.getAttribute("data-q"));
-        const v = Math.max(1, parseInt(inp.value||"1",10));
-        cart[i].qtd = v;
-        saveCart();
-        renderCart();
-      });
-    });
-
-    // bind remove
-    cartItens.querySelectorAll("[data-del]").forEach(btn=>{
-      btn.addEventListener("click", ()=>{
-        const i = Number(btn.getAttribute("data-del"));
-        cart.splice(i,1);
-        saveCart();
-        renderCart();
-      });
-    });
-
-    const sub = cartSubtotal();
-    cartTotal.textContent = `Total: ${formatBRL(sub)}`;
-    if(cartHint) cartHint.textContent = "Frete: a combinar no WhatsApp.";
-    updateCartResumo();
-  }
-
-  window.addToCart = (id) => {
+  window.addCarrinho = (id) => {
     const it = allItems.find(x => x.id === id);
     if(!it) return;
 
     const qid = `q_${it.id}`;
-    const qtd = Math.max(1, parseInt(document.getElementById(qid).value || "1", 10));
+    const q = Math.max(1, parseInt(document.getElementById(qid).value || "1", 10));
+    const preco = Number(it.preco||0);
 
-    const existente = cart.find(c => c.id === it.id);
-    if(existente){
-      existente.qtd = Number(existente.qtd||0) + qtd;
-    }else{
-      cart.push({
+    if(cart[it.id]) {
+      cart[it.id].qty = (Number(cart[it.id].qty)||0) + q;
+    } else {
+      cart[it.id] = {
         id: it.id,
         nome: it.nome || "",
         categoria: it.categoria || "Outros",
-        preco: Number(it.preco||0),
-        qtd
-      });
+        preco,
+        qty: q
+      };
     }
+
     saveCart();
     renderCart();
-    if(cartPanel) cartPanel.scrollIntoView({behavior:"smooth", block:"start"});
   };
 
-  function finalizarWhats(){
-    if(!cart.length){
-      alert("Seu carrinho está vazio.");
-      return;
-    }
+  btnFinalizar.addEventListener("click", ()=>{
+    if(btnFinalizar.disabled) return;
 
-    const cadastro = (()=>{ try{ return JSON.parse(localStorage.getItem(CLIENT_KEY)||"null"); }catch(e){ return null; } })();
-    if(!cadastro || !cadastro.savedAt){
-      alert("⚠️ Primeiro faça o cadastro e clique em \"Salvar dados\".");
-      return;
-    }
+    const nomeCliente = (cliNome.value || "").trim();
+    const telCliente = (cliTelefone.value || "").trim();
+    const endCliente = (cliEndereco.value || "").trim();
 
-    const nome = (cadastro.nome || "").trim();
-    const tel = (cadastro.telefone || "").trim();
-    const end = (cadastro.endereco || "").trim();
-
-    if(!end){
-      alert("⚠️ Endereço vazio. Atualize o cadastro e clique em \"Salvar dados\".");
-      return;
-    }
-    if(!nome || !tel){
-      alert("⚠️ Nome ou telefone vazio. Atualize o cadastro e clique em \"Salvar dados\".");
-      return;
-    }
-
-    const obs = (obsInput.value || "").trim();
-    const obsTxt = obs ? `
-Observação: ${obs}` : "";
-
-    const linhas = cart.map(c => {
-      const lt = Number(c.preco||0) * Number(c.qtd||0);
-      return `- ${c.qtd}x ${c.nome} (${formatBRL(c.preco)}) = ${formatBRL(lt)}`;
-    }).join("
-");
-
+    const items = Object.values(cart).filter(x => (Number(x.qty)||0) > 0);
     const subtotal = cartSubtotal();
 
+    const linhas = items.map(it => {
+      const linhaTotal = (Number(it.preco)||0) * (Number(it.qty)||0);
+      return `• ${it.qty}x ${it.nome} — ${formatBRL(linhaTotal)}`;
+    }).join("\n");
+
+    const obs = (obsInput.value || "").trim();
+    const obsTxt = obs ? `\nObservação: ${obs}` : "";
+
     const text =
-`Olá! Quero pedir na *Sabor da Sopa*:
+`Olá! Quero finalizar meu pedido na *Sabor da Sopa*:
 
 Itens:
 ${linhas}
 
 Subtotal: ${formatBRL(subtotal)}
-Frete: a combinar${obsTxt}
+Frete: *a combinar*${obsTxt}
 
-Meu nome: ${nome}
-Telefone: ${tel}
-Endereço: ${end}`;
+Cliente: ${nomeCliente}
+Telefone: ${telCliente}
+Endereço: ${endCliente}`;
 
     abrirWhats(text);
-  }
-
-  if(btnFinalizar){
-    btnFinalizar.addEventListener("click", finalizarWhats);
-  }
-
+  });
 
   busca.addEventListener("input", render);
-  loadCliente();
+
+  // ✅ START
   loadCart();
+  loadCliente();
   renderCart();
+  updateFinalizeState();
   carregar();
 </script>
 
