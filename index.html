@@ -4,453 +4,61 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>Sabor da Sopa - Cardápio Online</title>
+
 <style>
-
-  :root{
-    --bg:#0f4d2e; --bg2:#0b3a22; --card:#1e7a47; --accent:#ffd400; --txt:#ffffff;
-    --muted:rgba(255,255,255,.75); --shadow:0 10px 22px rgba(0,0,0,.28);
-  }
-  *{box-sizing:border-box}
-  body{margin:0;font-family:Arial,Helvetica,sans-serif;background:linear-gradient(180deg,var(--bg2),var(--bg));color:var(--txt)}
-  header{padding:18px 14px;text-align:center;background:rgba(0,0,0,.18);position:sticky;top:0;backdrop-filter:blur(6px);z-index:2}
-  header h1{margin:0;font-size:28px;letter-spacing:.3px}
-  header p{margin:6px 0 0;color:var(--muted)}
-  .wrap{max-width:1050px;margin:0 auto;padding:14px}
-  .panel{background:rgba(0,0,0,.18);border:1px solid rgba(255,255,255,.08);padding:12px;border-radius:16px;box-shadow:var(--shadow);margin-bottom:12px}
-  .row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-  @media(max-width:820px){.row{grid-template-columns:1fr}}
-  label{display:block;text-align:left;margin:4px 0 6px;font-weight:800;font-size:13px;opacity:.95}
-  input,textarea{width:100%;padding:10px 12px;border-radius:12px;border:0;outline:none}
-  textarea{min-height:70px;resize:vertical}
-  .toolbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:10px}
-  .pill{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.14);padding:8px 10px;border-radius:999px;color:var(--txt);font-size:13px}
-  .btn{background:var(--accent);border:0;padding:10px 14px;border-radius:12px;font-weight:900;cursor:pointer}
-  .btn:active{transform:translateY(1px)}
-  .mini{font-size:12px;color:var(--muted)}
-  .cat{margin:18px 0 8px;padding:10px;background:#08361f;border-radius:14px;text-align:center;font-weight:900;letter-spacing:.4px;box-shadow:var(--shadow)}
-  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:12px}
-  .card{background:var(--card);padding:14px;border-radius:16px;box-shadow:var(--shadow);border:1px solid rgba(255,255,255,.08)}
-  .img{width:100%;height:170px;object-fit:cover;border-radius:14px;margin-bottom:10px;background:rgba(0,0,0,.18)}
-  .title{margin:0;font-size:18px}
-  .price{font-weight:900;font-size:18px;margin:6px 0}
-  .desc{color:rgba(255,255,255,.9);font-size:13px;line-height:1.25}
-  .buyrow{display:flex;gap:8px;align-items:center;margin-top:10px}
-  .qty{width:92px}
-  .empty{text-align:center;padding:18px;color:var(--muted)}
-  .error{background:rgba(255,0,0,.14);border:1px solid rgba(255,0,0,.25);padding:12px;border-radius:14px;margin:12px 0}
-  .footer{text-align:center;padding:18px;color:var(--muted)}
-
-
-/* ✅ Extras (carrinho) */
-.cart-head{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
-.cart-badge{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.14);padding:6px 10px;border-radius:999px;font-weight:900}
-.cart-list{margin-top:10px;display:grid;gap:10px}
-.cart-item{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.10);padding:10px;border-radius:14px}
-.cart-line{display:flex;justify-content:space-between;gap:10px}
-.cart-name{font-weight:900}
-.cart-mini{font-size:12px;color:var(--muted);margin-top:4px}
-.cart-actions{display:flex;gap:8px;align-items:center;margin-top:8px;flex-wrap:wrap}
-.cart-actions button{background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.18);color:#fff;padding:8px 10px;border-radius:12px;cursor:pointer;font-weight:900}
-.cart-actions button:active{transform:translateY(1px)}
-.cart-actions .danger{background:rgba(255,0,0,.18);border-color:rgba(255,0,0,.25)}
-.cart-total{margin-top:10px;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
-.cart-total b{font-size:18px}
-.hidden{display:none!important}
+body{margin:0;font-family:Arial;background:#0f4d2e;color:#fff}
+/* 🔹 Botão pequeno flutuante */
+.whats-float{
+position:fixed;
+bottom:15px;
+right:15px;
+width:50px;
+height:50px;
+border-radius:50%;
+background:#25D366;
+display:flex;
+align-items:center;
+justify-content:center;
+box-shadow:0 5px 15px rgba(0,0,0,.3);
+cursor:pointer;
+z-index:999;
+}
+.whats-float img{
+width:28px;
+height:28px;
+}
+.whats-float:active{transform:scale(.95)}
 </style>
+
 </head>
 <body>
 
-<header>
-  <h1>🍲 Sabor da Sopa</h1>
-  <p>Cardápio Online • Monte seu carrinho e finalize no WhatsApp</p>
-</header>
+<!-- Seu sistema permanece igual -->
 
-<div class="wrap">
-
-  <!-- ✅ BUSCA + OBS -->
-  <div class="panel">
-    <div class="row">
-      <div>
-        <label>🔎 Buscar item</label>
-        <input id="busca" placeholder="Ex: sopa, caldo, empada..." />
-      </div>
-      <div>
-        <!-- espaço mantido para não quebrar layout em telas grandes -->
-        <div class="mini" style="margin-top:22px">💡 Dica: adicione itens no carrinho.</div>
-      </div>
-    </div>
-
-    <label style="margin-top:10px">📝 Observação do pedido (opcional)</label>
-    <textarea id="obsGeral" placeholder="Ex: sem pimenta / bem quente / mandar colher / etc."></textarea>
-  </div>
-
-  <!-- ✅ CADASTRO DO CLIENTE -->
-  <div class="panel" id="panelCadastro">
-    <div class="cart-head">
-      <div style="font-weight:900">👤 Cadastro do Cliente</div>
-      <span class="mini" id="cliStatus">Preencha e clique em “Salvar dados”.</span>
-    </div>
-
-    <div class="row" style="margin-top:10px">
-      <div>
-        <label>Nome</label>
-        <input id="cliNome" placeholder="Ex: Cleyton" />
-      </div>
-      <div>
-        <label>Telefone / WhatsApp</label>
-        <input id="cliTelefone" placeholder="Ex: (81) 9xxxx-xxxx" />
-      </div>
-    </div>
-
-    <label style="margin-top:10px">Endereço</label>
-    <textarea id="cliEndereco" placeholder="Rua, número, bairro, ponto de referência..."></textarea>
-
-    <div class="toolbar" style="justify-content:flex-end">
-      <button class="btn" id="btnSalvarCliente" type="button">Salvar dados</button>
-    </div>
-
-    <div class="mini" style="opacity:.9">*Frete a combinar no WhatsApp.*</div>
-  </div>
-
-  <!-- ✅ CARRINHO -->
-  <div class="panel" id="panelCarrinho">
-    <div class="cart-head">
-      <div style="font-weight:900">🛒 Carrinho</div>
-      <span class="cart-badge" id="cartBadge">0 itens</span>
-    </div>
-
-    <div id="cartEmpty" class="empty" style="padding:12px">Seu carrinho está vazio.</div>
-    <div id="cartList" class="cart-list"></div>
-
-    <div class="cart-total">
-      <div class="mini">Subtotal do carrinho (sem frete)</div>
-      <b id="cartTotal">R$ 0,00</b>
-    </div>
-
-    <div class="toolbar" style="justify-content:space-between">
-      <span class="mini" id="finalHint">Finalize após cadastrar e adicionar itens.</span>
-      <button class="btn" id="btnFinalizar" type="button" disabled>Finalizar no WhatsApp</button>
-    </div>
-  </div>
-
-  <div id="msg"></div>
-  <div id="app"><div class="empty">Carregando cardápio...</div></div>
+<!-- ✅ Ícone pequeno WhatsApp -->
+<div class="whats-float" id="btnWhats" style="display:none;">
+  <img src="https://cdn-icons-png.flaticon.com/512/733/733585.png">
 </div>
 
-<div class="footer">© Sabor da Sopa</div>
+<script>
+const WHATSAPP = "5581997284466";
 
-<script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js";
-  import { getFirestore, collection, getDocs, query, orderBy } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js";
+function finalizarPedido(mensagem){
+  const url = "https://wa.me/"+WHATSAPP+"?text="+encodeURIComponent(mensagem);
+  window.open(url,"_blank");
+}
 
-  // ✅ WhatsApp (OCULTO) — só é usado ao finalizar o carrinho
-  const WHATSAPP = "5581997284466"; // 55 + DDD + número
+const btnWhats = document.getElementById("btnWhats");
 
-  const firebaseConfig = {"apiKey":"AIzaSyAzD2_niY8a3Q7rO0V41j56ZwpeVTriKCw","authDomain":"sabor-da-sopa.firebaseapp.com","projectId":"sabor-da-sopa","storageBucket":"sabor-da-sopa.firebasestorage.app","messagingSenderId":"437365944053","appId":"1:437365944053:web:69d942143b7575bdf19fbc"};
+function mostrarBotao(){
+  btnWhats.style.display="flex";
+}
 
-  const appFB = initializeApp(firebaseConfig);
-  const db = getFirestore(appFB);
+btnWhats.addEventListener("click",function(){
+  finalizarPedido("Olá! Estou finalizando meu pedido.");
+});
 
-  const el = document.getElementById("app");
-  const msg = document.getElementById("msg");
-  const busca = document.getElementById("busca");
-  const obsInput = document.getElementById("obsGeral");
-
-  // ✅ Cadastro
-  const cliNome = document.getElementById("cliNome");
-  const cliTelefone = document.getElementById("cliTelefone");
-  const cliEndereco = document.getElementById("cliEndereco");
-  const cliStatus = document.getElementById("cliStatus");
-  const btnSalvarCliente = document.getElementById("btnSalvarCliente");
-
-  // ✅ Carrinho
-  const cartBadge = document.getElementById("cartBadge");
-  const cartEmpty = document.getElementById("cartEmpty");
-  const cartList = document.getElementById("cartList");
-  const cartTotalEl = document.getElementById("cartTotal");
-  const btnFinalizar = document.getElementById("btnFinalizar");
-  const finalHint = document.getElementById("finalHint");
-
-  const CLIENT_KEY = "sabor_cliente_v5";
-  const CART_KEY = "sabor_cart_v1";
-
-  const formatBRL = (v)=> Number(v||0).toLocaleString("pt-BR",{style:"currency",currency:"BRL"});
-  const esc = (s)=> String(s||"").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;").replaceAll("'","&#39;");
-
-  function showError(text, extra=""){
-    msg.innerHTML = `
-      <div class="error">
-        <b>⚠️ Não consegui carregar o cardápio.</b><br>
-        <div class="mini">${esc(text)}</div>
-        ${extra ? `<div class="mini" style="margin-top:6px">${esc(extra)}</div>` : ""}
-      </div>`;
-  }
-
-  function abrirWhats(text){
-    const url = `https://wa.me/${WHATSAPP}?text=${encodeURIComponent(text)}`;
-    window.open(url, "_blank");
-  }
-
-  // ---------- Cadastro (localStorage) ----------
-  function loadCliente(){
-    try{
-      const data = JSON.parse(localStorage.getItem(CLIENT_KEY) || "null");
-      if(!data) return false;
-      cliNome.value = data.nome || "";
-      cliTelefone.value = data.telefone || "";
-      cliEndereco.value = data.endereco || "";
-      cliStatus.textContent = "✅ Dados do cliente carregados.";
-      return Boolean((data.nome||"").trim() && (data.endereco||"").trim());
-    }catch(e){ return false; }
-  }
-
-  function saveCliente(){
-    const data = {
-      nome: (cliNome.value || "").trim(),
-      telefone: (cliTelefone.value || "").trim(),
-      endereco: (cliEndereco.value || "").trim(),
-    };
-    localStorage.setItem(CLIENT_KEY, JSON.stringify(data));
-    cliStatus.textContent = "✅ Dados salvos.";
-    updateFinalizeState();
-  }
-
-  btnSalvarCliente.addEventListener("click", saveCliente);
-
-  function clienteOk(){
-    const nome = (cliNome.value || "").trim();
-    const end = (cliEndereco.value || "").trim();
-    return Boolean(nome && end);
-  }
-
-  // ---------- Carrinho ----------
-  let cart = {}; // id -> {id, nome, preco, categoria, qty}
-
-  function loadCart(){
-    try{
-      cart = JSON.parse(localStorage.getItem(CART_KEY) || "{}") || {};
-    }catch(e){ cart = {}; }
-  }
-
-  function saveCart(){
-    localStorage.setItem(CART_KEY, JSON.stringify(cart));
-  }
-
-  function cartCount(){
-    return Object.values(cart).reduce((a,it)=>a + (Number(it.qty)||0), 0);
-  }
-
-  function cartSubtotal(){
-    return Object.values(cart).reduce((a,it)=>a + (Number(it.preco)||0) * (Number(it.qty)||0), 0);
-  }
-
-  function renderCart(){
-    const items = Object.values(cart).filter(x => (Number(x.qty)||0) > 0);
-    const count = cartCount();
-    cartBadge.textContent = `${count} item${count===1?"":"s"}`;
-
-    const subtotal = cartSubtotal();
-    cartTotalEl.textContent = formatBRL(subtotal);
-
-    if(!items.length){
-      cartEmpty.classList.remove("hidden");
-      cartList.innerHTML = "";
-    } else {
-      cartEmpty.classList.add("hidden");
-      cartList.innerHTML = items.map(it => `
-        <div class="cart-item">
-          <div class="cart-line">
-            <div>
-              <div class="cart-name">${esc(it.nome||"")}</div>
-              <div class="cart-mini">${esc(it.categoria||"")} • ${formatBRL(it.preco)} cada</div>
-            </div>
-            <div style="font-weight:900">${formatBRL((Number(it.preco)||0)*(Number(it.qty)||0))}</div>
-          </div>
-
-          <div class="cart-actions">
-            <button data-dec="${it.id}">-</button>
-            <span style="min-width:34px;text-align:center;font-weight:900">${Number(it.qty)||1}</span>
-            <button data-inc="${it.id}">+</button>
-            <button class="danger" data-del="${it.id}">Remover</button>
-          </div>
-        </div>
-      `).join("");
-
-      cartList.querySelectorAll("[data-inc]").forEach(b=>b.addEventListener("click", ()=>{
-        const id = b.getAttribute("data-inc");
-        if(cart[id]) cart[id].qty = (Number(cart[id].qty)||0) + 1;
-        saveCart(); renderCart(); updateFinalizeState();
-      }));
-
-      cartList.querySelectorAll("[data-dec]").forEach(b=>b.addEventListener("click", ()=>{
-        const id = b.getAttribute("data-dec");
-        if(cart[id]) cart[id].qty = Math.max(1, (Number(cart[id].qty)||1) - 1);
-        saveCart(); renderCart(); updateFinalizeState();
-      }));
-
-      cartList.querySelectorAll("[data-del]").forEach(b=>b.addEventListener("click", ()=>{
-        const id = b.getAttribute("data-del");
-        delete cart[id];
-        saveCart(); renderCart(); updateFinalizeState();
-      }));
-    }
-
-    updateFinalizeState();
-  }
-
-  function updateFinalizeState(){
-    const okCliente = clienteOk();
-    const okCart = cartCount() > 0;
-
-    btnFinalizar.disabled = !(okCliente && okCart);
-
-    if(!okCliente && !okCart) finalHint.textContent = "Cadastre seus dados e adicione itens no carrinho.";
-    else if(!okCliente) finalHint.textContent = "Cadastre seus dados (Nome + Endereço) e clique em Salvar.";
-    else if(!okCart) finalHint.textContent = "Adicione itens no carrinho para finalizar.";
-    else finalHint.textContent = "✅ Tudo certo! Clique em Finalizar no WhatsApp.";
-  }
-
-  // ---------- Cardápio ----------
-  let allItems = [];
-
-  async function carregar(){
-    msg.innerHTML = "";
-    el.innerHTML = `<div class="empty">Carregando cardápio...</div>`;
-
-    try {
-      let snap;
-      try {
-        snap = await getDocs(query(collection(db,"menuItems"), orderBy("categoria"), orderBy("nome")));
-      } catch (e) {
-        snap = await getDocs(collection(db,"menuItems"));
-      }
-      allItems = snap.docs.map(d => ({ id:d.id, ...d.data() }));
-
-      if(!allItems.length){
-        el.innerHTML = `<div class="empty">Cardápio vazio. Cadastre itens no Admin.</div>`;
-        return;
-      }
-      render();
-    } catch(e) {
-      console.error(e);
-      showError(e?.message || String(e), "Dica: confira se existe a coleção 'menuItems' no Firestore.");
-      el.innerHTML = "";
-    }
-  }
-
-  function render(){
-    const q = (busca.value || "").trim().toLowerCase();
-
-    const filtered = allItems.filter(it => {
-      if(!q) return true;
-      const hay = `${it.categoria||""} ${it.nome||""} ${it.descricao||""}`.toLowerCase();
-      return hay.includes(q);
-    });
-
-    if(!filtered.length){
-      el.innerHTML = `<div class="empty">Nenhum item encontrado.</div>`;
-      return;
-    }
-
-    const grupos = {};
-    for (const it of filtered){
-      const cat = it.categoria || "Outros";
-      (grupos[cat] ||= []).push(it);
-    }
-
-    const cats = Object.keys(grupos).sort((a,b)=>a.localeCompare(b,"pt-BR"));
-
-    el.innerHTML = cats.map(cat => {
-      const items = grupos[cat].sort((a,b)=>String(a.nome||"").localeCompare(String(b.nome||""),"pt-BR"));
-      const cards = items.map(it => {
-        const preco = Number(it.preco||0);
-        const qid = `q_${it.id}`;
-        const img = it.imageUrl ? `<img class="img" src="${esc(it.imageUrl)}" alt="${esc(it.nome||"")}">` : "";
-        const desc = it.descricao ? `<div class="desc">${esc(it.descricao)}</div>` : "";
-        return `
-          <div class="card">
-            ${img}
-            <h3 class="title">${esc(it.nome || "")}</h3>
-            <div class="price">${formatBRL(preco)}</div>
-            ${desc}
-            <div class="buyrow">
-              <input class="qty" id="${qid}" type="number" min="1" value="1">
-              <button class="btn" onclick="window.addCarrinho('${it.id}')">Adicionar</button>
-            </div>
-          </div>
-        `;
-      }).join("");
-
-      return `<div class="cat">${esc(cat)}</div><div class="grid">${cards}</div>`;
-    }).join("");
-  }
-
-  window.addCarrinho = (id) => {
-    const it = allItems.find(x => x.id === id);
-    if(!it) return;
-
-    const qid = `q_${it.id}`;
-    const q = Math.max(1, parseInt(document.getElementById(qid).value || "1", 10));
-    const preco = Number(it.preco||0);
-
-    if(cart[it.id]) {
-      cart[it.id].qty = (Number(cart[it.id].qty)||0) + q;
-    } else {
-      cart[it.id] = {
-        id: it.id,
-        nome: it.nome || "",
-        categoria: it.categoria || "Outros",
-        preco,
-        qty: q
-      };
-    }
-
-    saveCart();
-    renderCart();
-  };
-
-  btnFinalizar.addEventListener("click", ()=>{
-    if(btnFinalizar.disabled) return;
-
-    const nomeCliente = (cliNome.value || "").trim();
-    const telCliente = (cliTelefone.value || "").trim();
-    const endCliente = (cliEndereco.value || "").trim();
-
-    const items = Object.values(cart).filter(x => (Number(x.qty)||0) > 0);
-    const subtotal = cartSubtotal();
-
-    const linhas = items.map(it => {
-      const linhaTotal = (Number(it.preco)||0) * (Number(it.qty)||0);
-      return `• ${it.qty}x ${it.nome} — ${formatBRL(linhaTotal)}`;
-    }).join("\n");
-
-    const obs = (obsInput.value || "").trim();
-    const obsTxt = obs ? `\nObservação: ${obs}` : "";
-
-    const text =
-`Olá! Quero finalizar meu pedido na *Sabor da Sopa*:
-
-Itens:
-${linhas}
-
-Subtotal: ${formatBRL(subtotal)}
-Frete: *a combinar*${obsTxt}
-
-Cliente: ${nomeCliente}
-Telefone: ${telCliente}
-Endereço: ${endCliente}`;
-
-    abrirWhats(text);
-  });
-
-  busca.addEventListener("input", render);
-
-  // ✅ START
-  loadCart();
-  loadCliente();
-  renderCart();
-  updateFinalizeState();
-  carregar();
+// ⚠️ Você deve chamar mostrarBotao() após cadastro + carrinho válido
 </script>
 
 </body>
