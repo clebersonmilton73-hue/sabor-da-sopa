@@ -6,181 +6,37 @@
 <title>Sabor da Sopa - Cardápio Online</title>
 <style>
   :root{
-    --bg:#0f4d2e; --bg2:#0b3a22; --card:#156a3d; --accent:#ffd400; --txt:#ffffff;
-    --muted:rgba(255,255,255,.78); --shadow:0 10px 22px rgba(0,0,0,.28);
-    --line:rgba(255,255,255,.12);
+    --bg:#0f4d2e; --bg2:#0b3a22; --card:#1e7a47; --accent:#ffd400; --txt:#ffffff;
+    --muted:rgba(255,255,255,.75); --shadow:0 10px 22px rgba(0,0,0,.28);
   }
   *{box-sizing:border-box}
   body{margin:0;font-family:Arial,Helvetica,sans-serif;background:linear-gradient(180deg,var(--bg2),var(--bg));color:var(--txt)}
-  header{
-    padding:14px 14px;
-    text-align:center;
-    background:rgba(0,0,0,.18);
-    position:sticky;top:0;
-    backdrop-filter:blur(8px);
-    z-index:5;
-    border-bottom:1px solid rgba(255,255,255,.08);
-  }
-  header h1{margin:0;font-size:24px;letter-spacing:.3px}
-  header .sub{margin:6px 0 0;color:var(--muted);font-size:12px}
-  .wrap{max-width:980px;margin:0 auto;padding:14px}
-  .panel{
-    background:rgba(0,0,0,.18);
-    border:1px solid rgba(255,255,255,.10);
-    padding:12px;
-    border-radius:16px;
-    box-shadow:var(--shadow);
-    margin-bottom:12px;
-  }
-  label{display:block;text-align:left;margin:4px 0 6px;font-weight:900;font-size:12px;opacity:.95}
-  input,textarea,select{
-    width:100%;
-    padding:10px 12px;
-    border-radius:12px;
-    border:1px solid rgba(255,255,255,.14);
-    outline:none;
-    background:rgba(255,255,255,.08);
-    color:var(--txt);
-  }
-  input::placeholder,textarea::placeholder{color:rgba(255,255,255,.55)}
-  input:focus,textarea:focus,select:focus{border-color:rgba(255,212,0,.75); box-shadow:0 0 0 4px rgba(255,212,0,.12)}
-  textarea{min-height:66px;resize:vertical}
+  header{padding:18px 14px;text-align:center;background:rgba(0,0,0,.18);position:sticky;top:0;backdrop-filter:blur(6px);z-index:2}
+  header h1{margin:0;font-size:28px;letter-spacing:.3px}
+  header p{margin:6px 0 0;color:var(--muted)}
+  .wrap{max-width:1050px;margin:0 auto;padding:14px}
+  .panel{background:rgba(0,0,0,.18);border:1px solid rgba(255,255,255,.08);padding:12px;border-radius:16px;box-shadow:var(--shadow);margin-bottom:12px}
   .row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-  .row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
-  @media(max-width:820px){.row,.row3{grid-template-columns:1fr}}
-  .toolbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:10px}
-  .btn{
-    background:var(--accent);
-    border:0;
-    padding:10px 12px;
-    border-radius:12px;
-    font-weight:900;
-    cursor:pointer;
-    color:#1d1d1d;
-    transition:transform .12s ease, filter .12s ease;
-  }
+  @media(max-width:820px){.row{grid-template-columns:1fr}}
+  label{display:block;text-align:left;margin:4px 0 6px;font-weight:800;font-size:13px;opacity:.95}
+  input,textarea{width:100%;padding:10px 12px;border-radius:12px;border:0;outline:none}
+  textarea{min-height:70px;resize:vertical}
+  .toolbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:10px}
+  .pill{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.14);padding:8px 10px;border-radius:999px;color:var(--txt);font-size:13px}
+  .btn{background:var(--accent);border:0;padding:10px 14px;border-radius:12px;font-weight:900;cursor:pointer}
   .btn:active{transform:translateY(1px)}
-  .btn:hover{filter:brightness(.98)}
-  .btn2{
-    background:rgba(255,255,255,.12);
-    border:1px solid rgba(255,255,255,.16);
-    padding:10px 12px;
-    border-radius:12px;
-    font-weight:900;
-    cursor:pointer;
-    color:var(--txt);
-  }
-  .danger{background:#ff4d4d!important;border-color:rgba(255,77,77,.35)!important;color:#fff!important}
-  .ok{background:#2ee58c!important;border-color:rgba(46,229,140,.25)!important;color:#08361f!important}
   .mini{font-size:12px;color:var(--muted)}
-  .badgeCarrinho{
-    display:inline-flex;
-    align-items:center;
-    gap:8px;
-    padding:6px 10px;
-    border-radius:999px;
-    background:rgba(255,212,0,.92);
-    color:#1a1a1a;
-    font-weight:900;
-    font-size:13px;
-    margin-top:10px;
-    user-select:none;
-  }
-
-  .cat{
-    margin:14px 0 8px;
-    padding:9px 10px;
-    background:#08361f;
-    border-radius:999px;
-    text-align:center;
-    font-weight:900;
-    letter-spacing:.4px;
-    box-shadow:var(--shadow);
-    border:1px solid rgba(255,255,255,.08);
-  }
-
-  .grid{display:flex;flex-direction:column;gap:10px}
-  .card{
-    background:rgba(255,255,255,.08);
-    border:1px solid rgba(255,255,255,.10);
-    padding:10px;
-    border-radius:16px;
-    box-shadow:var(--shadow);
-    display:flex;
-    align-items:center;
-    gap:12px;
-  }
-  .img{
-    width:88px;height:88px;
-    object-fit:cover;
-    border-radius:14px;
-    background:rgba(0,0,0,.18);
-    flex:0 0 auto;
-  }
-  .meta{flex:1 1 auto; min-width:0;}
-  .title{margin:0;font-size:15px;line-height:1.15; font-weight:900}
-  .price{font-weight:900;font-size:14px;margin:4px 0}
-  .desc{color:rgba(255,255,255,.9);font-size:12px;line-height:1.2; margin-top:2px}
-  .buyrow{margin-left:auto;display:flex;align-items:center;gap:8px}
-
-  .btnAdd{
-    width:38px;height:38px;border-radius:999px;border:0;
-    background:var(--accent);
-    font-weight:900;font-size:18px;cursor:pointer;
-    box-shadow:0 8px 18px rgba(0,0,0,.25);
-    transition:transform .12s ease, filter .12s ease;
-  }
-  .btnAdd:active{transform:translateY(1px)}
-  .btnAdd:hover{filter:brightness(.98)}
+  .cat{margin:18px 0 8px;padding:10px;background:#08361f;border-radius:14px;text-align:center;font-weight:900;letter-spacing:.4px;box-shadow:var(--shadow)}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:12px}
+  .card{background:var(--card);padding:14px;border-radius:16px;box-shadow:var(--shadow);border:1px solid rgba(255,255,255,.08)}
+  .img{width:100%;height:170px;object-fit:cover;border-radius:14px;margin-bottom:10px;background:rgba(0,0,0,.18)}
+  .title{margin:0;font-size:18px}
+  .price{font-weight:900;font-size:18px;margin:6px 0}
+  .desc{color:rgba(255,255,255,.9);font-size:13px;line-height:1.25}
+  .buyrow{display:flex;gap:8px;align-items:center;margin-top:10px}
+  .qty{width:92px}
   .empty{text-align:center;padding:18px;color:var(--muted)}
   .error{background:rgba(255,0,0,.14);border:1px solid rgba(255,0,0,.25);padding:12px;border-radius:14px;margin:12px 0}
-  .success{background:rgba(46,229,140,.14);border:1px solid rgba(46,229,140,.25);padding:12px;border-radius:14px;margin:12px 0}
-
-  .cartItem{
-    display:flex;justify-content:space-between;align-items:center;
-    gap:10px;padding:10px 8px;border-bottom:1px solid var(--line);
-  }
-  .cartItem:last-child{border-bottom:0}
-  .cartBtns{display:flex;gap:6px;align-items:center}
-  .pillBtn{
-    background:rgba(255,255,255,.12);
-    border:1px solid rgba(255,255,255,.16);
-    border-radius:12px;
-    padding:6px 10px;
-    font-weight:900;
-    color:var(--txt);
-    cursor:pointer;
-  }
-  .pillBtn:active{transform:translateY(1px)}
-  .totalLine{display:flex;justify-content:space-between;align-items:center;margin-top:10px;font-weight:900}
-
-  #taxaFrete[readonly]{
-    background:rgba(255,255,255,.06);
-    border-color:rgba(255,212,0,.22);
-    font-weight:900;
-  }
-
-  @keyframes pop {0%{transform:scale(1)}40%{transform:scale(1.18)}100%{transform:scale(1)}}
-  @keyframes bounce {0%{transform:translateY(0)}30%{transform:translateY(-6px)}100%{transform:translateY(0)}}
-  @keyframes glow {0%{box-shadow:0 0 0 rgba(255,212,0,0)}40%{box-shadow:0 0 0 6px rgba(255,212,0,.18)}100%{box-shadow:0 0 0 rgba(255,212,0,0)}}
-  .btnAdd.anim{animation:pop .18s ease}
-  .badgeCarrinho.anim{animation:bounce .25s ease}
-  .card.flash{animation:glow .45s ease}
-
-  #toast{
-    position:fixed;left:50%;bottom:18px;transform:translateX(-50%);
-    background:rgba(0,0,0,.78);
-    border:1px solid rgba(255,255,255,.14);
-    color:#fff;padding:10px 12px;border-radius:14px;box-shadow:var(--shadow);
-    z-index:9999;opacity:0;pointer-events:none;transition:opacity .2s ease, transform .2s ease;
-    font-weight:900;font-size:13px;
-  }
-  #toast.show{opacity:1;transform:translateX(-50%) translateY(-6px)}
-  .flyDot{
-    position:fixed;width:10px;height:10px;border-radius:999px;background:var(--accent);
-    z-index:9999;box-shadow:0 6px 16px rgba(0,0,0,.25);pointer-events:none;
-  }
-
   .footer{text-align:center;padding:18px;color:var(--muted)}
 </style>
 </head>
@@ -188,190 +44,69 @@
 
 <header>
   <h1>🍲 Sabor da Sopa</h1>
-  <div class="sub">Cardápio Online</div>
-  <span class="badgeCarrinho">🛒 <span id="contadorCarrinho">0</span> itens</span>
+  <p>Cardápio Online • Peça pelo WhatsApp</p>
 </header>
 
 <div class="wrap">
-  <div id="msg"></div>
-
-  <div class="panel" id="cadastroBox">
-    <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap">
+  <div class="panel">
+    <div class="row">
       <div>
-        <b>👤 Dados do Cliente</b>
-        <div class="mini">Preencha 1 vez para poder pedir.</div>
+        <label>🔎 Buscar item</label>
+        <input id="busca" placeholder="Ex: sopa, caldo, empada..." />
       </div>
-      <div style="display:flex;gap:6px;flex-wrap:wrap">
-        <button id="btnToggleCadastro" class="btn2" type="button">Editar</button>
-        <button id="btnGPS" class="btn2" type="button">📍 Local</button>
-        <button id="btnLimpar" class="btn2 danger" type="button">Limpar</button>
-      </div>
-    </div>
-
-    <div id="clienteResumo" class="success" style="margin-top:8px;display:none"></div>
-
-    <div id="formCadastro" style="margin-top:8px;display:none">
-      <div class="row3">
-        <div>
-          <label>Nome</label>
-          <input id="cliNome" placeholder="xxxx" />
-        </div>
-        <div>
-          <label>Telefone (WhatsApp)</label>
-          <input id="cliFone" inputmode="tel" placeholder="xxxx" />
-        </div>
-        <div>
-          <label>Endereço</label>
-          <input id="cliEnd" placeholder="xxxx" />
-        </div>
-      </div>
-
-      <div class="row" style="margin-top:8px">
-        <div>
-          <label>Referência (opcional)</label>
-          <input id="cliRef" placeholder="xxxx" />
-        </div>
-        <div>
-          <label>🚚 Taxa de Frete</label>
-          <input id="taxaFrete" readonly placeholder="Calculado automaticamente" />
-          <div class="mini" id="freteStatus"></div>
-        </div>
-      </div>
-
-      <div class="toolbar">
-        <button id="btnSalvarCadastro" class="btn ok" type="button">Salvar Cadastro</button>
-        <span class="mini" id="cadastroAviso"></span>
-      </div>
-    </div>
-  </div>
-
-  <div class="panel" id="carrinhoBox">
-    <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap">
-      <b>🛒 Carrinho</b>
-      <button class="btn2 danger" type="button" id="btnLimparCarrinho">Limpar carrinho</button>
-    </div>
-
-    <div id="listaCarrinho" class="mini" style="margin-top:10px">Seu carrinho está vazio.</div>
-
-    <div class="row" style="margin-top:10px">
       <div>
-        <label>💳 Forma de pagamento</label>
-        <select id="formaPagamento">
-          <option value="Pix">Pix</option>
-          <option value="Dinheiro">Dinheiro</option>
-          <option value="Cartão Débito">Cartão Débito</option>
-          <option value="Cartão Crédito">Cartão Crédito</option>
-        </select>
-      </div>
-      <div id="trocoBox" style="display:none">
-        <label>💵 Troco para (opcional)</label>
-        <input id="trocoPara" type="number" step="0.01" placeholder="xxxx" />
+        <label>🚚 Taxa de entrega (opcional)</label>
+        <input id="taxaEntrega" type="number" step="0.01" placeholder="Ex: 5.00 (deixe vazio se não tiver)" />
       </div>
     </div>
 
     <label style="margin-top:10px">📝 Observação do pedido (opcional)</label>
-    <textarea id="obsGeral" placeholder="xxxx"></textarea>
-
-    <div class="totalLine">
-      <span>Total</span>
-      <span id="totalCarrinho">R$ 0,00</span>
-    </div>
+    <textarea id="obsGeral" placeholder="Ex: sem pimenta / bem quente / mandar colher / etc."></textarea>
 
     <div class="toolbar">
-      <button class="btn ok" type="button" id="btnFinalizar">Finalizar Pedido</button>
+      <span class="pill">📲 WhatsApp: 5581996604169</span>
+      <span class="mini">Dica: escolha a quantidade e toque em “Pedir”.</span>
     </div>
   </div>
 
-  <div class="panel">
-    <label>🔎 Buscar item</label>
-    <input id="busca" placeholder="xxxx" />
-  </div>
-
+  <div id="msg"></div>
   <div id="app"><div class="empty">Carregando cardápio...</div></div>
 </div>
 
 <div class="footer">© Sabor da Sopa</div>
-<div id="toast">✅ Adicionado ao carrinho</div>
-
-<div id="pixModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9999;padding:14px;">
-  <div style="max-width:560px;margin:40px auto;background:#0b3a22;border:1px solid rgba(255,255,255,.15);border-radius:18px;box-shadow:0 10px 22px rgba(0,0,0,.28);padding:14px;">
-    <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;">
-      <b style="font-size:16px">✅ Pagar com Pix</b>
-      <button id="pixFechar" class="btn2" type="button">Fechar</button>
-    </div>
-
-    <div class="mini" style="margin-top:8px">Escaneie o QR Code ou copie o código Pix.</div>
-
-    <div style="display:grid;grid-template-columns:170px 1fr;gap:12px;margin-top:12px;align-items:center;">
-      <div style="background:#fff;border-radius:14px;padding:10px;display:flex;justify-content:center;align-items:center;">
-        <img id="pixQRImg" alt="QR Code Pix" style="width:160px;height:160px;display:block" />
-      </div>
-
-      <div>
-        <label style="margin:0 0 6px">Pix Copia e Cola</label>
-        <textarea id="pixCopiaCola" readonly style="min-height:92px"></textarea>
-        <div class="toolbar" style="margin-top:8px">
-          <button id="pixCopiar" class="btn" type="button">Copiar</button>
-          <button id="pixEnviarPedido" class="btn ok" type="button">Já paguei / Enviar pedido</button>
-        </div>
-        <div class="mini" style="margin-top:6px">
-          Depois do pagamento, envie o <b>comprovante</b> no WhatsApp.
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
 
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js";
   import { getFirestore, collection, getDocs, query, orderBy } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js";
 
   const WHATSAPP = "5581996604169";
-
   const firebaseConfig = {
-    "apiKey": "AIzaSyAzD2_niY8a3Q7rO0V41j56ZwpeVTriKCw",
-    "authDomain": "sabor-da-sopa.firebaseapp.com",
-    "projectId": "sabor-da-sopa",
-    "storageBucket": "sabor-da-sopa.firebasestorage.app",
-    "messagingSenderId": "437365944053",
-    "appId": "1:437365944053:web:69d942143b7575bdf19fbc"
-  };
-  const fbApp = initializeApp(firebaseConfig);
-  const db = getFirestore(fbApp);
+  "apiKey": "AIzaSyAzD2_niY8a3Q7rO0V41j56ZwpeVTriKCw",
+  "authDomain": "sabor-da-sopa.firebaseapp.com",
+  "projectId": "sabor-da-sopa",
+  "storageBucket": "sabor-da-sopa.firebasestorage.app",
+  "messagingSenderId": "437365944053",
+  "appId": "1:437365944053:web:69d942143b7575bdf19fbc"
+};
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
 
-  const msg = document.getElementById("msg");
   const el = document.getElementById("app");
+  const msg = document.getElementById("msg");
   const busca = document.getElementById("busca");
+  const taxaInput = document.getElementById("taxaEntrega");
   const obsInput = document.getElementById("obsGeral");
 
-  const esc = (s)=> String(s||"")
-    .replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;")
-    .replaceAll('"',"&quot;").replaceAll("'","&#39;");
-
   const formatBRL = (v)=> Number(v||0).toLocaleString("pt-BR",{style:"currency",currency:"BRL"});
+  const esc = (s)=> String(s||"").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;").replaceAll("'","&#39;");
 
   function showError(text, extra=""){
     msg.innerHTML = `
       <div class="error">
-        <b>⚠️ ${esc(text)}</b>
+        <b>⚠️ Não consegui carregar o cardápio.</b><br>
+        <div class="mini">${esc(text)}</div>
         ${extra ? `<div class="mini" style="margin-top:6px">${esc(extra)}</div>` : ""}
       </div>`;
-    window.scrollTo({top:0,behavior:"smooth"});
-  }
-
-  function showOk(text){
-    msg.innerHTML = `<div class="success"><b>✅ ${esc(text)}</b></div>`;
-    window.scrollTo({top:0,behavior:"smooth"});
-    setTimeout(()=>{ msg.innerHTML=""; }, 2200);
-  }
-
-  function toast(text){
-    const t = document.getElementById("toast");
-    if(!t) return;
-    t.textContent = text;
-    t.classList.add("show");
-    clearTimeout(window.__toastTimer);
-    window.__toastTimer = setTimeout(()=> t.classList.remove("show"), 1200);
   }
 
   function abrirWhats(text){
@@ -379,381 +114,37 @@
     window.open(url, "_blank");
   }
 
-  function animateBadge(){
-    const badge = document.querySelector(".badgeCarrinho");
-    if(!badge) return;
-    badge.classList.remove("anim");
-    void badge.offsetWidth;
-    badge.classList.add("anim");
-  }
-  function animateButton(btn){
-    if(!btn) return;
-    btn.classList.remove("anim");
-    void btn.offsetWidth;
-    btn.classList.add("anim");
-  }
-  function flashCardFromButton(btn){
-    const card = btn?.closest?.(".card");
-    if(!card) return;
-    card.classList.remove("flash");
-    void card.offsetWidth;
-    card.classList.add("flash");
-  }
-  function flyDot(btn){
-    const badge = document.querySelector(".badgeCarrinho");
-    if(!btn || !badge) return;
-
-    const b1 = btn.getBoundingClientRect();
-    const b2 = badge.getBoundingClientRect();
-
-    const dot = document.createElement("div");
-    dot.className = "flyDot";
-    document.body.appendChild(dot);
-
-    const startX = b1.left + b1.width/2;
-    const startY = b1.top + b1.height/2;
-    const endX   = b2.left + b2.width/2;
-    const endY   = b2.top + b2.height/2;
-
-    dot.style.left = startX + "px";
-    dot.style.top  = startY + "px";
-
-    dot.animate([
-      { transform:"translate(0,0) scale(1)", opacity:1 },
-      { transform:`translate(${(endX-startX)*0.7}px, ${(endY-startY)*0.7}px) scale(1.2)`, opacity:1 },
-      { transform:`translate(${(endX-startX)}px, ${(endY-startY)}px) scale(.6)`, opacity:0.2 }
-    ], { duration: 420, easing: "cubic-bezier(.2,.8,.2,1)" }).onfinish = ()=> dot.remove();
-  }
-
-  // Cadastro
-  const LS_KEY = "sabor_cliente_v1";
-  const cliNome = document.getElementById("cliNome");
-  const cliFone = document.getElementById("cliFone");
-  const cliEnd  = document.getElementById("cliEnd");
-  const cliRef  = document.getElementById("cliRef");
-  const taxaFreteEl = document.getElementById("taxaFrete");
-  const freteStatus = document.getElementById("freteStatus");
-  const btnToggleCadastro = document.getElementById("btnToggleCadastro");
-  const btnGPS = document.getElementById("btnGPS");
-  const btnSalvarCadastro = document.getElementById("btnSalvarCadastro");
-  const btnLimpar = document.getElementById("btnLimpar");
-  const clienteResumo = document.getElementById("clienteResumo");
-  const formCadastro = document.getElementById("formCadastro");
-  const cadastroAviso = document.getElementById("cadastroAviso");
-
-  function normFone(v){ return String(v||"").replace(/\D/g,""); }
-
-  function getCadastro(){
-    return {
-      nome: (cliNome.value||"").trim(),
-      fone: normFone(cliFone.value),
-      end:  (cliEnd.value||"").trim(),
-      ref:  (cliRef.value||"").trim(),
-      frete: Number(taxaFreteEl.value || 0)
-    };
-  }
-
-  function setResumo(d){
-    if(d?.nome && d?.fone && d?.end){
-      clienteResumo.style.display = "block";
-      clienteResumo.innerHTML = `
-        <b>✅ Cadastro salvo!</b><br>
-        <div class="mini">
-          <b>Nome:</b> ${esc(d.nome)}<br>
-          <b>Telefone:</b> ${esc(d.fone)}<br>
-          <b>Endereço:</b> ${esc(d.end)}${d.ref ? `<br><b>Referência:</b> ${esc(d.ref)}` : ``}
-        </div>`;
-      formCadastro.style.display = "none";
-      btnToggleCadastro.textContent = "Editar";
-    }else{
-      clienteResumo.style.display = "none";
-      formCadastro.style.display = "block";
-      btnToggleCadastro.textContent = "Fechar";
-    }
-  }
-
-  function loadCadastro(){
-    try{
-      const raw = localStorage.getItem(LS_KEY);
-      if(!raw){ setResumo(null); return; }
-      const d = JSON.parse(raw);
-      cliNome.value = d.nome || "";
-      cliFone.value = d.fone || "";
-      cliEnd.value  = d.end  || "";
-      cliRef.value  = d.ref  || "";
-      taxaFreteEl.value = (Number(d.frete||0) > 0) ? Number(d.frete).toFixed(2) : "";
-      setResumo(d);
-    }catch(_){
-      setResumo(null);
-    }
-  }
-  loadCadastro();
-
-  btnToggleCadastro.addEventListener("click", ()=>{
-    const showing = formCadastro.style.display !== "none";
-    formCadastro.style.display = showing ? "none" : "block";
-    btnToggleCadastro.textContent = showing ? "Editar" : "Fechar";
-  });
-
-  btnLimpar.addEventListener("click", ()=>{
-    localStorage.removeItem(LS_KEY);
-    cliNome.value = ""; cliFone.value = ""; cliEnd.value = ""; cliRef.value = "";
-    taxaFreteEl.value = "";
-    freteStatus.textContent = "";
-    setResumo(null);
-    showOk("Cadastro limpo.");
-  });
-
-  btnSalvarCadastro.addEventListener("click", ()=>{
-    const d = getCadastro();
-    if(!d.nome || !d.fone || !d.end){
-      showError("Preencha Nome, Telefone e Endereço para salvar.");
-      return;
-    }
-    localStorage.setItem(LS_KEY, JSON.stringify(d));
-    setResumo(d);
-    showOk("Cadastro salvo!");
-  });
-
-  // Frete por GPS (só mostra valor final)
-  const LOJA_LAT = -8.112980;
-  const LOJA_LON = -35.015000;
-
-  const PRECO_POR_KM = 0.80;
-  const LIMITE_KM_FRETE_MINIMO = 5;
-  const FRETE_MINIMO_ATE_5KM = 5.00;
-
-  function haversineKm(lat1, lon1, lat2, lon2){
-    const R = 6371;
-    const toRad = (d)=> d * Math.PI / 180;
-    const dLat = toRad(lat2 - lat1);
-    const dLon = toRad(lon2 - lon1);
-    const a =
-      Math.sin(dLat/2)**2 +
-      Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon/2)**2;
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-    return R * c;
-  }
-
-  function calcFretePorRegra(km){
-    let frete;
-    if(km <= LIMITE_KM_FRETE_MINIMO) frete = FRETE_MINIMO_ATE_5KM;
-    else frete = km * PRECO_POR_KM;
-    return Math.round(frete * 100) / 100;
-  }
-
-  async function calcularFreteGPS(){
-    cadastroAviso.textContent = "Calculando frete...";
-    freteStatus.textContent = "";
-    if(!navigator.geolocation){
-      cadastroAviso.textContent = "";
-      showError("Seu navegador não tem localização (GPS).");
-      return false;
-    }
-
-    return await new Promise((resolve)=>{
-      navigator.geolocation.getCurrentPosition((pos)=>{
-        cadastroAviso.textContent = "";
-        const lat = pos.coords.latitude;
-        const lon = pos.coords.longitude;
-
-        const km = haversineKm(LOJA_LAT, LOJA_LON, lat, lon);
-        const frete = calcFretePorRegra(km);
-
-        taxaFreteEl.value = frete.toFixed(2);
-        freteStatus.textContent = `Taxa de Frete: ${formatBRL(frete)}`;
-
-        if(!cliRef.value.trim()){
-          cliRef.value = `Localização: ${lat.toFixed(6)}, ${lon.toFixed(6)}`;
-        }
-
-        const d = getCadastro();
-        if(d.nome && d.fone && d.end){
-          localStorage.setItem(LS_KEY, JSON.stringify(d));
-          setResumo(d);
-        }
-
-        showOk(`Taxa de Frete: ${formatBRL(frete)}`);
-        resolve(true);
-      }, (err)=>{
-        cadastroAviso.textContent = "";
-        showError("Não consegui pegar sua localização.", err?.message || String(err));
-        resolve(false);
-      }, { enableHighAccuracy:true, timeout:10000 });
-    });
-  }
-
-  btnGPS.addEventListener("click", calcularFreteGPS);
-
-  // Carrinho
-  let carrinho = [];
-  const listaCarrinho = document.getElementById("listaCarrinho");
-  const totalCarrinhoEl = document.getElementById("totalCarrinho");
-  const contadorCarrinho = document.getElementById("contadorCarrinho");
-  const btnLimparCarrinho = document.getElementById("btnLimparCarrinho");
-  const btnFinalizar = document.getElementById("btnFinalizar");
-  const formaPagamento = document.getElementById("formaPagamento");
-  const trocoBox = document.getElementById("trocoBox");
-  const trocoPara = document.getElementById("trocoPara");
-
-  formaPagamento.addEventListener("change", ()=>{
-    trocoBox.style.display = (formaPagamento.value === "Dinheiro") ? "block" : "none";
-  });
-
-  function atualizarBadge(){
-    const totalItens = carrinho.reduce((s,i)=> s + i.qtd, 0);
-    contadorCarrinho.textContent = totalItens;
-  }
-
-  function atualizarCarrinho(){
-    if(carrinho.length === 0){
-      listaCarrinho.innerHTML = "Seu carrinho está vazio.";
-      totalCarrinhoEl.textContent = formatBRL(0);
-      atualizarBadge();
-      return;
-    }
-
-    let totalItens = 0;
-    listaCarrinho.innerHTML = carrinho.map((it, idx)=>{
-      const sub = it.preco * it.qtd;
-      totalItens += sub;
-      return `
-        <div class="cartItem">
-          <div style="min-width:0">
-            <b>${it.qtd}x ${esc(it.nome)}</b><br>
-            <span class="mini">${formatBRL(sub)}</span>
-          </div>
-          <div class="cartBtns">
-            <button class="pillBtn" onclick="window.cartMinus(${idx})">-</button>
-            <button class="pillBtn" onclick="window.cartPlus(${idx})">+</button>
-            <button class="pillBtn danger" onclick="window.cartRemove(${idx})">x</button>
-          </div>
-        </div>
-      `;
-    }).join("");
-
-    const frete = Number(taxaFreteEl.value || 0);
-    const total = totalItens + (frete>0 ? frete : 0);
-    totalCarrinhoEl.textContent = formatBRL(total);
-
-    atualizarBadge();
-  }
-
-  window.cartPlus = (idx)=>{ carrinho[idx].qtd += 1; atualizarCarrinho(); animateBadge(); };
-  window.cartMinus = (idx)=>{ carrinho[idx].qtd -= 1; if(carrinho[idx].qtd<=0) carrinho.splice(idx,1); atualizarCarrinho(); animateBadge(); };
-  window.cartRemove = (idx)=>{ carrinho.splice(idx,1); atualizarCarrinho(); animateBadge(); };
-
-  function limparCarrinho(){ carrinho = []; atualizarCarrinho(); }
-  btnLimparCarrinho.addEventListener("click", limparCarrinho);
-
-  // Pix (QR real)
-  const PIX_CHAVE = "81996604169";
-  const PIX_NOME  = "SABOR DA SOPA";
-  const PIX_CIDADE = "JABOATAO";
-
-  function onlyAscii(s){ return (s||"").toString().normalize("NFD").replace(/[\u0300-\u036f]/g,""); }
-  function trunc(s, n){ s = onlyAscii(s).toUpperCase(); return s.length>n ? s.slice(0,n) : s; }
-  function emv(id, value){
-    const v = String(value ?? "");
-    return String(id).padStart(2,"0") + String(v.length).padStart(2,"0") + v;
-  }
-  function crc16(payload){
-    let crc = 0xFFFF;
-    for (let i=0;i<payload.length;i++){
-      crc ^= payload.charCodeAt(i) << 8;
-      for (let j=0;j<8;j++){
-        crc = (crc & 0x8000) ? ((crc<<1) ^ 0x1021) : (crc<<1);
-        crc &= 0xFFFF;
-      }
-    }
-    return crc.toString(16).toUpperCase().padStart(4,"0");
-  }
-  function gerarPixCopiaCola(valor, txid="PEDIDO"){
-    const nome = trunc(PIX_NOME, 25);
-    const cidade = trunc(PIX_CIDADE, 15);
-    const chave = PIX_CHAVE;
-
-    const mai = emv("00","BR.GOV.BCB.PIX") + emv("01", chave);
-
-    const payloadBase =
-      emv("00","01") +
-      emv("01","12") +
-      emv("26", mai) +
-      emv("52","0000") +
-      emv("53","986") +
-      emv("54", Number(valor).toFixed(2)) +
-      emv("58","BR") +
-      emv("59", nome) +
-      emv("60", cidade) +
-      emv("62", emv("05", trunc(txid, 25)));
-
-    const payloadToCrc = payloadBase + "6304";
-    const crc = crc16(payloadToCrc);
-    return payloadToCrc + crc;
-  }
-
-  const pixModal = document.getElementById("pixModal");
-  const pixFechar = document.getElementById("pixFechar");
-  const pixCopiar = document.getElementById("pixCopiar");
-  const pixEnviarPedido = document.getElementById("pixEnviarPedido");
-  const pixCopiaColaEl = document.getElementById("pixCopiaCola");
-  const pixQRImg = document.getElementById("pixQRImg");
-
-  function abrirModalPix(valorTotal){
-    const code = gerarPixCopiaCola(valorTotal, "SABOR_DA_SOPA");
-    pixCopiaColaEl.value = code;
-
-    pixQRImg.src =
-      "https://api.qrserver.com/v1/create-qr-code/?size=260x260&data=" +
-      encodeURIComponent(code);
-
-    pixModal.style.display = "block";
-  }
-
-  pixFechar?.addEventListener("click", ()=> pixModal.style.display="none");
-  pixModal?.addEventListener("click", (e)=>{ if(e.target === pixModal) pixModal.style.display="none"; });
-
-  pixCopiar?.addEventListener("click", async ()=>{
-    try{
-      await navigator.clipboard.writeText(pixCopiaColaEl.value);
-      toast("✅ Pix copiado");
-    }catch(_){
-      pixCopiaColaEl.select();
-      document.execCommand("copy");
-      toast("✅ Pix copiado");
-    }
-  });
-
-  // Menu
   let allItems = [];
 
-  async function carregarMenu(){
+  async function carregar(){
     msg.innerHTML = "";
     el.innerHTML = `<div class="empty">Carregando cardápio...</div>`;
-    try{
+
+    try {
       let snap;
-      try{
+      try {
         snap = await getDocs(query(collection(db,"menuItems"), orderBy("categoria"), orderBy("nome")));
-      }catch(e){
+      } catch (e) {
         snap = await getDocs(collection(db,"menuItems"));
       }
       allItems = snap.docs.map(d => ({ id:d.id, ...d.data() }));
+
       if(!allItems.length){
-        el.innerHTML = `<div class="empty">Cardápio vazio.</div>`;
+        el.innerHTML = `<div class="empty">Cardápio vazio. Cadastre itens no Admin.</div>`;
         return;
       }
-      renderMenu();
-    }catch(e){
+      render();
+    } catch(e) {
       console.error(e);
-      showError("Não consegui carregar o cardápio.", e?.message || String(e));
+      showError(e?.message || String(e), "Dica: confira se existe a coleção 'menuItems' no Firestore.");
       el.innerHTML = "";
     }
   }
 
-  function renderMenu(){
+  function render(){
     const q = (busca.value || "").trim().toLowerCase();
 
-    const filtered = allItems.filter(it=>{
+    const filtered = allItems.filter(it => {
       if(!q) return true;
       const hay = `${it.categoria||""} ${it.nome||""} ${it.descricao||""}`.toLowerCase();
       return hay.includes(q);
@@ -765,144 +156,71 @@
     }
 
     const grupos = {};
-    for(const it of filtered){
+    for (const it of filtered){
       const cat = it.categoria || "Outros";
       (grupos[cat] ||= []).push(it);
     }
 
     const cats = Object.keys(grupos).sort((a,b)=>a.localeCompare(b,"pt-BR"));
 
-    el.innerHTML = cats.map(cat=>{
+    el.innerHTML = cats.map(cat => {
       const items = grupos[cat].sort((a,b)=>String(a.nome||"").localeCompare(String(b.nome||""),"pt-BR"));
-      const cards = items.map(it=>{
-        const img = it.imageUrl ? `<img class="img" src="${esc(it.imageUrl)}" alt="${esc(it.nome||"")}">` : `<div class="img"></div>`;
-        const desc = it.descricao ? `<div class="desc">${esc(it.descricao)}</div>` : "";
+      const cards = items.map(it => {
         const preco = Number(it.preco||0);
-
+        const qid = `q_${it.id}`;
+        const img = it.imageUrl ? `<img class="img" src="${esc(it.imageUrl)}" alt="${esc(it.nome||"")}">` : "";
+        const desc = it.descricao ? `<div class="desc">${esc(it.descricao)}</div>` : "";
         return `
           <div class="card">
             ${img}
-            <div class="meta">
-              <h3 class="title">${esc(it.nome || "")}</h3>
-              <div class="price">${formatBRL(preco)}</div>
-              ${desc}
-            </div>
+            <h3 class="title">${esc(it.nome || "")}</h3>
+            <div class="price">${formatBRL(preco)}</div>
+            ${desc}
             <div class="buyrow">
-              <button class="btnAdd" onclick="window.adicionarCarrinho('${esc(it.id)}', event)">+</button>
+              <input class="qty" id="${qid}" type="number" min="1" value="1">
+              <button class="btn" onclick="window.pedir('${it.id}')">Pedir</button>
             </div>
           </div>
         `;
       }).join("");
+
       return `<div class="cat">${esc(cat)}</div><div class="grid">${cards}</div>`;
     }).join("");
   }
 
-  window.adicionarCarrinho = (id, ev)=>{
-    const cad = getCadastro();
-    if(!cad.nome || !cad.fone || !cad.end){
-      showError("Preencha seu cadastro para pedir.");
-      formCadastro.style.display = "block";
-      btnToggleCadastro.textContent = "Fechar";
-      window.scrollTo({top:0,behavior:"smooth"});
-      return;
-    }
-
-    const btn = ev?.currentTarget;
-    animateButton(btn);
-    flashCardFromButton(btn);
-    flyDot(btn);
-
-    const it = allItems.find(x=>x.id===id);
+  window.pedir = (id) => {
+    const it = allItems.find(x => x.id === id);
     if(!it) return;
 
-    const existente = carrinho.find(x=>x.id===id);
-    if(existente) existente.qtd += 1;
-    else carrinho.push({ id: it.id, nome: it.nome, preco: Number(it.preco), qtd: 1 });
+    const qid = `q_${it.id}`;
+    const q = Math.max(1, parseInt(document.getElementById(qid).value || "1", 10));
+    const preco = Number(it.preco||0);
+    const subtotal = preco * q;
 
-    atualizarCarrinho();
-    animateBadge();
-    toast(`✅ ${it.nome} adicionado`);
-  };
-
-  busca.addEventListener("input", ()=>{
-    clearTimeout(window.__srch);
-    window.__srch = setTimeout(renderMenu, 80);
-  });
-
-  function montarMensagemWhats(total, frete, forma){
-    const cad = getCadastro();
-    let text = `Olá! Quero fazer um pedido:\n\n`;
-    let subtotal = 0;
-
-    for(const item of carrinho){
-      const sub = item.preco * item.qtd;
-      subtotal += sub;
-      text += `• ${item.qtd}x ${item.nome} - ${formatBRL(sub)}\n`;
-    }
+    const taxa = Number(taxaInput.value || 0);
+    const total = subtotal + (taxa > 0 ? taxa : 0);
 
     const obs = (obsInput.value || "").trim();
-    const obsTxt = obs ? `\n📝 Observação: ${obs}\n` : "";
+    const obsTxt = obs ? `\nObservação: ${obs}` : "";
+    const taxaTxt = taxa > 0 ? `\nTaxa de entrega: ${formatBRL(taxa)}` : "";
 
-    text += `${obsTxt}\n🚚 Taxa de Frete: ${formatBRL(frete)}`;
-    text += `\n💰 Total: ${formatBRL(total)}`;
-    text += `\n💳 Pagamento: ${forma}`;
+    const text =
+`Olá! Quero pedir na *Sabor da Sopa*:
 
-    if(forma === "Dinheiro"){
-      const t = Number(trocoPara.value || 0);
-      if(t > 0) text += `\n💵 Troco para: ${formatBRL(t)}`;
-    }
+Categoria: ${it.categoria || "Outros"}
+Item: ${q}x ${it.nome || ""}
+Valor unitário: ${formatBRL(preco)}
+Subtotal: ${formatBRL(subtotal)}${taxaTxt}
+Total: ${formatBRL(total)}${obsTxt}
 
-    text += `\n\n👤 Nome: ${cad.nome}`;
-    text += `\n📱 Telefone: ${cad.fone}`;
-    text += `\n📍 Endereço: ${cad.end}`;
-    if(cad.ref) text += `\n📌 Referência: ${cad.ref}`;
+Meu nome:
+Endereço:`;
 
-    if(forma === "Pix"){
-      text += `\n\n✅ PAGAMENTO PIX\nVou enviar o comprovante.`;
-    }
-
-    return text;
-  }
-
-  const btnFinalizar = document.getElementById("btnFinalizar");
-  btnFinalizar.addEventListener("click", ()=>{
-    if(carrinho.length === 0){
-      showError("Seu carrinho está vazio.");
-      return;
-    }
-
-    const cad = getCadastro();
-    if(!cad.nome || !cad.fone || !cad.end){
-      showError("Preencha seu cadastro para finalizar.");
-      return;
-    }
-
-    const frete = Number(taxaFreteEl.value || 0);
-    if(!(frete > 0)){
-      showError("Calcule a Taxa de Frete pela localização (📍 Local).");
-      return;
-    }
-
-    const forma = formaPagamento.value;
-    const totalItens = carrinho.reduce((s,i)=> s + (i.preco*i.qtd), 0);
-    const total = totalItens + frete;
-
-    if(forma === "Pix"){
-      abrirModalPix(total);
-      pixEnviarPedido.onclick = ()=>{
-        const text = montarMensagemWhats(total, frete, "Pix");
-        pixModal.style.display = "none";
-        abrirWhats(text);
-      };
-      return;
-    }
-
-    const text = montarMensagemWhats(total, frete, forma);
     abrirWhats(text);
-  });
+  };
 
-  atualizarCarrinho();
-  carregarMenu();
+  busca.addEventListener("input", render);
+  carregar();
 </script>
 
 </body>
