@@ -11,7 +11,7 @@
   }
   *{box-sizing:border-box}
   body{margin:0;font-family:Arial,Helvetica,sans-serif;background:linear-gradient(180deg,var(--bg2),var(--bg));color:var(--txt)}
-  header{padding:18px 14px;text-align:center;background:rgba(0,0,0,.18);position:sticky;top:0;backdrop-filter:blur(6px);z-index:2}
+  header{padding:18px 14px;text-align:center;background:rgba(0,0,0,.18);position:sticky;top:0;backdrop-filter:blur(6px);z-index:5}
   header h1{margin:0;font-size:28px;letter-spacing:.3px}
   header p{margin:6px 0 0;color:var(--muted)}
   .wrap{max-width:1050px;margin:0 auto;padding:14px}
@@ -22,22 +22,94 @@
   input,textarea{width:100%;padding:10px 12px;border-radius:12px;border:0;outline:none}
   textarea{min-height:70px;resize:vertical}
   .toolbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:10px}
-  .pill{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.14);padding:8px 10px;border-radius:999px;color:var(--txt);font-size:13px}
   .btn{background:var(--accent);border:0;padding:10px 14px;border-radius:12px;font-weight:900;cursor:pointer}
   .btn:active{transform:translateY(1px)}
+  .btn2{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.18);color:#fff;padding:10px 14px;border-radius:12px;font-weight:900;cursor:pointer}
+  .btn2:active{transform:translateY(1px)}
   .mini{font-size:12px;color:var(--muted)}
   .cat{margin:18px 0 8px;padding:10px;background:#08361f;border-radius:14px;text-align:center;font-weight:900;letter-spacing:.4px;box-shadow:var(--shadow)}
-  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:12px}
-  .card{background:var(--card);padding:14px;border-radius:16px;box-shadow:var(--shadow);border:1px solid rgba(255,255,255,.08)}
-  .img{width:100%;height:120px;object-fit:cover;border-radius:14px;margin-bottom:10px;background:rgba(0,0,0,.18)}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px}
+
+  /* ✅ CARD com imagem pequena e bem visível */
+  .card{
+    background:var(--card);
+    padding:14px;
+    border-radius:16px;
+    box-shadow:var(--shadow);
+    border:1px solid rgba(255,255,255,.08);
+    display:flex;
+    gap:12px;
+    align-items:flex-start;
+  }
+  .thumb{
+    width:110px;height:110px;
+    border-radius:14px;
+    object-fit:cover;
+    flex:0 0 110px;
+    background:rgba(0,0,0,.18);
+    border:1px solid rgba(255,255,255,.10);
+  }
+  .content{flex:1;min-width:0}
   .title{margin:0;font-size:18px}
   .price{font-weight:900;font-size:18px;margin:6px 0}
   .desc{color:rgba(255,255,255,.9);font-size:13px;line-height:1.25}
-  .buyrow{display:flex;gap:8px;align-items:center;margin-top:10px}
+  .buyrow{display:flex;gap:8px;align-items:center;margin-top:10px;flex-wrap:wrap}
   .qty{width:92px}
   .empty{text-align:center;padding:18px;color:var(--muted)}
   .error{background:rgba(255,0,0,.14);border:1px solid rgba(255,0,0,.25);padding:12px;border-radius:14px;margin:12px 0}
+
   .footer{text-align:center;padding:18px;color:var(--muted)}
+
+  /* ✅ CAPA (topo) */
+  .cover{
+    margin: 0 0 12px 0;
+    border-radius: 16px;
+    overflow: hidden;
+    position: relative;
+    box-shadow: var(--shadow);
+    border: 1px solid rgba(255,255,255,.08);
+    background: rgba(0,0,0,.18);
+  }
+  .cover img{width:100%;height:240px;object-fit:cover;display:block}
+  @media(min-width:820px){.cover img{height:280px}}
+  .cover::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg, rgba(0,0,0,.10), rgba(0,0,0,.55))}
+  .cover .cover-text{
+    position:absolute; left:14px; right:14px; bottom:12px;
+    z-index:1;
+    display:flex; align-items:flex-end; justify-content:space-between; gap:12px; flex-wrap:wrap;
+  }
+  .cover .brand{font-weight:900;letter-spacing:.3px;font-size:18px;text-shadow:0 8px 18px rgba(0,0,0,.35)}
+  .cover .tag{font-size:12px;color:rgba(255,255,255,.88);background:rgba(0,0,0,.28);border:1px solid rgba(255,255,255,.14);padding:6px 10px;border-radius:999px;backdrop-filter:blur(6px)}
+
+  /* ✅ Atalhos de categoria */
+  .catsBar{
+    display:flex; gap:8px; flex-wrap:wrap;
+    margin:10px 0 4px;
+  }
+  .catLink{
+    cursor:pointer;
+    padding:8px 10px;
+    border-radius:999px;
+    background:rgba(255,255,255,.12);
+    border:1px solid rgba(255,255,255,.16);
+    color:#fff;
+    font-size:13px;
+    font-weight:800;
+  }
+  .catLink:active{transform:translateY(1px)}
+
+  /* ✅ Cadastro */
+  .ok{
+    background:rgba(0,255,140,.12);
+    border:1px solid rgba(0,255,140,.22);
+    padding:12px;border-radius:14px;margin:12px 0;
+  }
+
+  /* responsivo do card */
+  @media(max-width:520px){
+    .card{flex-direction:column}
+    .thumb{width:100%;height:170px;flex:0 0 auto}
+  }
 </style>
 </head>
 <body>
@@ -48,6 +120,58 @@
 </header>
 
 <div class="wrap">
+
+  <!-- ✅ CAPA DO SABOR DA SOPA -->
+  <div class="cover">
+    <img src="capa.jpg" alt="Sabor da Sopa - Capa" />
+    <div class="cover-text">
+      <div class="brand">🍲 Sabor da Sopa</div>
+      <div class="tag">Cardápio Online • Caldos e Sopas</div>
+    </div>
+  </div>
+
+  <!-- ✅ CADASTRO DO CLIENTE (OBRIGATÓRIO) -->
+  <div class="panel" id="cadastroPanel">
+    <div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:center">
+      <div>
+        <div style="font-weight:900;font-size:16px">👤 Cadastro do Cliente (obrigatório)</div>
+        <div class="mini">Para pedir, preencha uma vez. Fica salvo neste aparelho.</div>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn2" type="button" id="btnEditar" style="display:none">Editar</button>
+        <button class="btn" type="button" id="btnSalvar">Salvar cadastro</button>
+      </div>
+    </div>
+
+    <div id="cadastroStatus" style="margin-top:10px"></div>
+
+    <div class="row" style="margin-top:10px">
+      <div>
+        <label>✅ Nome</label>
+        <input id="cNome" placeholder="Seu nome" />
+      </div>
+      <div>
+        <label>📞 WhatsApp do cliente</label>
+        <input id="cFone" placeholder="Ex: 81999999999" />
+      </div>
+    </div>
+
+    <div class="row" style="margin-top:10px">
+      <div>
+        <label>📍 Endereço</label>
+        <input id="cEndereco" placeholder="Rua, número, bairro" />
+      </div>
+      <div>
+        <label>🏢 Ap (Apartamento) / Bloco (opcional)</label>
+        <input id="cAp" placeholder="Ex: Ap 302 Bloco B" />
+      </div>
+    </div>
+
+    <label style="margin-top:10px">🧭 Ponto de referência (opcional)</label>
+    <input id="cRef" placeholder="Ex: perto do mercado / em frente à praça" />
+  </div>
+
+  <!-- ✅ BUSCA + OBS -->
   <div class="panel">
     <div class="row">
       <div>
@@ -55,43 +179,16 @@
         <input id="busca" placeholder="Ex: sopa, caldo, empada..." />
       </div>
       <div>
-        <label>🚚 Taxa de entrega (opcional)</label>
-        <input id="taxaEntrega" type="number" step="0.01" placeholder="Ex: 5.00 (deixe vazio se não tiver)" />
+        <label>📝 Observação do pedido (opcional)</label>
+        <textarea id="obsGeral" placeholder="Ex: sem pimenta / bem quente / mandar colher / etc."></textarea>
       </div>
     </div>
-
-    <label style="margin-top:10px">📝 Observação do pedido (opcional)</label>
-    <textarea id="obsGeral" placeholder="Ex: sem pimenta / bem quente / mandar colher / etc."></textarea>
 
     <div class="toolbar">
-      <span class="pill">📲 WhatsApp: 5581996604169</span>
       <span class="mini">Dica: escolha a quantidade e toque em “Pedir”.</span>
     </div>
-  </div>
 
-
-  <!-- ✅ CADASTRO DO CLIENTE (NOVO) -->
-  <div class="panel" id="cadastroPanel">
-    <div style="font-weight:900;margin-bottom:8px">👤 Cadastro do Cliente</div>
-
-    <div class="row" style="grid-template-columns:1fr 1fr">
-      <div>
-        <label>Nome</label>
-        <input id="cliNome" placeholder="Ex: Cleyton" />
-      </div>
-      <div>
-        <label>Telefone / WhatsApp</label>
-        <input id="cliTelefone" placeholder="Ex: (81) 9xxxx-xxxx" />
-      </div>
-    </div>
-
-    <label style="margin-top:10px">Endereço</label>
-    <textarea id="cliEndereco" placeholder="Rua, número, bairro, ponto de referência..."></textarea>
-
-    <div class="toolbar" style="justify-content:space-between">
-      <span class="mini" id="cliStatus">Preencha e clique em “Salvar dados”.</span>
-      <button class="btn" id="btnSalvarCliente" type="button">Salvar dados</button>
-    </div>
+    <div id="catsBar" class="catsBar"></div>
   </div>
 
   <div id="msg"></div>
@@ -104,23 +201,39 @@
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js";
   import { getFirestore, collection, getDocs, query, orderBy } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js";
 
-  const WHATSAPP = "5581996604169";
+  // ✅ Número novo
+  const WHATSAPP = "5581997284466";
+
   const firebaseConfig = {
-  "apiKey": "AIzaSyAzD2_niY8a3Q7rO0V41j56ZwpeVTriKCw",
-  "authDomain": "sabor-da-sopa.firebaseapp.com",
-  "projectId": "sabor-da-sopa",
-  "storageBucket": "sabor-da-sopa.firebasestorage.app",
-  "messagingSenderId": "437365944053",
-  "appId": "1:437365944053:web:69d942143b7575bdf19fbc"
-};
+    "apiKey": "AIzaSyAzD2_niY8a3Q7rO0V41j56ZwpeVTriKCw",
+    "authDomain": "sabor-da-sopa.firebaseapp.com",
+    "projectId": "sabor-da-sopa",
+    "storageBucket": "sabor-da-sopa.firebasestorage.app",
+    "messagingSenderId": "437365944053",
+    "appId": "1:437365944053:web:69d942143b7575bdf19fbc"
+  };
+
   const app = initializeApp(firebaseConfig);
   const db = getFirestore(app);
 
   const el = document.getElementById("app");
   const msg = document.getElementById("msg");
   const busca = document.getElementById("busca");
-  const taxaInput = document.getElementById("taxaEntrega");
   const obsInput = document.getElementById("obsGeral");
+  const catsBar = document.getElementById("catsBar");
+
+  // Cadastro
+  const cadastroPanel = document.getElementById("cadastroPanel");
+  const cadastroStatus = document.getElementById("cadastroStatus");
+  const btnSalvar = document.getElementById("btnSalvar");
+  const btnEditar = document.getElementById("btnEditar");
+  const cNome = document.getElementById("cNome");
+  const cFone = document.getElementById("cFone");
+  const cEndereco = document.getElementById("cEndereco");
+  const cAp = document.getElementById("cAp");
+  const cRef = document.getElementById("cRef");
+
+  const STORAGE_KEY = "sabor_da_sopa_cliente_v1";
 
   const formatBRL = (v)=> Number(v||0).toLocaleString("pt-BR",{style:"currency",currency:"BRL"});
   const esc = (s)=> String(s||"").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;").replaceAll("'","&#39;");
@@ -135,9 +248,87 @@
   }
 
   function abrirWhats(text){
-    const url = `https://wa.me/${WHATSAPP}?text=${encodeURIComponent(text)}`;
+    const url = \`https://wa.me/\${WHATSAPP}?text=\${encodeURIComponent(text)}\`;
     window.open(url, "_blank");
   }
+
+  function scrollToCadastro(){
+    cadastroPanel.scrollIntoView({ behavior:"smooth", block:"start" });
+  }
+
+  function getCliente(){
+    try{
+      const raw = localStorage.getItem(STORAGE_KEY);
+      return raw ? JSON.parse(raw) : null;
+    }catch(e){ return null; }
+  }
+
+  function setCliente(obj){
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(obj));
+  }
+
+  function validarCadastro(){
+    const nome = (cNome.value||"").trim();
+    const fone = (cFone.value||"").trim();
+    const end = (cEndereco.value||"").trim();
+    if(!nome || !fone || !end) return { ok:false, msg:"Preencha Nome, WhatsApp e Endereço." };
+    return { ok:true };
+  }
+
+  function setCadastroModo(locked){
+    [cNome,cFone,cEndereco,cAp,cRef].forEach(i => i.disabled = locked);
+    btnSalvar.style.display = locked ? "none" : "inline-block";
+    btnEditar.style.display = locked ? "inline-block" : "none";
+  }
+
+  function renderCadastroStatus(){
+    const cli = getCliente();
+    if(cli && cli.nome && cli.fone && cli.endereco){
+      cadastroStatus.innerHTML = `
+        <div class="ok">
+          <b>✅ Cadastro salvo!</b><br>
+          <div class="mini"><b>Nome:</b> ${esc(cli.nome)} • <b>WhatsApp:</b> ${esc(cli.fone)}</div>
+          <div class="mini"><b>Endereço:</b> ${esc(cli.endereco)}${cli.ap ? " • <b>Ap:</b> "+esc(cli.ap) : ""}</div>
+        </div>`;
+      cNome.value = cli.nome || "";
+      cFone.value = cli.fone || "";
+      cEndereco.value = cli.endereco || "";
+      cAp.value = cli.ap || "";
+      cRef.value = cli.ref || "";
+      setCadastroModo(true);
+    }else{
+      cadastroStatus.innerHTML = `
+        <div class="error" style="border-color:rgba(255,255,255,.14);background:rgba(0,0,0,.18)">
+          <b>⚠️ Faça seu cadastro para liberar o botão “Pedir”.</b>
+          <div class="mini" style="margin-top:6px">Preencha os campos e toque em “Salvar cadastro”.</div>
+        </div>`;
+      setCadastroModo(false);
+    }
+  }
+
+  btnSalvar.addEventListener("click", ()=>{
+    const v = validarCadastro();
+    if(!v.ok){
+      alert(v.msg);
+      scrollToCadastro();
+      return;
+    }
+    const cli = {
+      nome: (cNome.value||"").trim(),
+      fone: (cFone.value||"").trim(),
+      endereco: (cEndereco.value||"").trim(),
+      ap: (cAp.value||"").trim(),
+      ref: (cRef.value||"").trim(),
+      savedAt: Date.now()
+    };
+    setCliente(cli);
+    renderCadastroStatus();
+  });
+
+  btnEditar.addEventListener("click", ()=>{
+    setCadastroModo(false);
+    scrollToCadastro();
+  });
 
   let allItems = [];
 
@@ -152,18 +343,29 @@
       } catch (e) {
         snap = await getDocs(collection(db,"menuItems"));
       }
+
       allItems = snap.docs.map(d => ({ id:d.id, ...d.data() }));
 
       if(!allItems.length){
         el.innerHTML = `<div class="empty">Cardápio vazio. Cadastre itens no Admin.</div>`;
+        catsBar.innerHTML = "";
         return;
       }
+
       render();
     } catch(e) {
       console.error(e);
       showError(e?.message || String(e), "Dica: confira se existe a coleção 'menuItems' no Firestore.");
       el.innerHTML = "";
+      catsBar.innerHTML = "";
     }
+  }
+
+  function montarAtalhosCategorias(cats){
+    catsBar.innerHTML = cats.map(cat => {
+      const id = "cat_" + cat.toLowerCase().replace(/\s+/g,"_").replace(/[^\w_]/g,"");
+      return `<button class="catLink" type="button" onclick="document.getElementById('${id}').scrollIntoView({behavior:'smooth',block:'start'})">${esc(cat)}</button>`;
+    }).join("");
   }
 
   function render(){
@@ -177,6 +379,7 @@
 
     if(!filtered.length){
       el.innerHTML = `<div class="empty">Nenhum item encontrado.</div>`;
+      catsBar.innerHTML = "";
       return;
     }
 
@@ -187,33 +390,55 @@
     }
 
     const cats = Object.keys(grupos).sort((a,b)=>a.localeCompare(b,"pt-BR"));
+    montarAtalhosCategorias(cats);
 
     el.innerHTML = cats.map(cat => {
       const items = grupos[cat].sort((a,b)=>String(a.nome||"").localeCompare(String(b.nome||""),"pt-BR"));
+      const catId = "cat_" + cat.toLowerCase().replace(/\s+/g,"_").replace(/[^\w_]/g,"");
+
       const cards = items.map(it => {
         const preco = Number(it.preco||0);
         const qid = `q_${it.id}`;
-        const img = it.imageUrl ? `<img class="img" src="${esc(it.imageUrl)}" alt="${esc(it.nome||"")}">` : "";
+        const img = it.imageUrl
+          ? `<img class="thumb" src="${esc(it.imageUrl)}" alt="${esc(it.nome||"")}">`
+          : `<div class="thumb" aria-label="Sem imagem"></div>`;
         const desc = it.descricao ? `<div class="desc">${esc(it.descricao)}</div>` : "";
+
         return `
           <div class="card">
             ${img}
-            <h3 class="title">${esc(it.nome || "")}</h3>
-            <div class="price">${formatBRL(preco)}</div>
-            ${desc}
-            <div class="buyrow">
-              <input class="qty" id="${qid}" type="number" min="1" value="1">
-              <button class="btn" onclick="window.pedir('${it.id}')">Pedir</button>
+            <div class="content">
+              <h3 class="title">${esc(it.nome || "")}</h3>
+              <div class="price">${formatBRL(preco)}</div>
+              ${desc}
+              <div class="buyrow">
+                <input class="qty" id="${qid}" type="number" min="1" value="1">
+                <button class="btn" onclick="window.pedir('${it.id}')">Pedir</button>
+              </div>
             </div>
           </div>
         `;
       }).join("");
 
-      return `<div class="cat">${esc(cat)}</div><div class="grid">${cards}</div>`;
+      return `<div class="cat" id="${catId}">${esc(cat)}</div><div class="grid">${cards}</div>`;
     }).join("");
   }
 
+  function clienteOk(){
+    const cli = getCliente();
+    return !!(cli && cli.nome && cli.fone && cli.endereco);
+  }
+
   window.pedir = (id) => {
+    // ✅ Bloqueia pedido se não cadastrou
+    if(!clienteOk()){
+      alert("⚠️ Para fazer o pedido, primeiro faça seu cadastro (Nome, WhatsApp e Endereço).");
+      scrollToCadastro();
+      return;
+    }
+
+    const cli = getCliente();
+
     const it = allItems.find(x => x.id === id);
     if(!it) return;
 
@@ -222,63 +447,33 @@
     const preco = Number(it.preco||0);
     const subtotal = preco * q;
 
-    const taxa = Number(taxaInput.value || 0);
-    const total = subtotal + (taxa > 0 ? taxa : 0);
-
     const obs = (obsInput.value || "").trim();
     const obsTxt = obs ? `\nObservação: ${obs}` : "";
-    const taxaTxt = taxa > 0 ? `\nTaxa de entrega: ${formatBRL(taxa)}` : "";
 
+    // ✅ Finalização com dados do cliente + Ap
     const text =
 `Olá! Quero pedir na *Sabor da Sopa*:
 
 Categoria: ${it.categoria || "Outros"}
 Item: ${q}x ${it.nome || ""}
 Valor unitário: ${formatBRL(preco)}
-Subtotal: ${formatBRL(subtotal)}${taxaTxt}
-Total: ${formatBRL(total)}${obsTxt}
+Total: ${formatBRL(subtotal)}${obsTxt}
 
-Meu nome:
-Endereço:`;
+*DADOS DO CLIENTE*
+Nome: ${cli.nome || ""}
+WhatsApp: ${cli.fone || ""}
+Endereço: ${cli.endereco || ""}
+Ap/Bloco: ${cli.ap || "—"}
+Referência: ${cli.ref || "—"}`;
 
     abrirWhats(text);
   };
 
   busca.addEventListener("input", render);
+
+  // init
+  renderCadastroStatus();
   carregar();
-
-  // ✅ CADASTRO DO CLIENTE (localStorage)
-  const cliNome = document.getElementById("cliNome");
-  const cliTelefone = document.getElementById("cliTelefone");
-  const cliEndereco = document.getElementById("cliEndereco");
-  const cliStatus = document.getElementById("cliStatus");
-  const btnSalvarCliente = document.getElementById("btnSalvarCliente");
-  const CLIENT_KEY = "sabor_cliente_v1";
-
-  function loadCliente(){
-    try{
-      const data = JSON.parse(localStorage.getItem(CLIENT_KEY) || "null");
-      if(!data) return;
-      if(cliNome) cliNome.value = data.nome || "";
-      if(cliTelefone) cliTelefone.value = data.telefone || "";
-      if(cliEndereco) cliEndereco.value = data.endereco || "";
-      if(cliStatus) cliStatus.textContent = "✅ Dados carregados.";
-    }catch(e){}
-  }
-
-  function saveCliente(){
-    const data = {
-      nome: (cliNome?.value || "").trim(),
-      telefone: (cliTelefone?.value || "").trim(),
-      endereco: (cliEndereco?.value || "").trim(),
-    };
-    localStorage.setItem(CLIENT_KEY, JSON.stringify(data));
-    if(cliStatus) cliStatus.textContent = "✅ Dados salvos.";
-  }
-
-  if(btnSalvarCliente) btnSalvarCliente.addEventListener("click", saveCliente);
-  loadCliente();
-
 </script>
 
 </body>
