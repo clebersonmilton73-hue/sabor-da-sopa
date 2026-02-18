@@ -1,0 +1,253 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Admin • Frete/KM</title>
+<style>
+  :root{--bg:#0b3a22;--bg2:#0f4d2e;--accent:#ffd400;--txt:#fff;--muted:rgba(255,255,255,.75);--shadow:0 10px 22px rgba(0,0,0,.28)}
+  *{box-sizing:border-box}
+  body{margin:0;font-family:Arial,Helvetica,sans-serif;background:linear-gradient(180deg,var(--bg),var(--bg2));color:var(--txt)}
+  header{padding:16px;text-align:center;background:rgba(0,0,0,.18);position:sticky;top:0;backdrop-filter:blur(6px)}
+  header h1{margin:0;font-size:20px}
+  header p{margin:6px 0 0;color:var(--muted);font-size:13px}
+  .wrap{max-width:1000px;margin:0 auto;padding:14px}
+  .panel{background:rgba(0,0,0,.18);border:1px solid rgba(255,255,255,.08);padding:14px;border-radius:16px;box-shadow:var(--shadow);margin-bottom:12px}
+  label{display:block;margin:10px 0 6px;font-weight:800;font-size:13px}
+  input{width:100%;padding:10px 12px;border-radius:12px;border:0;outline:none}
+  .row{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+  @media(max-width:900px){.row{grid-template-columns:1fr 1fr}}
+  @media(max-width:520px){.row{grid-template-columns:1fr}}
+  .btn{background:var(--accent);border:0;padding:10px 14px;border-radius:12px;font-weight:900;cursor:pointer}
+  .btn2{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.18);padding:10px 14px;border-radius:12px;font-weight:900;color:#fff;cursor:pointer}
+  .mini{font-size:12px;color:var(--muted)}
+  table{width:100%;border-collapse:separate;border-spacing:0 8px}
+  th{font-size:12px;text-align:left;color:var(--muted);font-weight:900}
+  td{background:rgba(255,255,255,.07);padding:10px;border-top:1px solid rgba(255,255,255,.12);border-bottom:1px solid rgba(255,255,255,.12)}
+  td:first-child{border-left:1px solid rgba(255,255,255,.12);border-radius:12px 0 0 12px}
+  td:last-child{border-right:1px solid rgba(255,255,255,.12);border-radius:0 12px 12px 0}
+  .actions{display:flex;gap:8px;flex-wrap:wrap}
+  .ok{background:rgba(0,255,120,.14);border:1px solid rgba(0,255,120,.25);padding:12px;border-radius:14px;margin-top:10px}
+  .err{background:rgba(255,0,0,.14);border:1px solid rgba(255,0,0,.25);padding:12px;border-radius:14px;margin-top:10px}
+</style>
+</head>
+<body>
+<header>
+  <h1>🚚 Admin • Frete/KM</h1>
+  <p>Edite bairros, frete base e KM (sem mexer no código)</p>
+</header>
+
+<div class="wrap">
+  <div class="panel">
+    <div class="row">
+      <div>
+        <label>KM limite</label>
+        <input id="kmLimite" type="number" value="10" />
+      </div>
+      <div>
+        <label>R$ por KM extra</label>
+        <input id="valorPorKmExtra" type="number" step="0.01" value="1" />
+      </div>
+      <div>
+        <label>Frete padrão</label>
+        <input id="fretePadrao" type="number" step="0.01" value="10" />
+      </div>
+      <div>
+        <label>KM padrão</label>
+        <input id="kmPadrao" type="number" step="0.1" value="12" />
+      </div>
+    </div>
+
+    <div class="mini" style="margin-top:10px">
+      Regra: se KM > limite → adiciona (KM - limite) × R$ por KM extra
+    </div>
+
+    <div style="margin-top:12px;display:flex;gap:10px;flex-wrap:wrap">
+      <button class="btn" id="btnSalvarTudo" type="button">Salvar Tudo</button>
+      <button class="btn2" id="btnRecarregar" type="button">Recarregar</button>
+    </div>
+    <div id="msg"></div>
+  </div>
+
+  <div class="panel">
+    <div style="font-weight:900;margin-bottom:8px">📍 Bairros</div>
+
+    <div class="row">
+      <div>
+        <label>Nome</label>
+        <input id="nNome" placeholder="Ex: Ibura" />
+      </div>
+      <div>
+        <label>Palavra-chave (match)</label>
+        <input id="nMatch" placeholder="Ex: ibura" />
+      </div>
+      <div>
+        <label>Frete base (R$)</label>
+        <input id="nFrete" type="number" step="0.01" placeholder="Ex: 8" />
+      </div>
+      <div>
+        <label>KM estimado</label>
+        <input id="nKm" type="number" step="0.1" placeholder="Ex: 9" />
+      </div>
+    </div>
+
+    <div style="margin-top:10px" class="actions">
+      <button class="btn" id="btnAdd" type="button">Adicionar bairro</button>
+      <span class="mini">Dica: match pode ser “dois carneiro”, “curado”, etc.</span>
+    </div>
+
+    <div style="margin-top:14px;overflow:auto">
+      <table>
+        <thead>
+          <tr>
+            <th>Nome</th><th>Match</th><th>Frete</th><th>KM</th><th>Ações</th>
+          </tr>
+        </thead>
+        <tbody id="tbody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js";
+  import { getFirestore, doc, getDoc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js";
+
+  const firebaseConfig = {
+    "apiKey": "AIzaSyAzD2_niY8a3Q7rO0V41j56ZwpeVTriKCw",
+    "authDomain": "sabor-da-sopa.firebaseapp.com",
+    "projectId": "sabor-da-sopa",
+    "storageBucket": "sabor-da-sopa.firebasestorage.app",
+    "messagingSenderId": "437365944053",
+    "appId": "1:437365944053:web:69d942143b7575bdf19fbc"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+
+  const kmLimite = document.getElementById("kmLimite");
+  const valorPorKmExtra = document.getElementById("valorPorKmExtra");
+  const fretePadrao = document.getElementById("fretePadrao");
+  const kmPadrao = document.getElementById("kmPadrao");
+
+  const nNome = document.getElementById("nNome");
+  const nMatch = document.getElementById("nMatch");
+  const nFrete = document.getElementById("nFrete");
+  const nKm = document.getElementById("nKm");
+
+  const btnAdd = document.getElementById("btnAdd");
+  const btnSalvarTudo = document.getElementById("btnSalvarTudo");
+  const btnRecarregar = document.getElementById("btnRecarregar");
+
+  const tbody = document.getElementById("tbody");
+  const msg = document.getElementById("msg");
+
+  const esc = (s)=> String(s||"").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;").replaceAll("'","&#39;");
+
+  let regras = [];
+
+  function ok(t){ msg.innerHTML = `<div class="ok">${t}</div>`; }
+  function err(t){ msg.innerHTML = `<div class="err">${t}</div>`; }
+
+  function render(){
+    tbody.innerHTML = regras.map((r, i) => `
+      <tr>
+        <td>${esc(r.nome||"")}</td>
+        <td>${esc(r.match||"")}</td>
+        <td>R$ ${Number(r.frete||0).toFixed(2)}</td>
+        <td>${Number(r.km||0).toFixed(1)}</td>
+        <td>
+          <div class="actions">
+            <button class="btn2" data-edit="${i}">Editar</button>
+            <button class="btn2" data-del="${i}">Excluir</button>
+          </div>
+        </td>
+      </tr>
+    `).join("");
+
+    tbody.querySelectorAll("[data-del]").forEach(b=>{
+      b.addEventListener("click", ()=>{
+        const i = Number(b.getAttribute("data-del"));
+        regras.splice(i,1);
+        render();
+      });
+    });
+
+    tbody.querySelectorAll("[data-edit]").forEach(b=>{
+      b.addEventListener("click", ()=>{
+        const i = Number(b.getAttribute("data-edit"));
+        const r = regras[i];
+        nNome.value = r.nome || "";
+        nMatch.value = r.match || "";
+        nFrete.value = r.frete ?? "";
+        nKm.value = r.km ?? "";
+        regras.splice(i,1);
+        render();
+      });
+    });
+  }
+
+  async function carregar(){
+    msg.innerHTML = "";
+    try{
+      const snap = await getDoc(doc(db,"config","frete"));
+      if(snap.exists()){
+        const d = snap.data() || {};
+        kmLimite.value = d.kmLimite ?? 10;
+        valorPorKmExtra.value = d.valorPorKmExtra ?? 1;
+        fretePadrao.value = d.fretePadrao ?? 10;
+        kmPadrao.value = d.kmPadrao ?? 12;
+        regras = Array.isArray(d.regras) ? d.regras : [];
+      }else{
+        regras = [];
+      }
+      render();
+      ok("<b>Config carregada.</b>");
+    }catch(e){
+      console.error(e);
+      err("<b>Erro ao carregar.</b><br><span class='mini'>"+esc(e?.message||String(e))+"</span>");
+    }
+  }
+
+  function addRegra(){
+    const nome = (nNome.value||"").trim();
+    const match = (nMatch.value||"").trim();
+    const frete = Number(nFrete.value||0);
+    const km = Number(nKm.value||0);
+
+    if(!nome || !match){
+      err("Preencha Nome e Match.");
+      return;
+    }
+    regras.push({ nome, match, frete, km });
+    nNome.value = ""; nMatch.value = ""; nFrete.value = ""; nKm.value = "";
+    msg.innerHTML = "";
+    render();
+  }
+
+  async function salvarTudo(){
+    msg.innerHTML = "";
+    try{
+      await setDoc(doc(db,"config","frete"), {
+        kmLimite: Number(kmLimite.value||10),
+        valorPorKmExtra: Number(valorPorKmExtra.value||1),
+        fretePadrao: Number(fretePadrao.value||10),
+        kmPadrao: Number(kmPadrao.value||12),
+        regras,
+        updatedAt: serverTimestamp()
+      }, { merge:true });
+      ok("<b>Salvo com sucesso!</b> O site do cliente vai usar automaticamente.");
+    }catch(e){
+      console.error(e);
+      err("<b>Erro ao salvar.</b><br><span class='mini'>"+esc(e?.message||String(e))+"</span>");
+    }
+  }
+
+  btnAdd.addEventListener("click", addRegra);
+  btnSalvarTudo.addEventListener("click", salvarTudo);
+  btnRecarregar.addEventListener("click", carregar);
+
+  carregar();
+</script>
+</body>
+</html>
