@@ -82,9 +82,9 @@
         <label class="status" style="margin:0">Descrição (opcional)</label>
         <input id="descricao" placeholder="Ex: bem quentinha" />
 
-        <label class="status" style="margin:0">Foto (opcional)</label>
-        <input id="foto" type="file" accept="image/*" />
-        <div class="status" id="statusFoto">Nenhuma foto selecionada.</div>
+        <label class="status" style="margin:0">Foto por link (URL) — opcional</label>
+        <input id="fotoUrl" placeholder="Ex: https://meusite.com/imagens/sopa.jpg" />
+        <div class="status" id="statusFoto">Cole um link direto da imagem (jpg/png/webp).</div>
 
         <div class="rowBtns" style="margin-top:10px">
           <button id="btnSalvar">Salvar</button>
@@ -108,7 +108,7 @@
         <div class="hint" style="margin-top:10px">
           <div class="pill">Dica foto</div>
           <div class="status">
-            Se a foto não subir, verifique o <b>Storage Rules</b> e o campo <b>storageBucket</b> no firebaseConfig.
+            Use link direto de imagem (terminando em .jpg/.png/.webp). Link de Google Drive/Instagram geralmente não funciona direto.
           </div>
         </div>
       </div>
@@ -134,20 +134,19 @@
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js";
   import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-auth.js";
   import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, updateDoc, query, orderBy } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js";
-  import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-storage.js";
 
   const firebaseConfig = {
-  "apiKey": "AIzaSyAzD2_niY8a3Q7rO0V41j56ZwpeVTriKCw",
-  "authDomain": "sabor-da-sopa.firebaseapp.com",
-  "projectId": "sabor-da-sopa",
-  "storageBucket": "sabor-da-sopa.firebasestorage.app",
-  "messagingSenderId": "437365944053",
-  "appId": "1:437365944053:web:69d942143b7575bdf19fbc"
-};
+    "apiKey": "AIzaSyAzD2_niY8a3Q7rO0V41j56ZwpeVTriKCw",
+    "authDomain": "sabor-da-sopa.firebaseapp.com",
+    "projectId": "sabor-da-sopa",
+    "storageBucket": "sabor-da-sopa.firebasestorage.app",
+    "messagingSenderId": "437365944053",
+    "appId": "1:437365944053:web:69d942143b7575bdf19fbc"
+  };
+
   const app = initializeApp(firebaseConfig);
   const auth = getAuth(app);
   const db = getFirestore(app);
-  const storage = getStorage(app);
 
   const loginBox = document.getElementById("loginBox");
   const painel = document.getElementById("painel");
@@ -162,7 +161,7 @@
   const nomeEl = document.getElementById("nome");
   const precoEl = document.getElementById("preco");
   const descEl = document.getElementById("descricao");
-  const fotoEl = document.getElementById("foto");
+  const fotoUrlEl = document.getElementById("fotoUrl");
   const statusFoto = document.getElementById("statusFoto");
   const saveMsg = document.getElementById("saveMsg");
 
@@ -182,37 +181,33 @@
     el.className = "status" + (ok===true ? " ok" : ok===false ? " bad" : "");
   }
 
+  function isValidHttpUrl(url){
+    try{
+      const u = new URL(url);
+      return (u.protocol === "http:" || u.protocol === "https:");
+    }catch(_){ return false; }
+  }
+
   function limparForm(){
     editingId = null;
     categoriaEl.value = "Sopas";
     nomeEl.value = "";
     precoEl.value = "";
     descEl.value = "";
-    fotoEl.value = "";
-    statusFoto.textContent = "Nenhuma foto selecionada.";
+    fotoUrlEl.value = "";
+    statusFoto.textContent = "Cole um link direto da imagem (jpg/png/webp).";
     setStatus(saveMsg, "");
     btnSalvar.textContent = "Salvar";
   }
 
-  fotoEl.addEventListener("change", ()=>{
-    statusFoto.textContent = fotoEl.files?.[0]?.name ? ("Foto: " + fotoEl.files[0].name) : "Nenhuma foto selecionada.";
+  fotoUrlEl.addEventListener("input", ()=>{
+    const v = fotoUrlEl.value.trim();
+    if(!v){
+      statusFoto.textContent = "Sem foto (opcional).";
+      return;
+    }
+    statusFoto.textContent = isValidHttpUrl(v) ? "Link ok ✅" : "Link inválido (precisa começar com http/https).";
   });
-
-  async function uploadFotoSeTiver(nomeItem){
-    const file = fotoEl.files?.[0];
-    if(!file) return "";
-
-    const safe = (nomeItem || "item").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/(^-|-$)/g,"");
-    const ext = (file.name.split(".").pop() || "jpg").toLowerCase();
-    const path = `menuImages/${Date.now()}-${safe}.${ext}`;
-
-    statusFoto.textContent = "Enviando foto...";
-    const storageRef = ref(storage, path);
-    await uploadBytes(storageRef, file);
-    const url = await getDownloadURL(storageRef);
-    statusFoto.textContent = "Foto enviada ✅";
-    return url;
-  }
 
   async function carregar(){
     tb.innerHTML = `<tr><td colspan="4" class="status">Carregando...</td></tr>`;
@@ -261,8 +256,8 @@
           nomeEl.value = it.nome || "";
           precoEl.value = it.preco ?? "";
           descEl.value = it.descricao || "";
-          fotoEl.value = "";
-          statusFoto.textContent = "Para trocar a foto, selecione um arquivo novo.";
+          fotoUrlEl.value = it.imageUrl || "";
+          statusFoto.textContent = it.imageUrl ? "Link carregado (você pode trocar)." : "Sem foto (opcional).";
           btnSalvar.textContent = "Atualizar";
           window.scrollTo({top:0,behavior:"smooth"});
         };
@@ -312,21 +307,26 @@
     const preco = Number(precoEl.value || 0);
     const descricao = descEl.value.trim();
 
+    const imageUrl = fotoUrlEl.value.trim();
+
     if(!nome || preco <= 0){
       setStatus(saveMsg, "Preencha nome e preço.", false);
       return;
     }
 
+    if(imageUrl && !isValidHttpUrl(imageUrl)){
+      setStatus(saveMsg, "Link da foto inválido. Use http/https.", false);
+      return;
+    }
+
     try {
-      const imageUrl = await uploadFotoSeTiver(nome);
-      const payload = { categoria, nome, preco, descricao };
-      if(imageUrl) payload.imageUrl = imageUrl;
+      const payload = { categoria, nome, preco, descricao, imageUrl: imageUrl || "" };
 
       if(editingId){
         await updateDoc(doc(db,"menuItems", editingId), payload);
         setStatus(saveMsg, "Item atualizado ✅", true);
       } else {
-        await addDoc(collection(db,"menuItems"), { ...payload, imageUrl: imageUrl || "" });
+        await addDoc(collection(db,"menuItems"), payload);
         setStatus(saveMsg, "Item cadastrado ✅", true);
       }
 
