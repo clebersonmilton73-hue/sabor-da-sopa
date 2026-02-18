@@ -29,7 +29,7 @@
   .cat{margin:18px 0 8px;padding:10px;background:#08361f;border-radius:14px;text-align:center;font-weight:900;letter-spacing:.4px;box-shadow:var(--shadow)}
   .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:12px}
   .card{background:var(--card);padding:14px;border-radius:16px;box-shadow:var(--shadow);border:1px solid rgba(255,255,255,.08)}
-  .img{width:100%;height:170px;object-fit:cover;border-radius:14px;margin-bottom:10px;background:rgba(0,0,0,.18)}
+  .img{width:100%;height:120px;object-fit:cover;border-radius:14px;margin-bottom:10px;background:rgba(0,0,0,.18)}
   .title{margin:0;font-size:18px}
   .price{font-weight:900;font-size:18px;margin:6px 0}
   .desc{color:rgba(255,255,255,.9);font-size:13px;line-height:1.25}
@@ -38,56 +38,6 @@
   .empty{text-align:center;padding:18px;color:var(--muted)}
   .error{background:rgba(255,0,0,.14);border:1px solid rgba(255,0,0,.25);padding:12px;border-radius:14px;margin:12px 0}
   .footer{text-align:center;padding:18px;color:var(--muted)}
-
-/* ✅ CAPA (topo) */
-.cover{
-  margin: 0 0 12px 0;
-  border-radius: 16px;
-  overflow: hidden;
-  position: relative;
-  box-shadow: var(--shadow);
-  border: 1px solid rgba(255,255,255,.08);
-  background: rgba(0,0,0,.18);
-}
-.cover img{
-  width: 100%;
-  height: 240px;
-  object-fit: cover;
-  display:block;
-}
-@media(min-width:820px){
-  .cover img{ height: 280px; }
-}
-.cover::after{
-  content:"";
-  position:absolute; inset:0;
-  background: linear-gradient(180deg, rgba(0,0,0,.10), rgba(0,0,0,.55));
-}
-.cover .cover-text{
-  position:absolute; left:14px; right:14px; bottom:12px;
-  z-index:1;
-  display:flex; align-items:flex-end; justify-content:space-between; gap:12px; flex-wrap:wrap;
-}
-.cover .brand{
-  font-weight: 900;
-  letter-spacing:.3px;
-  font-size: 18px;
-  text-shadow: 0 8px 18px rgba(0,0,0,.35);
-}
-.cover .tag{
-  font-size: 12px;
-  color: rgba(255,255,255,.88);
-  background: rgba(0,0,0,.28);
-  border: 1px solid rgba(255,255,255,.14);
-  padding: 6px 10px;
-  border-radius: 999px;
-  backdrop-filter: blur(6px);
-}
-
-
-/* ✅ Esconde qualquer texto/linha de WhatsApp na tela (número fica oculto) */
-#zapPill, .pill { display:none !important; }
-
 </style>
 </head>
 <body>
@@ -98,16 +48,6 @@
 </header>
 
 <div class="wrap">
-
-  <!-- ✅ CAPA DO SABOR DA SOPA -->
-  <div class="cover">
-    <img src="capa.jpg" alt="Sabor da Sopa - Capa" />
-    <div class="cover-text">
-      <div class="brand">🍲 Sabor da Sopa</div>
-      <div class="tag">Cardápio Online • Caldos e Sopas</div>
-    </div>
-  </div>
-
   <div class="panel">
     <div class="row">
       <div>
@@ -126,6 +66,31 @@
     <div class="toolbar">
       <span class="pill">📲 WhatsApp: 5581996604169</span>
       <span class="mini">Dica: escolha a quantidade e toque em “Pedir”.</span>
+    </div>
+  </div>
+
+
+  <!-- ✅ CADASTRO DO CLIENTE (NOVO) -->
+  <div class="panel" id="cadastroPanel">
+    <div style="font-weight:900;margin-bottom:8px">👤 Cadastro do Cliente</div>
+
+    <div class="row" style="grid-template-columns:1fr 1fr">
+      <div>
+        <label>Nome</label>
+        <input id="cliNome" placeholder="Ex: Cleyton" />
+      </div>
+      <div>
+        <label>Telefone / WhatsApp</label>
+        <input id="cliTelefone" placeholder="Ex: (81) 9xxxx-xxxx" />
+      </div>
+    </div>
+
+    <label style="margin-top:10px">Endereço</label>
+    <textarea id="cliEndereco" placeholder="Rua, número, bairro, ponto de referência..."></textarea>
+
+    <div class="toolbar" style="justify-content:space-between">
+      <span class="mini" id="cliStatus">Preencha e clique em “Salvar dados”.</span>
+      <button class="btn" id="btnSalvarCliente" type="button">Salvar dados</button>
     </div>
   </div>
 
@@ -281,6 +246,39 @@ Endereço:`;
 
   busca.addEventListener("input", render);
   carregar();
+
+  // ✅ CADASTRO DO CLIENTE (localStorage)
+  const cliNome = document.getElementById("cliNome");
+  const cliTelefone = document.getElementById("cliTelefone");
+  const cliEndereco = document.getElementById("cliEndereco");
+  const cliStatus = document.getElementById("cliStatus");
+  const btnSalvarCliente = document.getElementById("btnSalvarCliente");
+  const CLIENT_KEY = "sabor_cliente_v1";
+
+  function loadCliente(){
+    try{
+      const data = JSON.parse(localStorage.getItem(CLIENT_KEY) || "null");
+      if(!data) return;
+      if(cliNome) cliNome.value = data.nome || "";
+      if(cliTelefone) cliTelefone.value = data.telefone || "";
+      if(cliEndereco) cliEndereco.value = data.endereco || "";
+      if(cliStatus) cliStatus.textContent = "✅ Dados carregados.";
+    }catch(e){}
+  }
+
+  function saveCliente(){
+    const data = {
+      nome: (cliNome?.value || "").trim(),
+      telefone: (cliTelefone?.value || "").trim(),
+      endereco: (cliEndereco?.value || "").trim(),
+    };
+    localStorage.setItem(CLIENT_KEY, JSON.stringify(data));
+    if(cliStatus) cliStatus.textContent = "✅ Dados salvos.";
+  }
+
+  if(btnSalvarCliente) btnSalvarCliente.addEventListener("click", saveCliente);
+  loadCliente();
+
 </script>
 
 </body>
