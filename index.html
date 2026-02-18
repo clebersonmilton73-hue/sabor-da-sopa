@@ -11,7 +11,7 @@
   }
   *{box-sizing:border-box}
   body{margin:0;font-family:Arial,Helvetica,sans-serif;background:linear-gradient(180deg,var(--bg2),var(--bg));color:var(--txt)}
-  header{padding:18px 14px;text-align:center;background:rgba(0,0,0,.18);position:sticky;top:0;backdrop-filter:blur(6px);z-index:5}
+  header{padding:18px 14px;text-align:center;background:rgba(0,0,0,.18);position:sticky;top:0;backdrop-filter:blur(6px);z-index:2}
   header h1{margin:0;font-size:28px;letter-spacing:.3px}
   header p{margin:6px 0 0;color:var(--muted)}
   .wrap{max-width:1050px;margin:0 auto;padding:14px}
@@ -22,94 +22,43 @@
   input,textarea{width:100%;padding:10px 12px;border-radius:12px;border:0;outline:none}
   textarea{min-height:70px;resize:vertical}
   .toolbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:10px}
+  .pill{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.14);padding:8px 10px;border-radius:999px;color:var(--txt);font-size:13px}
   .btn{background:var(--accent);border:0;padding:10px 14px;border-radius:12px;font-weight:900;cursor:pointer}
   .btn:active{transform:translateY(1px)}
-  .btn2{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.18);color:#fff;padding:10px 14px;border-radius:12px;font-weight:900;cursor:pointer}
-  .btn2:active{transform:translateY(1px)}
+  .btnGhost{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.22);color:var(--txt)}
   .mini{font-size:12px;color:var(--muted)}
   .cat{margin:18px 0 8px;padding:10px;background:#08361f;border-radius:14px;text-align:center;font-weight:900;letter-spacing:.4px;box-shadow:var(--shadow)}
-  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px}
-
-  /* ✅ CARD com imagem pequena e bem visível */
-  .card{
-    background:var(--card);
-    padding:14px;
-    border-radius:16px;
-    box-shadow:var(--shadow);
-    border:1px solid rgba(255,255,255,.08);
-    display:flex;
-    gap:12px;
-    align-items:flex-start;
-  }
-  .thumb{
-    width:110px;height:110px;
-    border-radius:14px;
-    object-fit:cover;
-    flex:0 0 110px;
-    background:rgba(0,0,0,.18);
-    border:1px solid rgba(255,255,255,.10);
-  }
-  .content{flex:1;min-width:0}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:12px}
+  .card{background:var(--card);padding:14px;border-radius:16px;box-shadow:var(--shadow);border:1px solid rgba(255,255,255,.08)}
+  /* imagens mais visíveis, porém menores */
+  .img{width:100%;height:110px;object-fit:cover;border-radius:14px;margin-bottom:10px;background:rgba(0,0,0,.18)}
   .title{margin:0;font-size:18px}
   .price{font-weight:900;font-size:18px;margin:6px 0}
   .desc{color:rgba(255,255,255,.9);font-size:13px;line-height:1.25}
-  .buyrow{display:flex;gap:8px;align-items:center;margin-top:10px;flex-wrap:wrap}
+  .buyrow{display:flex;gap:8px;align-items:center;margin-top:10px}
   .qty{width:92px}
   .empty{text-align:center;padding:18px;color:var(--muted)}
   .error{background:rgba(255,0,0,.14);border:1px solid rgba(255,0,0,.25);padding:12px;border-radius:14px;margin:12px 0}
-
   .footer{text-align:center;padding:18px;color:var(--muted)}
 
-  /* ✅ CAPA (topo) */
-  .cover{
-    margin: 0 0 12px 0;
-    border-radius: 16px;
-    overflow: hidden;
-    position: relative;
-    box-shadow: var(--shadow);
-    border: 1px solid rgba(255,255,255,.08);
-    background: rgba(0,0,0,.18);
-  }
-  .cover img{width:100%;height:240px;object-fit:cover;display:block}
-  @media(min-width:820px){.cover img{height:280px}}
-  .cover::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg, rgba(0,0,0,.10), rgba(0,0,0,.55))}
-  .cover .cover-text{
-    position:absolute; left:14px; right:14px; bottom:12px;
-    z-index:1;
-    display:flex; align-items:flex-end; justify-content:space-between; gap:12px; flex-wrap:wrap;
-  }
-  .cover .brand{font-weight:900;letter-spacing:.3px;font-size:18px;text-shadow:0 8px 18px rgba(0,0,0,.35)}
-  .cover .tag{font-size:12px;color:rgba(255,255,255,.88);background:rgba(0,0,0,.28);border:1px solid rgba(255,255,255,.14);padding:6px 10px;border-radius:999px;backdrop-filter:blur(6px)}
+  /* navegação por categoria (página) */
+  .catsWrap{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
+  .catCard{background:rgba(255,255,255,.10);border:1px solid rgba(255,255,255,.16);padding:14px;border-radius:16px;box-shadow:var(--shadow);cursor:pointer}
+  .catCard:hover{transform:translateY(-1px)}
+  .catTitle{font-weight:900;font-size:16px;margin:0 0 6px}
+  .topbar{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:10px}
+  .tag{background:rgba(0,0,0,.18);border:1px solid rgba(255,255,255,.14);padding:6px 10px;border-radius:999px;font-size:12px;color:var(--muted)}
+  .hr{height:1px;background:rgba(255,255,255,.10);margin:10px 0;border-radius:999px}
 
-  /* ✅ Atalhos de categoria */
-  .catsBar{
-    display:flex; gap:8px; flex-wrap:wrap;
-    margin:10px 0 4px;
-  }
-  .catLink{
-    cursor:pointer;
-    padding:8px 10px;
-    border-radius:999px;
-    background:rgba(255,255,255,.12);
-    border:1px solid rgba(255,255,255,.16);
-    color:#fff;
-    font-size:13px;
-    font-weight:800;
-  }
-  .catLink:active{transform:translateY(1px)}
-
-  /* ✅ Cadastro */
-  .ok{
-    background:rgba(0,255,140,.12);
-    border:1px solid rgba(0,255,140,.22);
-    padding:12px;border-radius:14px;margin:12px 0;
-  }
-
-  /* responsivo do card */
-  @media(max-width:520px){
-    .card{flex-direction:column}
-    .thumb{width:100%;height:170px;flex:0 0 auto}
-  }
+  /* modal de finalização */
+  .overlay{position:fixed;inset:0;background:rgba(0,0,0,.55);display:none;align-items:center;justify-content:center;padding:14px;z-index:50}
+  .modal{width:min(560px,100%);background:linear-gradient(180deg,rgba(0,0,0,.25),rgba(0,0,0,.18));border:1px solid rgba(255,255,255,.14);border-radius:18px;box-shadow:var(--shadow);padding:14px}
+  .modal h2{margin:0 0 10px;font-size:18px}
+  .modal .row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  @media(max-width:520px){.modal .row2{grid-template-columns:1fr}}
+  .closeX{float:right;background:transparent;border:0;color:var(--txt);font-size:18px;cursor:pointer}
+  .sum{background:rgba(255,255,255,.10);border:1px solid rgba(255,255,255,.14);border-radius:14px;padding:10px;font-size:13px;line-height:1.35}
+  .warn{background:rgba(255,212,0,.14);border:1px solid rgba(255,212,0,.35);padding:10px;border-radius:14px;margin-top:10px}
 </style>
 </head>
 <body>
@@ -120,58 +69,35 @@
 </header>
 
 <div class="wrap">
+  <!-- Cadastro do cliente (obrigatório para pedir) -->
+  <div class="panel" id="cadastro">
+    <div class="topbar">
+      <div style="font-weight:900">🧾 Cadastro do Cliente (obrigatório)</div>
+      <span class="tag" id="statusCliente">Cliente: não cadastrado</span>
+    </div>
 
-  <!-- ✅ CAPA DO SABOR DA SOPA -->
-  <div class="cover">
-    <img src="capa.jpg" alt="Sabor da Sopa - Capa" />
-    <div class="cover-text">
-      <div class="brand">🍲 Sabor da Sopa</div>
-      <div class="tag">Cardápio Online • Caldos e Sopas</div>
+    <div class="row">
+      <div>
+        <label>👤 Nome</label>
+        <input id="cliNome" placeholder="Seu nome" />
+      </div>
+      <div>
+        <label>📱 WhatsApp</label>
+        <input id="cliFone" placeholder="(81) 9xxxx-xxxx" />
+      </div>
+    </div>
+
+    <label style="margin-top:10px">📍 Endereço</label>
+    <textarea id="cliEnd" placeholder="Rua, número, bairro, ponto de referência..."></textarea>
+
+    <div class="toolbar">
+      <button class="btn" id="btnSalvarCliente">Salvar cadastro</button>
+      <button class="btn btnGhost" id="btnLimparCliente" type="button">Limpar</button>
+      <span class="mini">Só dá pra fazer pedido depois de cadastrar.</span>
     </div>
   </div>
 
-  <!-- ✅ CADASTRO DO CLIENTE (OBRIGATÓRIO) -->
-  <div class="panel" id="cadastroPanel">
-    <div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:center">
-      <div>
-        <div style="font-weight:900;font-size:16px">👤 Cadastro do Cliente (obrigatório)</div>
-        <div class="mini">Para pedir, preencha uma vez. Fica salvo neste aparelho.</div>
-      </div>
-      <div style="display:flex;gap:8px;flex-wrap:wrap">
-        <button class="btn2" type="button" id="btnEditar" style="display:none">Editar</button>
-        <button class="btn" type="button" id="btnSalvar">Salvar cadastro</button>
-      </div>
-    </div>
-
-    <div id="cadastroStatus" style="margin-top:10px"></div>
-
-    <div class="row" style="margin-top:10px">
-      <div>
-        <label>✅ Nome</label>
-        <input id="cNome" placeholder="Seu nome" />
-      </div>
-      <div>
-        <label>📞 WhatsApp do cliente</label>
-        <input id="cFone" placeholder="Ex: 81999999999" />
-      </div>
-    </div>
-
-    <div class="row" style="margin-top:10px">
-      <div>
-        <label>📍 Endereço</label>
-        <input id="cEndereco" placeholder="Rua, número, bairro" />
-      </div>
-      <div>
-        <label>🏢 Ap (Apartamento) / Bloco (opcional)</label>
-        <input id="cAp" placeholder="Ex: Ap 302 Bloco B" />
-      </div>
-    </div>
-
-    <label style="margin-top:10px">🧭 Ponto de referência (opcional)</label>
-    <input id="cRef" placeholder="Ex: perto do mercado / em frente à praça" />
-  </div>
-
-  <!-- ✅ BUSCA + OBS -->
+  <!-- Busca -->
   <div class="panel">
     <div class="row">
       <div>
@@ -180,15 +106,14 @@
       </div>
       <div>
         <label>📝 Observação do pedido (opcional)</label>
-        <textarea id="obsGeral" placeholder="Ex: sem pimenta / bem quente / mandar colher / etc."></textarea>
+        <input id="obsGeral" placeholder="Ex: sem pimenta / bem quente / mandar colher / etc." />
       </div>
     </div>
 
     <div class="toolbar">
-      <span class="mini">Dica: escolha a quantidade e toque em “Pedir”.</span>
+      <span class="pill">📲 WhatsApp: 5581997284466</span>
+      <span class="mini">Dica: toque na categoria, escolha o item e finalize.</span>
     </div>
-
-    <div id="catsBar" class="catsBar"></div>
   </div>
 
   <div id="msg"></div>
@@ -197,11 +122,32 @@
 
 <div class="footer">© Sabor da Sopa</div>
 
+<!-- Modal Finalização -->
+<div class="overlay" id="overlay">
+  <div class="modal" role="dialog" aria-modal="true" aria-label="Finalização do pedido">
+    <button class="closeX" id="closeModal" aria-label="Fechar">✕</button>
+    <h2>✅ Finalização do pedido</h2>
+
+    <div class="sum" id="sumBox">...</div>
+
+    <div class="hr"></div>
+
+    <label>📝 Observação (opcional)</label>
+    <textarea id="obsFinal" placeholder="Ex: sem pimenta / bem quente / etc."></textarea>
+
+    <div class="toolbar" style="justify-content:flex-end;margin-top:10px">
+      <button class="btn btnGhost" id="btnCancelar" type="button">Cancelar</button>
+      <button class="btn" id="btnFinalizar" type="button">Finalizar no WhatsApp</button>
+    </div>
+
+    <div class="mini" style="margin-top:10px">Ao finalizar, abre o WhatsApp com a mensagem pronta.</div>
+  </div>
+</div>
+
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js";
   import { getFirestore, collection, getDocs, query, orderBy } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js";
 
-  // ✅ Número novo
   const WHATSAPP = "5581997284466";
 
   const firebaseConfig = {
@@ -219,21 +165,23 @@
   const el = document.getElementById("app");
   const msg = document.getElementById("msg");
   const busca = document.getElementById("busca");
-  const obsInput = document.getElementById("obsGeral");
-  const catsBar = document.getElementById("catsBar");
+  const obsGeral = document.getElementById("obsGeral");
 
-  // Cadastro
-  const cadastroPanel = document.getElementById("cadastroPanel");
-  const cadastroStatus = document.getElementById("cadastroStatus");
-  const btnSalvar = document.getElementById("btnSalvar");
-  const btnEditar = document.getElementById("btnEditar");
-  const cNome = document.getElementById("cNome");
-  const cFone = document.getElementById("cFone");
-  const cEndereco = document.getElementById("cEndereco");
-  const cAp = document.getElementById("cAp");
-  const cRef = document.getElementById("cRef");
+  // cadastro
+  const cliNome = document.getElementById("cliNome");
+  const cliFone = document.getElementById("cliFone");
+  const cliEnd  = document.getElementById("cliEnd");
+  const statusCliente = document.getElementById("statusCliente");
+  const btnSalvarCliente = document.getElementById("btnSalvarCliente");
+  const btnLimparCliente = document.getElementById("btnLimparCliente");
 
-  const STORAGE_KEY = "sabor_da_sopa_cliente_v1";
+  // modal finalização
+  const overlay = document.getElementById("overlay");
+  const closeModal = document.getElementById("closeModal");
+  const btnCancelar = document.getElementById("btnCancelar");
+  const btnFinalizar = document.getElementById("btnFinalizar");
+  const sumBox = document.getElementById("sumBox");
+  const obsFinal = document.getElementById("obsFinal");
 
   const formatBRL = (v)=> Number(v||0).toLocaleString("pt-BR",{style:"currency",currency:"BRL"});
   const esc = (s)=> String(s||"").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;").replaceAll("'","&#39;");
@@ -248,89 +196,86 @@
   }
 
   function abrirWhats(text){
-    const url = \`https://wa.me/\${WHATSAPP}?text=\${encodeURIComponent(text)}\`;
+    const url = `https://wa.me/${WHATSAPP}?text=${encodeURIComponent(text)}`;
     window.open(url, "_blank");
-  }
-
-  function scrollToCadastro(){
-    cadastroPanel.scrollIntoView({ behavior:"smooth", block:"start" });
   }
 
   function getCliente(){
     try{
-      const raw = localStorage.getItem(STORAGE_KEY);
+      const raw = localStorage.getItem("cliente_cadastro");
       return raw ? JSON.parse(raw) : null;
-    }catch(e){ return null; }
+    }catch{ return null; }
   }
-
   function setCliente(obj){
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(obj));
+    localStorage.setItem("cliente_cadastro", JSON.stringify(obj));
   }
-
-  function validarCadastro(){
-    const nome = (cNome.value||"").trim();
-    const fone = (cFone.value||"").trim();
-    const end = (cEndereco.value||"").trim();
-    if(!nome || !fone || !end) return { ok:false, msg:"Preencha Nome, WhatsApp e Endereço." };
-    return { ok:true };
+  function clearCliente(){
+    localStorage.removeItem("cliente_cadastro");
   }
-
-  function setCadastroModo(locked){
-    [cNome,cFone,cEndereco,cAp,cRef].forEach(i => i.disabled = locked);
-    btnSalvar.style.display = locked ? "none" : "inline-block";
-    btnEditar.style.display = locked ? "inline-block" : "none";
-  }
-
-  function renderCadastroStatus(){
-    const cli = getCliente();
-    if(cli && cli.nome && cli.fone && cli.endereco){
-      cadastroStatus.innerHTML = `
-        <div class="ok">
-          <b>✅ Cadastro salvo!</b><br>
-          <div class="mini"><b>Nome:</b> ${esc(cli.nome)} • <b>WhatsApp:</b> ${esc(cli.fone)}</div>
-          <div class="mini"><b>Endereço:</b> ${esc(cli.endereco)}${cli.ap ? " • <b>Ap:</b> "+esc(cli.ap) : ""}</div>
-        </div>`;
-      cNome.value = cli.nome || "";
-      cFone.value = cli.fone || "";
-      cEndereco.value = cli.endereco || "";
-      cAp.value = cli.ap || "";
-      cRef.value = cli.ref || "";
-      setCadastroModo(true);
+  function refreshClienteUI(){
+    const c = getCliente();
+    if(c && c.nome){
+      statusCliente.textContent = `Cliente: ${c.nome}`;
+      cliNome.value = c.nome || "";
+      cliFone.value = c.fone || "";
+      cliEnd.value  = c.end || "";
     }else{
-      cadastroStatus.innerHTML = `
-        <div class="error" style="border-color:rgba(255,255,255,.14);background:rgba(0,0,0,.18)">
-          <b>⚠️ Faça seu cadastro para liberar o botão “Pedir”.</b>
-          <div class="mini" style="margin-top:6px">Preencha os campos e toque em “Salvar cadastro”.</div>
-        </div>`;
-      setCadastroModo(false);
+      statusCliente.textContent = "Cliente: não cadastrado";
     }
   }
+  function validarCadastro(){
+    const nome = (cliNome.value || "").trim();
+    const fone = (cliFone.value || "").trim();
+    const end  = (cliEnd.value  || "").trim();
+    if(!nome || !fone || !end) return null;
+    return { nome, fone, end };
+  }
 
-  btnSalvar.addEventListener("click", ()=>{
-    const v = validarCadastro();
-    if(!v.ok){
-      alert(v.msg);
-      scrollToCadastro();
+  btnSalvarCliente.addEventListener("click", ()=>{
+    const c = validarCadastro();
+    if(!c){
+      msg.innerHTML = `<div class="warn">⚠️ Preencha <b>Nome</b>, <b>WhatsApp</b> e <b>Endereço</b> para salvar.</div>`;
+      document.getElementById("cadastro").scrollIntoView({behavior:"smooth", block:"start"});
       return;
     }
-    const cli = {
-      nome: (cNome.value||"").trim(),
-      fone: (cFone.value||"").trim(),
-      endereco: (cEndereco.value||"").trim(),
-      ap: (cAp.value||"").trim(),
-      ref: (cRef.value||"").trim(),
-      savedAt: Date.now()
-    };
-    setCliente(cli);
-    renderCadastroStatus();
+    setCliente(c);
+    msg.innerHTML = `<div class="warn">✅ Cadastro salvo! Agora você já pode fazer seu pedido.</div>`;
+    refreshClienteUI();
   });
 
-  btnEditar.addEventListener("click", ()=>{
-    setCadastroModo(false);
-    scrollToCadastro();
+  btnLimparCliente.addEventListener("click", ()=>{
+    clearCliente();
+    cliNome.value = "";
+    cliFone.value = "";
+    cliEnd.value  = "";
+    refreshClienteUI();
+    msg.innerHTML = `<div class="warn">Cadastro limpo.</div>`;
   });
 
+  function exigirCadastroOuAvisar(){
+    const c = getCliente();
+    if(c && c.nome && c.fone && c.end) return true;
+    msg.innerHTML = `<div class="warn">⚠️ Para pedir, faça o <b>cadastro do cliente</b> acima.</div>`;
+    document.getElementById("cadastro").scrollIntoView({behavior:"smooth", block:"start"});
+    return false;
+  }
+
+  // estado
   let allItems = [];
+  let currentCat = null;
+  let pending = null; // {it, q, subtotal}
+
+  // helpers de "página"
+  function goHome(){
+    currentCat = null;
+    render();
+    window.scrollTo({top:0, behavior:"smooth"});
+  }
+  function goCat(cat){
+    currentCat = cat;
+    render();
+    window.scrollTo({top:0, behavior:"smooth"});
+  }
 
   async function carregar(){
     msg.innerHTML = "";
@@ -343,101 +288,125 @@
       } catch (e) {
         snap = await getDocs(collection(db,"menuItems"));
       }
-
       allItems = snap.docs.map(d => ({ id:d.id, ...d.data() }));
 
       if(!allItems.length){
         el.innerHTML = `<div class="empty">Cardápio vazio. Cadastre itens no Admin.</div>`;
-        catsBar.innerHTML = "";
         return;
       }
-
       render();
     } catch(e) {
       console.error(e);
       showError(e?.message || String(e), "Dica: confira se existe a coleção 'menuItems' no Firestore.");
       el.innerHTML = "";
-      catsBar.innerHTML = "";
     }
   }
 
-  function montarAtalhosCategorias(cats){
-    catsBar.innerHTML = cats.map(cat => {
-      const id = "cat_" + cat.toLowerCase().replace(/\s+/g,"_").replace(/[^\w_]/g,"");
-      return `<button class="catLink" type="button" onclick="document.getElementById('${id}').scrollIntoView({behavior:'smooth',block:'start'})">${esc(cat)}</button>`;
-    }).join("");
-  }
-
-  function render(){
+  function getFiltered(){
     const q = (busca.value || "").trim().toLowerCase();
-
-    const filtered = allItems.filter(it => {
+    return allItems.filter(it => {
       if(!q) return true;
       const hay = `${it.categoria||""} ${it.nome||""} ${it.descricao||""}`.toLowerCase();
       return hay.includes(q);
     });
+  }
+
+  function render(){
+    const filtered = getFiltered();
 
     if(!filtered.length){
       el.innerHTML = `<div class="empty">Nenhum item encontrado.</div>`;
-      catsBar.innerHTML = "";
       return;
     }
 
+    // agrupar categorias
     const grupos = {};
     for (const it of filtered){
       const cat = it.categoria || "Outros";
       (grupos[cat] ||= []).push(it);
     }
-
     const cats = Object.keys(grupos).sort((a,b)=>a.localeCompare(b,"pt-BR"));
-    montarAtalhosCategorias(cats);
 
-    el.innerHTML = cats.map(cat => {
-      const items = grupos[cat].sort((a,b)=>String(a.nome||"").localeCompare(String(b.nome||""),"pt-BR"));
-      const catId = "cat_" + cat.toLowerCase().replace(/\s+/g,"_").replace(/[^\w_]/g,"");
-
-      const cards = items.map(it => {
-        const preco = Number(it.preco||0);
-        const qid = `q_${it.id}`;
-        const img = it.imageUrl
-          ? `<img class="thumb" src="${esc(it.imageUrl)}" alt="${esc(it.nome||"")}">`
-          : `<div class="thumb" aria-label="Sem imagem"></div>`;
-        const desc = it.descricao ? `<div class="desc">${esc(it.descricao)}</div>` : "";
-
+    // "Página" de categorias
+    if(!currentCat){
+      const cards = cats.map(cat=>{
+        const qtd = grupos[cat].length;
         return `
-          <div class="card">
-            ${img}
-            <div class="content">
-              <h3 class="title">${esc(it.nome || "")}</h3>
-              <div class="price">${formatBRL(preco)}</div>
-              ${desc}
-              <div class="buyrow">
-                <input class="qty" id="${qid}" type="number" min="1" value="1">
-                <button class="btn" onclick="window.pedir('${it.id}')">Pedir</button>
-              </div>
-            </div>
+          <div class="catCard" onclick="window.abrirCategoria('${esc(cat)}')">
+            <div class="catTitle">📌 ${esc(cat)}</div>
+            <div class="mini">${qtd} item(ns)</div>
           </div>
         `;
       }).join("");
 
-      return `<div class="cat" id="${catId}">${esc(cat)}</div><div class="grid">${cards}</div>`;
-    }).join("");
-  }
-
-  function clienteOk(){
-    const cli = getCliente();
-    return !!(cli && cli.nome && cli.fone && cli.endereco);
-  }
-
-  window.pedir = (id) => {
-    // ✅ Bloqueia pedido se não cadastrou
-    if(!clienteOk()){
-      alert("⚠️ Para fazer o pedido, primeiro faça seu cadastro (Nome, WhatsApp e Endereço).");
-      scrollToCadastro();
+      el.innerHTML = `
+        <div class="panel" style="margin-bottom:12px">
+          <div class="topbar">
+            <div style="font-weight:900">📂 Categorias</div>
+            <span class="mini">Toque para abrir uma categoria.</span>
+          </div>
+          <div class="catsWrap">${cards}</div>
+        </div>
+      `;
       return;
     }
 
-    const cli = getCliente();
+    // "Página" de uma categoria
+    const items = (grupos[currentCat] || []).sort((a,b)=>String(a.nome||"").localeCompare(String(b.nome||""),"pt-BR"));
+
+    const cards = items.map(it => {
+      const preco = Number(it.preco||0);
+      const qid = `q_${it.id}`;
+      const img = it.imageUrl ? `<img class="img" src="${esc(it.imageUrl)}" alt="${esc(it.nome||"")}">`
+                              : `<div class="img" style="display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,.7);font-size:12px">Sem imagem</div>`;
+      const desc = it.descricao ? `<div class="desc">${esc(it.descricao)}</div>` : "";
+      return `
+        <div class="card">
+          ${img}
+          <h3 class="title">${esc(it.nome || "")}</h3>
+          <div class="price">${formatBRL(preco)}</div>
+          ${desc}
+          <div class="buyrow">
+            <input class="qty" id="${qid}" type="number" min="1" value="1">
+            <button class="btn" onclick="window.pedir('${it.id}')">Pedir</button>
+          </div>
+        </div>
+      `;
+    }).join("");
+
+    el.innerHTML = `
+      <div class="panel">
+        <div class="topbar">
+          <button class="btn btnGhost" onclick="window.voltarCategorias()">← Voltar</button>
+          <div class="pill">📂 ${esc(currentCat)}</div>
+          <span class="mini">${items.length} item(ns)</span>
+        </div>
+      </div>
+      <div class="grid">${cards}</div>
+    `;
+  }
+
+  // navegação por categoria
+  window.abrirCategoria = (cat) => { goCat(cat); };
+  window.voltarCategorias = () => { goHome(); };
+
+  function openModal(){
+    overlay.style.display = "flex";
+    obsFinal.value = (obsGeral.value || "").trim();
+    setTimeout(()=>obsFinal.focus(), 50);
+  }
+  function closeModalFn(){
+    overlay.style.display = "none";
+    pending = null;
+  }
+
+  closeModal.addEventListener("click", closeModalFn);
+  btnCancelar.addEventListener("click", closeModalFn);
+  overlay.addEventListener("click", (e)=>{ if(e.target === overlay) closeModalFn(); });
+
+  // pedir (só se cadastrado)
+  window.pedir = (id) => {
+    if(!exigirCadastroOuAvisar()) return;
 
     const it = allItems.find(x => x.id === id);
     if(!it) return;
@@ -447,32 +416,46 @@
     const preco = Number(it.preco||0);
     const subtotal = preco * q;
 
-    const obs = (obsInput.value || "").trim();
+    pending = { it, q, preco, subtotal, categoria: it.categoria || "Outros" };
+
+    sumBox.innerHTML = `
+      <b>Categoria:</b> ${esc(pending.categoria)}<br>
+      <b>Item:</b> ${esc(pending.q)}x ${esc(it.nome || "")}<br>
+      <b>Valor unitário:</b> ${formatBRL(preco)}<br>
+      <b>Total:</b> ${formatBRL(subtotal)}
+    `;
+
+    openModal();
+  };
+
+  btnFinalizar.addEventListener("click", ()=>{
+    if(!pending) return;
+    if(!exigirCadastroOuAvisar()) { closeModalFn(); return; }
+
+    const c = getCliente();
+    const obs = (obsFinal.value || "").trim();
     const obsTxt = obs ? `\nObservação: ${obs}` : "";
 
-    // ✅ Finalização com dados do cliente + Ap
     const text =
 `Olá! Quero pedir na *Sabor da Sopa*:
 
-Categoria: ${it.categoria || "Outros"}
-Item: ${q}x ${it.nome || ""}
-Valor unitário: ${formatBRL(preco)}
-Total: ${formatBRL(subtotal)}${obsTxt}
+Categoria: ${pending.categoria}
+Item: ${pending.q}x ${pending.it.nome || ""}
+Valor unitário: ${formatBRL(pending.preco)}
+Total: ${formatBRL(pending.subtotal)}${obsTxt}
 
-*DADOS DO CLIENTE*
-Nome: ${cli.nome || ""}
-WhatsApp: ${cli.fone || ""}
-Endereço: ${cli.endereco || ""}
-Ap/Bloco: ${cli.ap || "—"}
-Referência: ${cli.ref || "—"}`;
+Cliente: ${c.nome}
+WhatsApp: ${c.fone}
+Endereço: ${c.end}`;
 
+    closeModalFn();
     abrirWhats(text);
-  };
+  });
 
   busca.addEventListener("input", render);
 
   // init
-  renderCadastroStatus();
+  refreshClienteUI();
   carregar();
 </script>
 
