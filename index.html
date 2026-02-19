@@ -234,10 +234,10 @@
   const db = getFirestore(app);
 
   // 🔐 App Check (reCAPTCHA v3)
-  initializeAppCheck(app, {
-    provider: new ReCaptchaV3Provider("6LcUV3EsAAAAAAfuYOzsR0v2yvLjJYQbAW_shQNJB"),
-    isTokenAutoRefreshEnabled: true
-  });
+initializeAppCheck(app, {
+  provider: new ReCaptchaV3Provider("6LcUV3EsAAAAAAfuYOzsR0v2yvLjJYQbAW_shQNJB"),
+  isTokenAutoRefreshEnabled: true
+});
 
   const el = document.getElementById("app");
   const msg = document.getElementById("msg");
