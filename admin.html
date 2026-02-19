@@ -134,7 +134,6 @@
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js";
   import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-auth.js";
   import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, updateDoc, query, orderBy } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js";
-  import { initializeAppCheck, ReCaptchaV3Provider } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-app-check.js";
 
   const firebaseConfig = {
     "apiKey": "AIzaSyAzD2_niY8a3Q7rO0V41j56ZwpeVTriKCw",
@@ -148,12 +147,6 @@
   const app = initializeApp(firebaseConfig);
   const auth = getAuth(app);
   const db = getFirestore(app);
-
-  // 🔐 App Check (reCAPTCHA v3)
-  initializeAppCheck(app, {
-    provider: new ReCaptchaV3Provider("6LcUV3EsAAAAAAfuYOzsR0v2yvLjJYQbAW_shQNJB"),
-    isTokenAutoRefreshEnabled: true
-  });
 
   const loginBox = document.getElementById("loginBox");
   const painel = document.getElementById("painel");
@@ -179,20 +172,6 @@
   const btnRecarregar = document.getElementById("btnRecarregar");
 
   const fmt = (v)=> Number(v||0).toLocaleString("pt-BR",{style:"currency",currency:"BRL"});
-
-  const esc = (s)=> String(s||"")
-    .replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;")
-    .replaceAll('"',"&quot;").replaceAll("'","&#39;");
-
-  const safeUrl = (u)=>{
-    u = String(u || "").trim();
-    if(!u) return "";
-    try{
-      const uu = new URL(u);
-      if(uu.protocol === "http:" || uu.protocol === "https:") return u;
-      return "";
-    }catch(_){ return ""; }
-  };
 
   let editingId = null;
   let cache = [];
@@ -253,12 +232,12 @@
         const tr = document.createElement("tr");
         tr.innerHTML = `
           <td style="width:78px">
-            ${(() => { const u = safeUrl(it.imageUrl); return u ? `<img class="thumb" src="${esc(u)}" alt="">` : `<div class="thumb"></div>`; })()}
+            ${it.imageUrl ? `<img class="thumb" src="${it.imageUrl}">` : `<div class="thumb"></div>`}
           </td>
           <td>
-            <b>${esc(it.categoria||"Outros")}</b><br>
-            ${esc(it.nome||"")}<br>
-            <span class="status">${esc(it.descricao||"")}</span>
+            <b>${it.categoria||"Outros"}</b><br>
+            ${it.nome||""}<br>
+            <span class="status">${it.descricao||""}</span>
           </td>
           <td>${fmt(it.preco)}</td>
           <td>
