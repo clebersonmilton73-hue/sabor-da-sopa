@@ -234,7 +234,10 @@
   const db = getFirestore(app);
 
   // 🔐 App Check (reCAPTCHA v3)
-initializeAppCheck(app, {
+import { initializeAppCheck, ReCaptchaV3Provider } 
+from "https://www.gstatic.com/firebasejs/10.0.0/firebase-app-check.js";
+
+const appCheck = initializeAppCheck(app, {
   provider: new ReCaptchaV3Provider("6LcUV3EsAAAAAAfuYOzsR0v2yvLjJYQbAW_shQNJB"),
   isTokenAutoRefreshEnabled: true
 });
