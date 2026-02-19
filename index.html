@@ -25,6 +25,8 @@
   .pill{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.14);padding:8px 10px;border-radius:999px;color:var(--txt);font-size:13px;display:inline-flex;gap:8px;align-items:center}
   .btn{background:var(--accent);border:0;padding:10px 14px;border-radius:12px;font-weight:900;cursor:pointer}
   .btn:active{transform:translateY(1px)}
+  .btn2{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.14);color:#fff}
+  .btn2:active{transform:translateY(1px)}
   .mini{font-size:12px;color:var(--muted)}
   .cat{margin:18px 0 8px;padding:10px;background:#08361f;border-radius:14px;text-align:center;font-weight:900;letter-spacing:.4px;box-shadow:var(--shadow)}
   .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:12px}
@@ -165,6 +167,7 @@
       <textarea id="cliEndereco" placeholder="Rua, número, bairro, referência..."></textarea>
       <div class="toolbar">
         <button class="btn" type="button" onclick="window.salvarCadastro()">Salvar cadastro</button>
+        <button class="btn btn2" type="button" onclick="window.limparCadastro()">Limpar</button>
         <span class="mini" id="cadStatus">Preencha e salve antes de finalizar.</span>
       </div>
     </div>
@@ -214,6 +217,7 @@
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js";
   import { getFirestore, collection, getDocs, query, orderBy } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js";
+  import { initializeAppCheck, ReCaptchaV3Provider } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-app-check.js";
 
   const WHATSAPP = "5581997284466";
 
@@ -228,6 +232,12 @@
 
   const app = initializeApp(firebaseConfig);
   const db = getFirestore(app);
+
+  // 🔐 App Check (reCAPTCHA v3)
+  initializeAppCheck(app, {
+    provider: new ReCaptchaV3Provider("6LcUV3EsAAAAAAfuYOzsR0v2yvLjJYQbAW_shQNJB"),
+    isTokenAutoRefreshEnabled: true
+  });
 
   const el = document.getElementById("app");
   const msg = document.getElementById("msg");
@@ -277,6 +287,27 @@
     }
   }
 
+  function getCadastro(){
+    try{
+      const raw = localStorage.getItem(CAD_KEY);
+      if(!raw) return null;
+      const d = JSON.parse(raw);
+      const nomeOk = (d?.nome || "").trim().length >= 3;
+      const zapOk  = (d?.zap || "").trim().length >= 10;
+      const endOk  = (d?.endereco || "").trim().length >= 8;
+      return (nomeOk && zapOk && endOk) ? d : null;
+    }catch(_){ return null; }
+  }
+
+  window.limparCadastro = () => {
+    localStorage.removeItem(CAD_KEY);
+    if(cliNome) cliNome.value = "";
+    if(cliZap) cliZap.value = "";
+    if(cliEndereco) cliEndereco.value = "";
+    setStatus(false, "Cadastro removido. Preencha e salve novamente.");
+    updateFinalizeState();
+  };
+
   window.salvarCadastro = () => {
     const nome = (cliNome?.value || "").trim();
     const zap = (cliZap?.value || "").trim().replace(/\D/g,"");
@@ -324,6 +355,14 @@
     .replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;")
     .replaceAll('"',"&quot;").replaceAll("'","&#39;");
 
+  // ✅ Aceita somente URLs http/https (bloqueia data:, javascript:, etc.)
+  const safeUrl = (u)=>{
+    u = String(u || "").trim();
+    if(!u) return "";
+    if(/^https?:\/\/[^ "\\]+$/i.test(u)) return u;
+    return "";
+  };
+
   function showError(text, extra=""){
     msg.innerHTML = `
       <div class="error">
@@ -335,7 +374,8 @@
 
   function abrirWhats(text){
     const url = `https://wa.me/${WHATSAPP}?text=${encodeURIComponent(text)}`;
-    window.open(url, "_blank");
+    const w = window.open(url, "_blank", "noopener,noreferrer");
+    if (w) w.opener = null;
   }
 
   // ===== Carrinho =====
@@ -431,7 +471,7 @@
   }
 
   function updateFinalizeState(){
-    const hasCadastro = !!(carregarCadastro() && (JSON.parse(localStorage.getItem(CAD_KEY) || "null")));
+    const hasCadastro = !!getCadastro();
     const hasItems = cartCount() > 0;
 
     btnFinalizar.disabled = !(hasCadastro && hasItems);
@@ -563,7 +603,8 @@
       const cards = items.map(it => {
         const preco = Number(it.preco||0);
         const qid = `q_${it.id}`;
-        const img = it.imageUrl ? `<img class="img" src="${esc(it.imageUrl)}" alt="${esc(it.nome||"")}">` : "";
+        const url = safeUrl(it.imageUrl);
+        const img = url ? `<img class="img" src="${esc(url)}" alt="${esc(it.nome||"")}">` : "";
         const desc = it.descricao ? `<div class="desc">${esc(it.descricao)}</div>` : "";
         return `
           <div class="card">
