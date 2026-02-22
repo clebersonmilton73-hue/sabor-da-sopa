@@ -114,7 +114,7 @@
 </div>
 
 <script type="module">
-import { firebaseConfig, ADMIN_EMAIL } from "./firebase-config.js";
+import { firebaseConfig, ADMIN_EMAILS } from "./firebase-config.js";
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-app.js";
 import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-auth.js";
 import { getFirestore, collection, doc, setDoc, deleteDoc, getDocs, query, orderBy, limit } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-firestore.js";
@@ -241,8 +241,10 @@ async function carregarProdutos(){
 async function salvarProduto(){
   const u = auth.currentUser;
   if(!u){ alert("Faça login."); return; }
-  if(String(u.email||"").toLowerCase() !== String(ADMIN_EMAIL||"").toLowerCase()){
-    alert("Este email não é admin. Ajuste ADMIN_EMAIL no firebase-config.js.");
+  const email = String(u.email||"").toLowerCase();
+  const ok = (ADMIN_EMAILS||[]).map(x=>String(x||"").toLowerCase()).includes(email);
+  if(!ok){
+    alert("Este email não é admin. Ajuste ADMIN_EMAILS no firebase-config.js.");
     return;
   }
 
