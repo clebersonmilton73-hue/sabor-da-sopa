@@ -1,0 +1,20 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isAdmin() {
+      return request.auth != null && request.auth.token.email == "clebersonmilton73@gmail.com";
+    }
+
+    match /produtos/{id} {
+      allow read: if true;
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /pedidos/{id} {
+      allow create: if true;
+      allow read, update, delete: if isAdmin();
+      allow list: if isAdmin();
+    }
+  }
+}

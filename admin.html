@@ -1,0 +1,323 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Admin - Sabor da Sopa</title>
+<style>
+  :root{
+    --bg:#050814; --card:#0f172a; --line:rgba(148,163,184,.16); --txt:#e2e8f0; --muted:#94a3b8;
+    --good:#22c55e; --bad:#ef4444; --shadow:0 12px 28px rgba(0,0,0,.35); --radius:18px;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;background:linear-gradient(180deg,#07101f,#050814);color:var(--txt)}
+  .wrap{max-width:1100px;margin:20px auto 60px;padding:0 14px}
+  .panel{background:rgba(15,23,42,.86);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden}
+  .hd{padding:14px 14px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;gap:10px}
+  .hd b{font-size:14px}
+  .grid{padding:14px;display:grid;grid-template-columns:320px 1fr;gap:14px}
+  @media(max-width:980px){.grid{grid-template-columns:1fr}}
+  .card{background:rgba(2,6,23,.55);border:1px solid var(--line);border-radius:16px;padding:12px}
+  .row{display:flex;gap:10px;flex-wrap:wrap}
+  .row>*{flex:1}
+  .input,.select{width:100%;background:rgba(2,6,23,.55);border:1px solid var(--line);border-radius:14px;padding:10px 12px;color:var(--txt);font-weight:900}
+  .btn{border:none;border-radius:14px;padding:10px 12px;font-weight:1000;cursor:pointer}
+  .btn.primary{background:linear-gradient(180deg,#60a5fa,#3b82f6);color:#081426}
+  .btn.good{background:linear-gradient(180deg,#34d399,#22c55e);color:#05210f}
+  .btn.ghost{background:rgba(148,163,184,.10);border:1px solid var(--line);color:var(--txt)}
+  .muted{color:var(--muted);font-weight:800}
+  .pill{display:inline-flex;align-items:center;gap:8px;background:rgba(148,163,184,.10);border:1px solid var(--line);padding:8px 10px;border-radius:999px;font-weight:900}
+  table{width:100%;border-collapse:collapse}
+  th,td{border-bottom:1px solid rgba(148,163,184,.14);padding:10px 6px;text-align:left;font-weight:900}
+  th{color:var(--muted);font-size:12px}
+  td small{color:var(--muted);font-weight:800}
+  .danger{color:var(--bad)}
+  .ok{color:var(--good)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="panel">
+    <div class="hd">
+      <div>
+        <b>🛡️ Admin - Sabor da Sopa</b>
+        <div class="muted" style="font-size:12px">Login com Firebase Auth + bloqueio após 3 tentativas</div>
+      </div>
+      <div class="pill" id="pill">🔒 desconectado</div>
+    </div>
+
+    <div class="grid">
+      <div class="card" id="loginCard">
+        <b>Entrar</b>
+        <div class="muted" style="margin-top:6px;font-size:12px">Use seu email/senha do Firebase Authentication.</div>
+
+        <div style="margin-top:12px;display:grid;gap:10px">
+          <input id="user" class="input" placeholder="Email" autocomplete="username">
+          <input id="pass" class="input" type="password" placeholder="Senha" autocomplete="current-password">
+          <button class="btn primary" onclick="entrar()">Entrar</button>
+          <div class="muted" id="lockInfo" style="font-size:12px"></div>
+        </div>
+      </div>
+
+      <div class="card" id="panelCard" style="display:none">
+        <div class="row" style="align-items:center;justify-content:space-between">
+          <b>Painel</b>
+          <div class="row" style="justify-content:flex-end">
+            <button class="btn ghost" onclick="exportarCSV()">Exportar CSV (pedidos)</button>
+            <button class="btn ghost" onclick="sair()">Sair</button>
+          </div>
+        </div>
+
+        <div style="margin-top:12px" class="row">
+          <input id="pId" class="input" placeholder="ID numérico (ex: 101)">
+          <input id="pCat" class="input" placeholder="Categoria">
+        </div>
+        <div style="margin-top:10px" class="row">
+          <input id="pNome" class="input" placeholder="Nome do produto">
+          <input id="pPreco" class="input" placeholder="Preço" inputmode="decimal">
+        </div>
+        <div style="margin-top:10px" class="row">
+          <input id="pOrd" class="input" placeholder="Ordem (opcional)" inputmode="numeric">
+          <button class="btn good" onclick="salvarProduto()">Salvar/Atualizar</button>
+        </div>
+
+        <div style="margin-top:16px">
+          <b>Produtos</b>
+          <div class="muted" style="font-size:12px;margin-top:6px">Apenas o email admin pode editar (rules).</div>
+          <div style="margin-top:10px;overflow:auto">
+            <table>
+              <thead><tr><th>ID</th><th>Produto</th><th>Categoria</th><th>Preço</th><th>Ações</th></tr></thead>
+              <tbody id="tbProd"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div style="margin-top:18px">
+          <b>Pedidos</b>
+          <div class="muted" style="font-size:12px;margin-top:6px">Clientes criam, mas não leem. Admin lê.</div>
+          <div style="margin-top:10px;overflow:auto">
+            <table>
+              <thead><tr><th>Data</th><th>Cliente</th><th>Total</th><th>Tipo</th><th>Obs</th></tr></thead>
+              <tbody id="tbPed"></tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <div class="muted" style="margin-top:14px;font-size:12px">
+    ✅ Senha “criptografada”: no Firebase Auth, senhas são armazenadas com hash/segurança do servidor (você não guarda a senha em arquivo).<br>
+    🛡️ O bloqueio após 3 tentativas é local (neste navegador) para evitar força bruta rápida.
+  </div>
+</div>
+
+<script type="module">
+import { firebaseConfig, ADMIN_EMAIL } from "./firebase-config.js";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-app.js";
+import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-auth.js";
+import { getFirestore, collection, doc, setDoc, deleteDoc, getDocs, query, orderBy, limit } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-firestore.js";
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+
+const pill = document.getElementById("pill");
+const loginCard = document.getElementById("loginCard");
+const panelCard = document.getElementById("panelCard");
+const lockInfo = document.getElementById("lockInfo");
+
+const LOCK_KEY = "SABOR_ADMIN_LOCK_v1";
+
+function now(){ return Date.now(); }
+function getLock(){
+  try{ return JSON.parse(localStorage.getItem(LOCK_KEY) || "{}"); }catch(e){ return {}; }
+}
+function setLock(o){ localStorage.setItem(LOCK_KEY, JSON.stringify(o||{})); }
+function isLocked(){
+  const l = getLock();
+  if(!l.until) return false;
+  return now() < l.until;
+}
+function lockMsg(){
+  const l = getLock();
+  if(!l.until) return "";
+  const sec = Math.max(0, Math.ceil((l.until - now())/1000));
+  return sec ? `Bloqueado por ${sec}s (após 3 tentativas).` : "";
+}
+function resetAttempts(){ setLock({attempts:0, until:0}); }
+
+function showLockUI(){
+  lockInfo.textContent = lockMsg();
+  lockInfo.className = "muted";
+  if(isLocked()) lockInfo.className = "muted danger";
+}
+setInterval(showLockUI, 500);
+
+async function entrar(){
+  if(isLocked()){
+    alert(lockMsg());
+    return;
+  }
+  const email = (document.getElementById("user").value||"").trim();
+  const pass  = (document.getElementById("pass").value||"").trim();
+
+  if(!email || !pass){ alert("Preencha email e senha."); return; }
+
+  try{
+    await signInWithEmailAndPassword(auth, email, pass);
+    resetAttempts();
+  }catch(e){
+    console.warn(e);
+    const l = getLock();
+    const attempts = (l.attempts||0) + 1;
+    // bloqueio 15 minutos após 3 tentativas
+    if(attempts >= 3){
+      setLock({attempts, until: now() + 15*60*1000});
+      alert("Muitas tentativas. Bloqueado por 15 minutos.");
+    }else{
+      setLock({attempts, until: 0});
+      alert("Login inválido. Tentativas: " + attempts + "/3");
+    }
+  }
+}
+
+async function sair(){
+  await signOut(auth);
+}
+
+function setUI(user){
+  if(user){
+    pill.textContent = "✅ logado: " + user.email;
+    loginCard.style.display="none";
+    panelCard.style.display="";
+  }else{
+    pill.textContent = "🔒 desconectado";
+    loginCard.style.display="";
+    panelCard.style.display="none";
+  }
+}
+
+async function carregarProdutos(){
+  const tb = document.getElementById("tbProd");
+  tb.innerHTML = "";
+  const snap = await getDocs(query(collection(db,"produtos"), orderBy("ord","asc"), limit(300)));
+  snap.forEach(d=>{
+    const p = d.data();
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td>${d.id}</td>
+      <td>${p.nome||""}</td>
+      <td><small>${p.cat||""}</small></td>
+      <td>R$ ${(Number(p.preco||0)).toFixed(2)}</td>
+      <td>
+        <button class="btn ghost" onclick="window.__edit('${d.id}')">Editar</button>
+        <button class="btn ghost" onclick="window.__del('${d.id}')">Excluir</button>
+      </td>
+    `;
+    tb.appendChild(tr);
+  });
+
+  window.__del = async (id)=>{
+    if(!confirm("Excluir produto "+id+"?")) return;
+    await deleteDoc(doc(db,"produtos", String(id)));
+    await carregarProdutos();
+  };
+
+  window.__edit = async (id)=>{
+    const snap2 = await getDocs(query(collection(db,"produtos"), orderBy("ord","asc"), limit(300)));
+    const docx = snap2.docs.find(x=>x.id===id);
+    const p = docx?.data() || {};
+    document.getElementById("pId").value = id;
+    document.getElementById("pCat").value = p.cat||"";
+    document.getElementById("pNome").value = p.nome||"";
+    document.getElementById("pPreco").value = p.preco||"";
+    document.getElementById("pOrd").value = p.ord ?? "";
+    window.scrollTo({top:0,behavior:"smooth"});
+  };
+}
+
+async function salvarProduto(){
+  const u = auth.currentUser;
+  if(!u){ alert("Faça login."); return; }
+  if(String(u.email||"").toLowerCase() !== String(ADMIN_EMAIL||"").toLowerCase()){
+    alert("Este email não é admin. Ajuste ADMIN_EMAIL no firebase-config.js.");
+    return;
+  }
+
+  const id = String((document.getElementById("pId").value||"").trim());
+  const cat = (document.getElementById("pCat").value||"").trim() || "Sopas";
+  const nome = (document.getElementById("pNome").value||"").trim();
+  const preco = parseFloat(String(document.getElementById("pPreco").value||"").replace(",","."));
+  const ord = parseInt(document.getElementById("pOrd").value||"0",10) || 999;
+
+  if(!id || !/^[0-9]+$/.test(id)) return alert("ID deve ser numérico (ex: 101).");
+  if(!nome) return alert("Informe o nome.");
+  if(!Number.isFinite(preco)) return alert("Preço inválido.");
+
+  await setDoc(doc(db,"produtos", id), {cat, nome, preco, ord}, {merge:true});
+  alert("Salvo!");
+  await carregarProdutos();
+}
+
+async function carregarPedidos(){
+  const tb = document.getElementById("tbPed");
+  tb.innerHTML="";
+  // últimos 120 pedidos
+  const snap = await getDocs(query(collection(db,"pedidos"), orderBy("criadoEm","desc"), limit(120)));
+  snap.forEach(d=>{
+    const p = d.data();
+    const dt = p.criadoEm?.toDate ? p.criadoEm.toDate() : null;
+    const data = dt ? dt.toLocaleString("pt-BR") : "";
+    const nome = p.cliente?.nome || "";
+    const total = Number(p.total||0).toFixed(2);
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td><small>${data}</small></td>
+      <td>${nome}<br><small>${p.cliente?.tel||""}</small></td>
+      <td>R$ ${total}</td>
+      <td><small>${p.entregaTipo||""}</small></td>
+      <td><small>${(p.obs||"").slice(0,40)}</small></td>
+    `;
+    tb.appendChild(tr);
+  });
+}
+
+async function exportarCSV(){
+  const snap = await getDocs(query(collection(db,"pedidos"), orderBy("criadoEm","desc"), limit(500)));
+  const rows = [["id","data","cliente_nome","cliente_tel","cliente_endereco","tipo","metodo","subtotal","total","obs","itens"]];
+  snap.forEach(d=>{
+    const p = d.data();
+    const dt = p.criadoEm?.toDate ? p.criadoEm.toDate().toISOString() : "";
+    const itens = (p.itens||[]).map(i=>`${i.nome} x${i.qtd} (${(Number(i.preco||0)*Number(i.qtd||0)).toFixed(2)})`).join(" | ");
+    rows.push([
+      d.id, dt, p.cliente?.nome||"", p.cliente?.tel||"", p.cliente?.endereco||"",
+      p.entregaTipo||"", p.metodo||"", p.subtotal||0, p.total||0, (p.obs||""), itens
+    ]);
+  });
+  const csv = rows.map(r=>r.map(x=>('"'+String(x??"").replace(/"/g,'""')+'"')).join(";")).join("\n");
+  const blob = new Blob([csv], {type:"text/csv;charset=utf-8;"});
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "pedidos_sabor_da_sopa.csv";
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+window.entrar = entrar;
+window.sair = sair;
+window.salvarProduto = salvarProduto;
+window.exportarCSV = exportarCSV;
+
+onAuthStateChanged(auth, async (user)=>{
+  setUI(user);
+  showLockUI();
+  if(!user) return;
+  // carrega dados
+  await carregarProdutos();
+  await carregarPedidos();
+});
+</script>
+</body>
+</html>

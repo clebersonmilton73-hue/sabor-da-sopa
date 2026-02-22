@@ -1,0 +1,12 @@
+# .htaccess (APACHE) - Proteção extra do admin.html
+# ✅ Só funciona em hospedagem Apache com AllowOverride ON
+
+AuthType Basic
+AuthName "Area Restrita - Admin"
+AuthUserFile /CAMINHO/ABSOLUTO/fora_do_public_html/.htpasswd
+Require valid-user
+
+# Dicas:
+# 1) Gere .htpasswd com um gerador online (bcrypt/apr1) ou no terminal:
+#    htpasswd -c /caminho/.htpasswd usuario
+# 2) Coloque o .htpasswd fora do public_html para não vazar.

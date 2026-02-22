@@ -1,0 +1,295 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Sabor da Sopa</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<style>
+  :root{
+    --bg:#0b1220; --card:#0f172a; --muted:#94a3b8; --txt:#e2e8f0;
+    --accent:#22c55e; --accent2:#16a34a; --line:rgba(148,163,184,.14);
+    --shadow: 0 12px 28px rgba(0,0,0,.35);
+    --radius:18px;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;background:linear-gradient(180deg,#07101f,#050814);color:var(--txt)}
+  header{position:sticky;top:0;z-index:5;background:rgba(5,8,20,.72);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+  .top{max-width:1100px;margin:auto;padding:14px 14px;display:flex;align-items:center;justify-content:space-between;gap:10px}
+  .brand{display:flex;align-items:center;gap:10px}
+  .logo{width:40px;height:40px;border-radius:14px;background:radial-gradient(circle at 30% 30%, #34d399, #16a34a 60%, #0b1220);box-shadow:0 10px 20px rgba(34,197,94,.25)}
+  .brand b{font-size:18px;letter-spacing:.2px}
+  .pill{display:inline-flex;align-items:center;gap:8px;background:rgba(148,163,184,.10);border:1px solid var(--line);padding:8px 10px;border-radius:999px;color:var(--txt);font-weight:800}
+  .wrap{max-width:1100px;margin:18px auto 110px;padding:0 14px;display:grid;grid-template-columns:1fr 360px;gap:14px}
+  @media (max-width:980px){.wrap{grid-template-columns:1fr} .cart{position:fixed;left:0;right:0;bottom:0;max-width:none;border-radius:18px 18px 0 0}}
+  .panel{background:rgba(15,23,42,.85);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden}
+  .panel .hd{padding:14px 14px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;gap:10px}
+  .panel .hd h2{margin:0;font-size:14px;letter-spacing:.2px}
+  .grid{padding:14px;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+  @media (max-width:560px){.grid{grid-template-columns:1fr}}
+  .item{background:rgba(2,6,23,.55);border:1px solid var(--line);border-radius:16px;padding:12px;display:grid;gap:8px}
+  .item .t{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}
+  .item b{font-size:14px}
+  .item small{color:var(--muted);font-weight:800}
+  .price{font-weight:1000}
+  .btn{width:100%;border:none;border-radius:14px;padding:10px 12px;font-weight:1000;cursor:pointer;background:linear-gradient(180deg,var(--accent),var(--accent2));color:#06240f}
+  .btn:active{transform:translateY(1px)}
+  .cart{align-self:start}
+  .cartBody{padding:14px;display:grid;gap:10px}
+  .row{display:flex;gap:10px}
+  .row>*{flex:1}
+  .input,.select{width:100%;background:rgba(2,6,23,.55);border:1px solid var(--line);border-radius:14px;padding:10px 12px;color:var(--txt);font-weight:900}
+  textarea.input{min-height:72px;resize:vertical;padding-top:10px;line-height:1.25}
+  .chip{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--line);background:rgba(148,163,184,.10);padding:8px 10px;border-radius:999px;font-weight:1000;cursor:pointer;user-select:none}
+  .chip.active{background:rgba(34,197,94,.18);border-color:rgba(34,197,94,.35)}
+  .muted{color:var(--muted);font-weight:800}
+  .sum{border-top:1px dashed rgba(148,163,184,.35);padding-top:10px;display:grid;gap:8px}
+  .line{display:flex;justify-content:space-between;gap:10px;font-weight:900}
+  .line b{font-weight:1100}
+  .btn2{border:none;border-radius:14px;padding:10px 12px;font-weight:1000;cursor:pointer}
+  .btn2.primary{background:linear-gradient(180deg,#60a5fa,#3b82f6);color:#081426}
+  .btn2.ghost{background:rgba(148,163,184,.10);border:1px solid var(--line);color:var(--txt)}
+  .toast{position:fixed;left:50%;bottom:16px;transform:translateX(-50%);background:#111827;color:#fff;border:1px solid rgba(255,255,255,.10);padding:10px 12px;border-radius:14px;display:none;z-index:50}
+</style>
+</head>
+<body>
+<header>
+  <div class="top">
+    <div class="brand"><div class="logo"></div><div><b>Sabor da Sopa</b><div class="muted" style="font-size:12px">Cardápio online</div></div></div>
+    <div class="pill" id="statusPill">🔄 carregando…</div>
+  </div>
+</header>
+
+<div class="wrap">
+  <section class="panel">
+    <div class="hd">
+      <h2>🍲 Cardápio</h2>
+      <div class="muted" id="catInfo"></div>
+    </div>
+    <div class="grid" id="grid"></div>
+  </section>
+
+  <aside class="panel cart">
+    <div class="hd">
+      <h2>🛒 Seu pedido</h2>
+      <div class="muted"><span id="qtd">0</span> itens</div>
+    </div>
+    <div class="cartBody">
+      <div>
+        <div class="muted" style="margin-bottom:6px">Dados do Cliente (obrigatório)</div>
+        <div class="row">
+          <input id="cliNome" class="input" placeholder="Nome">
+          <input id="cliTel" class="input" placeholder="WhatsApp (DDD + número)" inputmode="tel">
+        </div>
+        <div style="margin-top:10px">
+          <input id="cliEnd" class="input" placeholder="Endereço completo">
+        </div>
+      </div>
+
+      <div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <div class="chip active" id="chipEntrega" onclick="setEntrega('ENTREGA')">🏍️ Entrega</div>
+          <div class="chip" id="chipRetirada" onclick="setEntrega('RETIRADA')">🏪 Retirada</div>
+        </div>
+      </div>
+
+      <textarea id="obs" class="input" placeholder="Observação do pedido (opcional)"></textarea>
+
+      <div class="row">
+        <select id="pay" class="select">
+          <option value="DINHEIRO">Dinheiro</option>
+          <option value="PIX">PIX</option>
+          <option value="CARTÃO">Cartão</option>
+        </select>
+        <input id="troco" class="input" placeholder="Troco para (se dinheiro)">
+      </div>
+
+      <div class="sum">
+        <div class="line"><span>Subtotal</span><b id="sub">R$ 0,00</b></div>
+        <div class="line"><span>Total</span><b id="tot">R$ 0,00</b></div>
+        <button class="btn2 primary" onclick="finalizar()">Finalizar e enviar no WhatsApp</button>
+        <div class="muted" style="font-size:12px">Seu pedido será salvo online (Firebase) e abrirá o WhatsApp do cliente.</div>
+      </div>
+    </div>
+  </aside>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script type="module">
+import { firebaseConfig } from "./firebase-config.js";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-app.js";
+import { getFirestore, collection, getDocs, query, orderBy, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-firestore.js";
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+const grid = document.getElementById("grid");
+const statusPill = document.getElementById("statusPill");
+const qtdEl = document.getElementById("qtd");
+const subEl = document.getElementById("sub");
+const totEl = document.getElementById("tot");
+
+let produtos = [];
+let cart = []; // {id, qtd}
+let entregaTipo = "ENTREGA";
+
+function moneyBR(v){
+  return (v||0).toLocaleString("pt-BR",{style:"currency",currency:"BRL"});
+}
+function toast(msg){
+  const t = document.getElementById("toast");
+  t.textContent = msg;
+  t.style.display="block";
+  clearTimeout(window.__tt);
+  window.__tt = setTimeout(()=>t.style.display="none", 2200);
+}
+function maskTel(raw){
+  const digits = String(raw||"").replace(/\D/g,"").slice(0, 11);
+  if(digits.length <= 2) return digits;
+  const ddd = digits.slice(0,2);
+  const rest = digits.slice(2);
+  if(rest.length <= 4) return `(${ddd}) ${rest}`;
+  if(rest.length <= 8) return `(${ddd}) ${rest.slice(0,4)}-${rest.slice(4)}`;
+  return `(${ddd}) ${rest.slice(0,5)}-${rest.slice(5)}`;
+}
+document.getElementById("cliTel").addEventListener("input", (e)=>{
+  e.target.value = maskTel(e.target.value);
+});
+
+function setEntrega(tipo){
+  entregaTipo = (tipo==="RETIRADA") ? "RETIRADA" : "ENTREGA";
+  document.getElementById("chipEntrega").classList.toggle("active", entregaTipo==="ENTREGA");
+  document.getElementById("chipRetirada").classList.toggle("active", entregaTipo==="RETIRADA");
+}
+
+function add(id){
+  const it = cart.find(x=>x.id===id);
+  if(it) it.qtd++;
+  else cart.push({id, qtd:1});
+  recalc();
+}
+
+function recalc(){
+  let qtd = 0;
+  let sub = 0;
+  cart.forEach(c=>{
+    const p = produtos.find(x=>x.id===c.id);
+    if(!p) return;
+    qtd += c.qtd;
+    sub += (p.preco||0) * c.qtd;
+  });
+  qtdEl.textContent = qtd;
+  subEl.textContent = moneyBR(sub);
+  totEl.textContent = moneyBR(sub);
+}
+
+function render(){
+  grid.innerHTML="";
+  produtos.forEach(p=>{
+    const div = document.createElement("div");
+    div.className = "item";
+    div.innerHTML = `
+      <div class="t">
+        <div>
+          <b>${p.nome}</b><br>
+          <small>${p.cat || "Sopas"}</small>
+        </div>
+        <div class="price">${moneyBR(p.preco||0)}</div>
+      </div>
+      <button class="btn" onclick="window.__add(${p.id})">Adicionar</button>
+    `;
+    grid.appendChild(div);
+  });
+  window.__add = add;
+}
+
+async function carregar(){
+  try{
+    statusPill.textContent = "🔄 carregando…";
+    const q = query(collection(db,"produtos"), orderBy("ord","asc"));
+    const snap = await getDocs(q);
+    produtos = snap.docs.map(d=>({id: Number(d.id), ...d.data()})).filter(p=>Number.isFinite(p.id));
+    render();
+    statusPill.textContent = "✅ online";
+  }catch(e){
+    console.error(e);
+    statusPill.textContent = "⚠️ offline/erro";
+    toast("Erro ao carregar produtos. Confira o Firebase.");
+  }
+}
+
+function dadosCliente(){
+  const nome = document.getElementById("cliNome").value.trim();
+  const tel = document.getElementById("cliTel").value.replace(/\D/g,"").trim();
+  const end = document.getElementById("cliEnd").value.trim();
+  return {nome, tel, endereco:end};
+}
+
+async function finalizar(){
+  if(!cart.length){ alert("Carrinho vazio."); return; }
+  const c = dadosCliente();
+  if(!(c.nome && c.tel && c.endereco)){
+    alert("Preencha Nome, WhatsApp e Endereço.");
+    return;
+  }
+
+  const itens = cart.map(ci=>{
+    const p = produtos.find(x=>x.id===ci.id);
+    return {id:ci.id, nome:p?.nome||"", preco:Number(p?.preco||0), qtd:ci.qtd};
+  });
+
+  const subtotal = itens.reduce((a,i)=>a+(i.preco*i.qtd),0);
+  const metodo = document.getElementById("pay").value;
+  const troco = document.getElementById("troco").value.trim();
+  const obs = document.getElementById("obs").value.trim();
+
+  const pedido = {
+    cliente: c,
+    entregaTipo,
+    metodo,
+    troco,
+    obs,
+    itens,
+    subtotal,
+    total: subtotal,
+    criadoEm: serverTimestamp()
+  };
+
+  try{
+    await addDoc(collection(db,"pedidos"), pedido);
+  }catch(e){
+    console.warn("Falha ao salvar pedido (rules?)", e);
+  }
+
+  const linhas = [];
+  linhas.push("*Sabor da Sopa* 🍲");
+  linhas.push(`Cliente: ${c.nome}`);
+  linhas.push(`Whats: ${c.tel}`);
+  linhas.push(`Endereço: ${c.endereco}`);
+  linhas.push(`Tipo: ${entregaTipo}`);
+  if(obs) linhas.push(`Obs: ${obs}`);
+  linhas.push("");
+  linhas.push("*Itens:*");
+  itens.forEach(i=>linhas.push(`- ${i.nome} x${i.qtd} (${moneyBR(i.preco*i.qtd)})`));
+  linhas.push("");
+  linhas.push(`Total: *${moneyBR(subtotal)}*`);
+  linhas.push(`Pagamento: ${metodo}`);
+  if(metodo==="DINHEIRO" && troco) linhas.push(`Troco para: ${troco}`);
+
+  const msg = encodeURIComponent(linhas.join("\n"));
+  window.open(`https://wa.me/55${c.tel}?text=${msg}`,"_blank");
+
+  cart = [];
+  recalc();
+  document.getElementById("obs").value="";
+  document.getElementById("troco").value="";
+  toast("Pedido enviado!");
+}
+window.finalizar = finalizar;
+window.setEntrega = setEntrega;
+
+carregar();
+</script>
+</body>
+</html>
