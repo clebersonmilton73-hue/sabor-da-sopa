@@ -6,7 +6,7 @@
 <title>Migração menuItems → produtos</title>
 <style>
   body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;background:#0b1220;color:#e2e8f0}
-  .wrap{max-width:860px;margin:24px auto;padding:0 14px}
+  .wrap{max-width:900px;margin:24px auto;padding:0 14px}
   .card{background:rgba(15,23,42,.86);border:1px solid rgba(148,163,184,.16);border-radius:18px;padding:14px;box-shadow:0 12px 28px rgba(0,0,0,.35)}
   .row{display:flex;gap:10px;flex-wrap:wrap}
   .row>*{flex:1}
@@ -15,15 +15,23 @@
   .primary{background:linear-gradient(180deg,#60a5fa,#3b82f6);color:#081426}
   .good{background:linear-gradient(180deg,#34d399,#22c55e);color:#05210f}
   .ghost{background:rgba(148,163,184,.10);border:1px solid rgba(148,163,184,.16);color:#e2e8f0}
-  pre{white-space:pre-wrap;word-break:break-word;background:rgba(2,6,23,.55);border:1px solid rgba(148,163,184,.16);border-radius:14px;padding:10px 12px}
+  pre{white-space:pre-wrap;word-break:break-word;background:rgba(2,6,23,.55);border:1px solid rgba(148,163,184,.16);border-radius:14px;padding:10px 12px;max-height:320px;overflow:auto}
   .muted{color:#94a3b8;font-weight:800}
+  .ok{color:#34d399}
+  .bad{color:#f87171}
+  .pill{display:inline-flex;align-items:center;gap:8px;border:1px solid rgba(148,163,184,.16);background:rgba(148,163,184,.10);padding:6px 10px;border-radius:999px;font-weight:900}
 </style>
 </head>
 <body>
 <div class="wrap">
   <div class="card">
-    <h2 style="margin:0 0 6px 0">Migração menuItems → produtos</h2>
-    <div class="muted">Faça login com admin e clique em migrar. Isso copia os itens de <b>menuItems</b> para <b>produtos</b> no padrão do seu sistema.</div>
+    <div class="row" style="align-items:center;justify-content:space-between">
+      <div>
+        <h2 style="margin:0 0 6px 0">Migração <b>menuItems</b> → <b>produtos</b></h2>
+        <div class="muted">Faça login com admin e clique em migrar. Isso copia os itens de <b>menuItems</b> para <b>produtos</b> no padrão do seu sistema.</div>
+      </div>
+      <div class="pill" id="pill">🔒 desconectado</div>
+    </div>
 
     <div style="margin-top:14px" class="row">
       <input id="email" placeholder="Email (admin)" autocomplete="username">
@@ -33,6 +41,8 @@
     <div style="margin-top:10px" class="row">
       <button class="primary" onclick="entrar()">Entrar</button>
       <button class="ghost" onclick="sair()">Sair</button>
+      <button class="ghost" onclick="testarLeitura()">Testar leitura menuItems</button>
+      <button class="ghost" onclick="testarEscrita()">Testar escrita produtos</button>
       <button class="good" onclick="migrar()">Migrar agora</button>
     </div>
 
@@ -41,7 +51,7 @@
   </div>
 
   <div style="margin-top:12px" class="muted">
-    ⚠️ Regras: para migrar, o admin precisa ter permissão de ler <b>menuItems</b> e escrever em <b>produtos</b>.<br>
+    ⚠️ Regras: para migrar, o admin precisa ter permissão de <b>ler menuItems</b> e <b>escrever em produtos</b>.<br>
     ✅ Depois da migração, o seu site vai usar somente <b>produtos</b>.
   </div>
 </div>
@@ -50,22 +60,32 @@
 import { firebaseConfig, ADMIN_EMAILS } from "./firebase-config.js";
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-app.js";
 import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-auth.js";
-import { getFirestore, collection, getDocs, query, orderBy, doc, setDoc, writeBatch } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-firestore.js";
+import { getFirestore, collection, getDocs, query, orderBy, doc, setDoc, writeBatch, serverTimestamp, deleteDoc } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-firestore.js";
 
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
 const st = document.getElementById("st");
+const pill = document.getElementById("pill");
 const logEl = document.getElementById("log");
 
-function log(msg){
-  logEl.textContent += "\n" + msg;
+function log(msg, cls=""){
+  const line = cls ? (cls==="ok" ? "✅ " : "❌ ") : "";
+  logEl.textContent += "\n" + line + msg;
   logEl.scrollTop = logEl.scrollHeight;
+}
+function resetLog(title=""){
+  logEl.textContent = title ? title + "\n" : "";
 }
 function isAdminEmail(email){
   const e = String(email||"").toLowerCase();
   return (ADMIN_EMAILS||[]).map(x=>String(x||"").toLowerCase()).includes(e);
+}
+function errText(e){
+  const code = e?.code || "";
+  const msg = e?.message || String(e||"");
+  return (code ? code + " — " : "") + msg;
 }
 
 window.entrar = async function(){
@@ -76,7 +96,7 @@ window.entrar = async function(){
     await signInWithEmailAndPassword(auth, email, senha);
   }catch(e){
     console.error(e);
-    alert("Falha no login: " + (e?.code||e?.message||e));
+    alert("Falha no login: " + errText(e));
   }
 }
 
@@ -84,64 +104,121 @@ window.sair = async function(){
   await signOut(auth);
 }
 
+window.testarLeitura = async function(){
+  resetLog("Testando leitura de menuItems...");
+  const u = auth.currentUser;
+  if(!u) return alert("Faça login.");
+  if(!isAdminEmail(u.email)) return alert("Este email não está em ADMIN_EMAILS.");
+
+  try{
+    const snap = await getDocs(collection(db,"menuItems"));
+    log("Leitura OK. Itens encontrados: " + snap.size, "ok");
+  }catch(e){
+    console.error(e);
+    log("Falha ao ler menuItems: " + errText(e), "bad");
+    if(String(e?.message||"").includes("index")){
+      log("Parece erro de índice. Use o link do erro no console para criar o índice.", "bad");
+    }
+  }
+}
+
+window.testarEscrita = async function(){
+  resetLog("Testando escrita em produtos...");
+  const u = auth.currentUser;
+  if(!u) return alert("Faça login.");
+  if(!isAdminEmail(u.email)) return alert("Este email não está em ADMIN_EMAILS.");
+
+  const testId = "999999";
+  try{
+    await setDoc(doc(db,"produtos", testId), {
+      cat: "TESTE",
+      nome: "Produto Teste (pode apagar)",
+      preco: 0,
+      ord: 999999,
+      criadoEm: serverTimestamp()
+    }, {merge:true});
+    log("Escrita OK em produtos/999999", "ok");
+    // limpa
+    await deleteDoc(doc(db,"produtos", testId));
+    log("Teste removido (delete) OK", "ok");
+  }catch(e){
+    console.error(e);
+    log("Falha ao escrever em produtos: " + errText(e), "bad");
+  }
+}
+
 window.migrar = async function(){
   const u = auth.currentUser;
   if(!u) return alert("Faça login primeiro.");
   if(!isAdminEmail(u.email)) return alert("Este email não está na lista ADMIN_EMAILS.");
 
-  logEl.textContent = "Iniciando migração...\n";
-  // Lê menuItems
-  let snap;
-  try{
-    // tenta ordenar por category e name se existir
-    snap = await getDocs(query(collection(db,"menuItems"), orderBy("category","asc"), orderBy("name","asc")));
-  }catch(e){
-    // fallback sem orderBy
-    snap = await getDocs(collection(db,"menuItems"));
-  }
+  resetLog("Iniciando migração...");
+  log("Lendo menuItems...");
 
-  const docs = snap.docs.map(d=>({id:d.id, ...d.data()}));
-  if(!docs.length){
-    log("Nenhum documento em menuItems.");
+  let snap = null;
+  try{
+    try{
+      snap = await getDocs(query(collection(db,"menuItems"), orderBy("category","asc"), orderBy("name","asc")));
+    }catch(e1){
+      log("Sem índice/ordenação (ok). Vou ler sem orderBy. (" + (e1?.code||"") + ")", "");
+      snap = await getDocs(collection(db,"menuItems"));
+    }
+  }catch(e){
+    console.error(e);
+    log("Falha ao ler menuItems: " + errText(e), "bad");
     return;
   }
 
-  log("Encontrados " + docs.length + " itens em menuItems.");
+  const docs = snap.docs.map(d=>({id:d.id, ...d.data()}));
+  log("Itens encontrados em menuItems: " + docs.length, docs.length ? "ok" : "");
 
-  // Escreve em produtos com IDs numéricos (1001+)
+  if(!docs.length){
+    log("menuItems está vazio. Nada para migrar.", "bad");
+    return;
+  }
+
+  log("Copiando para produtos...");
+
   const baseId = 1001;
   let wrote = 0;
 
-  // batch de 400 por vez (limite 500)
-  for(let i=0;i<docs.length;i+=400){
-    const batch = writeBatch(db);
-    const chunk = docs.slice(i, i+400);
-    chunk.forEach((m, idx)=>{
-      const newId = String(baseId + i + idx);
-      const data = {
-        cat: m.category || "Geral",
-        nome: m.name || "",
-        preco: Number(m.price||0),
-        ord: baseId + i + idx,
-        imageUrl: m.imageUrl || "",
-        desc: m.description || "",
-        source: { collection: "menuItems", id: m.id }
-      };
-      batch.set(doc(db,"produtos", newId), data, {merge:true});
-    });
-    await batch.commit();
-    wrote += chunk.length;
-    log("Copiados: " + wrote + "/" + docs.length);
+  try{
+    for(let i=0;i<docs.length;i+=400){
+      const batch = writeBatch(db);
+      const chunk = docs.slice(i, i+400);
+      chunk.forEach((m, idx)=>{
+        const newId = String(baseId + i + idx);
+        const data = {
+          cat: m.category || "Geral",
+          nome: m.name || "",
+          preco: Number(m.price||0),
+          ord: baseId + i + idx,
+          imageUrl: m.imageUrl || "",
+          desc: m.description || "",
+          source: { collection: "menuItems", id: m.id }
+        };
+        batch.set(doc(db,"produtos", newId), data, {merge:true});
+      });
+      await batch.commit();
+      wrote += chunk.length;
+      log("Copiados: " + wrote + "/" + docs.length, "ok");
+    }
+  }catch(e){
+    console.error(e);
+    log("Falha ao escrever em produtos: " + errText(e), "bad");
+    return;
   }
 
-  log("✅ Migração concluída! Agora seu sistema pode usar a coleção 'produtos'.");
-  log("Dica: depois, se quiser, você pode apagar 'menuItems' manualmente (opcional).");
+  log("Migração concluída! ✅ Agora seu sistema pode usar somente 'produtos'.", "ok");
+  log("Dica: se quiser, apague menuItems manualmente (opcional).", "");
 }
 
 onAuthStateChanged(auth, (user)=>{
   if(user){
+    pill.textContent = "✅ logado";
     st.textContent = "logado: " + user.email;
   }else{
+    pill.textContent = "🔒 desconectado";
     st.textContent = "desconectado";
   }
 });

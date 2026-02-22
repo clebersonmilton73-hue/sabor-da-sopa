@@ -1,36 +1,27 @@
-Sabor da Sopa — Segurança REAL (Firebase) + Admin separado
+Sabor da Sopa — Padrão PRODUTOS (migração do seu banco)
 
-📌 Arquivos:
-- index.html  -> CLIENTE (cardápio + checkout + envia Whats do cliente)
-- admin.html  -> ADMIN (login email/senha Firebase + bloqueio 3 tentativas)
-- firebase-config.js -> COLE o firebaseConfig + defina ADMIN_EMAIL
-- firestore.rules.txt -> regras recomendadas para segurança real
-- .htaccess.sample -> proteção extra (só Apache)
+Arquivos:
+- index.html  -> Cliente
+- admin.html  -> Admin (Firebase Auth)
+- migrar.html -> Migração menuItems -> produtos
+- firebase-config.js
+- firestore.rules.txt
 
-✅ PASSO A PASSO (Firebase):
-1) Crie projeto no Firebase Console.
-2) Authentication > Sign-in method:
-   - ative "Email/Password"
-   - crie o usuário admin (seu email) em Authentication > Users
-3) Firestore Database:
-   - crie em "Production mode"
-   - abra "Rules" e cole o conteúdo de firestore.rules.txt
-   - troque SEU_EMAIL_ADMIN@exemplo.com pelo seu email
-4) Project settings > Your apps (Web) > pegue o firebaseConfig
-   - cole dentro do arquivo firebase-config.js
-   - ajuste ADMIN_EMAIL pro seu email admin
+PASSO A PASSO (recomendado):
+1) No Firebase > Firestore > Rules:
+   - cole o conteúdo de firestore.rules.txt e PUBLIQUE
 
-✅ PASSO A PASSO (GitHub Pages):
-- Suba os 2 arquivos + firebase-config.js
-- Acesse:
-  - /index.html (cliente)
-  - /admin.html (admin)
+2) Suba todos os arquivos no GitHub Pages (mesma pasta):
+   - index.html, admin.html, migrar.html, firebase-config.js
 
-🛡️ Bloqueio 3 tentativas:
-- após 3 tentativas erradas, trava 15 minutos (neste navegador)
+3) Faça a migração:
+   - Abra: https://SEUUSUARIO.github.io/SEUREPO/migrar.html
+   - Faça login com um admin
+   - Clique "Migrar agora"
+   - Isso cria a coleção "produtos" com os campos: cat, nome, preco, ord, imageUrl, desc
 
-🔑 “Senha criptografada”:
-- No Firebase Auth, a senha NÃO fica no seu arquivo. O Firebase guarda com hash seguro no servidor.
+4) Depois disso:
+   - Seu sistema (index/admin) usa a coleção "produtos".
 
-🔒 .htaccess:
-- Só para Apache. No GitHub Pages NÃO funciona.
+Observação:
+- menuItems fica protegido (apenas admin) pelas rules deste pacote.
