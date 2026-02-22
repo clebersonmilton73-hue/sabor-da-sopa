@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Migração menuItems → produtos</title>
+<style>
+  body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;background:#0b1220;color:#e2e8f0}
+  .wrap{max-width:860px;margin:24px auto;padding:0 14px}
+  .card{background:rgba(15,23,42,.86);border:1px solid rgba(148,163,184,.16);border-radius:18px;padding:14px;box-shadow:0 12px 28px rgba(0,0,0,.35)}
+  .row{display:flex;gap:10px;flex-wrap:wrap}
+  .row>*{flex:1}
+  input{width:100%;background:rgba(2,6,23,.55);border:1px solid rgba(148,163,184,.16);border-radius:14px;padding:10px 12px;color:#e2e8f0;font-weight:900}
+  button{border:none;border-radius:14px;padding:10px 12px;font-weight:1000;cursor:pointer}
+  .primary{background:linear-gradient(180deg,#60a5fa,#3b82f6);color:#081426}
+  .good{background:linear-gradient(180deg,#34d399,#22c55e);color:#05210f}
+  .ghost{background:rgba(148,163,184,.10);border:1px solid rgba(148,163,184,.16);color:#e2e8f0}
+  pre{white-space:pre-wrap;word-break:break-word;background:rgba(2,6,23,.55);border:1px solid rgba(148,163,184,.16);border-radius:14px;padding:10px 12px}
+  .muted{color:#94a3b8;font-weight:800}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="card">
+    <h2 style="margin:0 0 6px 0">Migração menuItems → produtos</h2>
+    <div class="muted">Faça login com admin e clique em migrar. Isso copia os itens de <b>menuItems</b> para <b>produtos</b> no padrão do seu sistema.</div>
+
+    <div style="margin-top:14px" class="row">
+      <input id="email" placeholder="Email (admin)" autocomplete="username">
+      <input id="senha" type="password" placeholder="Senha" autocomplete="current-password">
+    </div>
+
+    <div style="margin-top:10px" class="row">
+      <button class="primary" onclick="entrar()">Entrar</button>
+      <button class="ghost" onclick="sair()">Sair</button>
+      <button class="good" onclick="migrar()">Migrar agora</button>
+    </div>
+
+    <div style="margin-top:10px" class="muted">Status: <span id="st">desconectado</span></div>
+    <div style="margin-top:10px"><pre id="log">Pronto.</pre></div>
+  </div>
+
+  <div style="margin-top:12px" class="muted">
+    ⚠️ Regras: para migrar, o admin precisa ter permissão de ler <b>menuItems</b> e escrever em <b>produtos</b>.<br>
+    ✅ Depois da migração, o seu site vai usar somente <b>produtos</b>.
+  </div>
+</div>
+
+<script type="module">
+import { firebaseConfig, ADMIN_EMAILS } from "./firebase-config.js";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-app.js";
+import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-auth.js";
+import { getFirestore, collection, getDocs, query, orderBy, doc, setDoc, writeBatch } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-firestore.js";
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+
+const st = document.getElementById("st");
+const logEl = document.getElementById("log");
+
+function log(msg){
+  logEl.textContent += "\n" + msg;
+  logEl.scrollTop = logEl.scrollHeight;
+}
+function isAdminEmail(email){
+  const e = String(email||"").toLowerCase();
+  return (ADMIN_EMAILS||[]).map(x=>String(x||"").toLowerCase()).includes(e);
+}
+
+window.entrar = async function(){
+  const email = (document.getElementById("email").value||"").trim();
+  const senha = (document.getElementById("senha").value||"").trim();
+  if(!email||!senha) return alert("Preencha email e senha.");
+  try{
+    await signInWithEmailAndPassword(auth, email, senha);
+  }catch(e){
+    console.error(e);
+    alert("Falha no login: " + (e?.code||e?.message||e));
+  }
+}
+
+window.sair = async function(){
+  await signOut(auth);
+}
+
+window.migrar = async function(){
+  const u = auth.currentUser;
+  if(!u) return alert("Faça login primeiro.");
+  if(!isAdminEmail(u.email)) return alert("Este email não está na lista ADMIN_EMAILS.");
+
+  logEl.textContent = "Iniciando migração...\n";
+  // Lê menuItems
+  let snap;
+  try{
+    // tenta ordenar por category e name se existir
+    snap = await getDocs(query(collection(db,"menuItems"), orderBy("category","asc"), orderBy("name","asc")));
+  }catch(e){
+    // fallback sem orderBy
+    snap = await getDocs(collection(db,"menuItems"));
+  }
+
+  const docs = snap.docs.map(d=>({id:d.id, ...d.data()}));
+  if(!docs.length){
+    log("Nenhum documento em menuItems.");
+    return;
+  }
+
+  log("Encontrados " + docs.length + " itens em menuItems.");
+
+  // Escreve em produtos com IDs numéricos (1001+)
+  const baseId = 1001;
+  let wrote = 0;
+
+  // batch de 400 por vez (limite 500)
+  for(let i=0;i<docs.length;i+=400){
+    const batch = writeBatch(db);
+    const chunk = docs.slice(i, i+400);
+    chunk.forEach((m, idx)=>{
+      const newId = String(baseId + i + idx);
+      const data = {
+        cat: m.category || "Geral",
+        nome: m.name || "",
+        preco: Number(m.price||0),
+        ord: baseId + i + idx,
+        imageUrl: m.imageUrl || "",
+        desc: m.description || "",
+        source: { collection: "menuItems", id: m.id }
+      };
+      batch.set(doc(db,"produtos", newId), data, {merge:true});
+    });
+    await batch.commit();
+    wrote += chunk.length;
+    log("Copiados: " + wrote + "/" + docs.length);
+  }
+
+  log("✅ Migração concluída! Agora seu sistema pode usar a coleção 'produtos'.");
+  log("Dica: depois, se quiser, você pode apagar 'menuItems' manualmente (opcional).");
+}
+
+onAuthStateChanged(auth, (user)=>{
+  if(user){
+    st.textContent = "logado: " + user.email;
+  }else{
+    st.textContent = "desconectado";
+  }
+});
+</script>
+</body>
+</html>

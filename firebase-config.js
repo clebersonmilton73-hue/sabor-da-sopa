@@ -7,7 +7,6 @@ export const firebaseConfig = {
   appId: "1:437365944053:web:69d942143b7575bdf19fbc"
 };
 
-// Agora aceita DOIS emails como admin
 export const ADMIN_EMAILS = [
   "clebersonmilton73@gmail.com",
   "sabordasopas@gmail.com"
