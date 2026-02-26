@@ -54,6 +54,10 @@
   }
 
 
+  
+  .mobBar{display:none}
+  @media(max-width:980px){.mobBar{display:flex}}
+
   /* ===== ERP Layout ===== */
   .erpShell{display:flex;min-height:calc(100vh - 0px);gap:0}
   .side{
@@ -100,6 +104,28 @@
     .mobBtn{padding:12px 14px;border-radius:14px;border:1px solid rgba(148,163,184,.14);background:rgba(148,163,184,.10);color:var(--txt);font-weight:1000;cursor:pointer}
     .overlay{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:35;display:none}
     .overlay.show{display:block}
+  }
+
+
+  /* ===== Mobile (Admin) ===== */
+  @media(max-width:980px){
+    .top{padding:12px}
+    .pill{max-width:70vw;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .topbar{flex-direction:column;align-items:stretch}
+    .topbar .actions{justify-content:stretch}
+    .topbar .actions .btn{width:100%}
+    .card{padding:14px}
+    .row{flex-direction:column}
+    .row>*{flex:unset}
+    .prodGrid{grid-template-columns:1fr;gap:12px}
+    .prodPad{padding:14px}
+    .prodActions{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    .btn.sm{width:100%}
+    .main{padding:14px}
+    .side{width:86vw;max-width:360px}
+  }
+  @media(max-width:420px){
+    .prodActions{grid-template-columns:1fr}
   }
 
 </style>
