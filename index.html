@@ -168,7 +168,7 @@
         <div class="line"><span>Subtotal</span><b id="sub">R$ 0,00</b></div>
         <div class="line"><span>Total</span><b id="tot">R$ 0,00</b></div>
         <button class="btn2 primary" onclick="finalizar()">Finalizar e enviar no WhatsApp</button>
-        <div class="muted" style="font-size:12px">Seu pedido será salvo online (Firebase) e abrirá o WhatsApp do cliente.</div>
+        <div class="muted" style="font-size:12px">Seu pedido será salvo online (Firebase) e abrirá o WhatsApp da loja (configure LOJA_WA no código).</div>
       </div>
     </div>
   </aside>
@@ -192,6 +192,9 @@ const qtdEl = document.getElementById("qtd");
 const subEl = document.getElementById("sub");
 const totEl = document.getElementById("tot");
 const catInfo = document.getElementById("catInfo");
+
+// WhatsApp da LOJA (coloque DDD+numero, só dígitos). Ex: "5581999999999"
+const LOJA_WA = "55SEU_DDD_SEU_NUMERO";
 
 let produtos = [];
 let cart = []; // {id, qtd}
@@ -410,14 +413,21 @@ async function finalizar(){
   if(obs) linhas.push(`Obs: ${obs}`);
   linhas.push("");
   linhas.push("*Itens:*");
-  itens.forEach(i=>linhas.push(`- ${i.nome} x${i.qtd} (${moneyBR(i.preco*i.qtd)})`));
+  const totalItens = itens.reduce((a,i)=>a+Number(i.qtd||0),0);
+  itens.forEach(i=>{
+    const unit = moneyBR(i.preco);
+    const totalLinha = moneyBR(i.preco*i.qtd);
+    linhas.push(`- ${i.nome}  x${i.qtd}  (${unit} cada) = ${totalLinha}`);
+  });
+  linhas.push(`Itens no total: ${totalItens}`);
   linhas.push("");
   linhas.push(`Total: *${moneyBR(subtotal)}*`);
   linhas.push(`Pagamento: ${metodo}`);
   if(metodo==="DINHEIRO" && troco) linhas.push(`Troco para: ${troco}`);
 
   const msg = encodeURIComponent(linhas.join("\n"));
-  window.open(`https://wa.me/55${c.tel}?text=${msg}`,"_blank");
+  const alvo = (LOJA_WA && LOJA_WA.includes("SEU")) ? (`55${c.tel}`) : LOJA_WA;
+  window.open(`https://wa.me/${alvo}?text=${msg}`,"_blank");
 
   cart = [];
   recalc();
