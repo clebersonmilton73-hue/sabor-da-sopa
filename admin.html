@@ -1,3 +1,4 @@
+
 <!doctype html>
 <html lang="pt-br">
 <head>
@@ -33,6 +34,11 @@
   td small{color:var(--muted);font-weight:800}
   .danger{color:var(--bad)}
   .ok{color:var(--good)}
+
+  .thumb{width:52px;height:40px;object-fit:cover;border-radius:10px;border:1px solid rgba(148,163,184,.20)}
+  .fotoBox{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+  .fotoPrev{width:120px;height:90px;object-fit:cover;border-radius:14px;border:1px solid rgba(148,163,184,.20);background:rgba(2,6,23,.35)}
+
 </style>
 </head>
 <body>
@@ -81,12 +87,26 @@
           <button class="btn good" onclick="salvarProduto()">Salvar/Atualizar</button>
         </div>
 
+        <div style="margin-top:10px" class="row" style="align-items:center">
+          <input type="file" id="pFoto" class="input" accept="image/*">
+        </div>
+        <div style="margin-top:10px" class="fotoBox">
+          <img id="fotoPrev" class="fotoPrev" alt="Prévia da foto">
+          <div style="display:grid;gap:8px;min-width:220px">
+            <div class="muted" style="font-size:12px">Dica: a foto é comprimida automaticamente antes do envio.</div>
+            <div class="row" style="gap:8px">
+              <button class="btn ghost" onclick="limparFotoInput()">Limpar seleção</button>
+              <button class="btn ghost" onclick="removerFotoProduto()">Remover foto do produto</button>
+            </div>
+          </div>
+        </div>
+
         <div style="margin-top:16px">
           <b>Produtos</b>
           <div class="muted" style="font-size:12px;margin-top:6px">Apenas o email admin pode editar (rules).</div>
           <div style="margin-top:10px;overflow:auto">
             <table>
-              <thead><tr><th>ID</th><th>Produto</th><th>Categoria</th><th>Preço</th><th>Ações</th></tr></thead>
+              <thead><tr><th>ID</th><th>Foto</th><th>Produto</th><th>Categoria</th><th>Preço</th><th>Ações</th></tr></thead>
               <tbody id="tbProd"></tbody>
             </table>
           </div>
@@ -117,11 +137,104 @@
 import { firebaseConfig, ADMIN_EMAILS } from "./firebase-config.js";
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-app.js";
 import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-auth.js";
-import { getFirestore, collection, doc, setDoc, deleteDoc, getDocs, query, orderBy, limit } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-firestore.js";
+import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-storage.js";
+import { getFirestore, collection, doc, setDoc, deleteDoc, getDocs, query, orderBy, limit, getDoc, updateDoc, deleteField } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-firestore.js";
 
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
+
+const storage = getStorage(app);
+
+// --- Foto: compressão + upload ---
+async function compressImage(file, maxSize=900, quality=0.82){
+  // Converte para JPEG reduzindo tamanho (mantém proporção)
+  const img = document.createElement("img");
+  const url = URL.createObjectURL(file);
+  img.src = url;
+  await img.decode().catch(()=>new Promise((res)=>{ img.onload=res; img.onerror=res; }));
+  URL.revokeObjectURL(url);
+
+  const w0 = img.naturalWidth || img.width || 0;
+  const h0 = img.naturalHeight || img.height || 0;
+  if(!w0 || !h0) return {blob:file, ext:(file.name.split(".").pop()||"jpg").toLowerCase()};
+
+  const scale = Math.min(1, maxSize / Math.max(w0,h0));
+  const w = Math.max(1, Math.round(w0*scale));
+  const h = Math.max(1, Math.round(h0*scale));
+
+  const canvas = document.createElement("canvas");
+  canvas.width = w; canvas.height = h;
+  const ctx = canvas.getContext("2d");
+  ctx.drawImage(img, 0, 0, w, h);
+
+  const blob = await new Promise(res=>canvas.toBlob(res, "image/jpeg", quality));
+  return {blob: blob || file, ext:"jpg"};
+}
+
+function setFotoPreview(url){
+  const el = document.getElementById("fotoPrev");
+  if(!url){ el.removeAttribute("src"); el.style.opacity="0.35"; return; }
+  el.src = url;
+  el.style.opacity="1";
+}
+
+function limparFotoInput(){
+  const f = document.getElementById("pFoto");
+  f.value = "";
+  // mantém preview da foto atual do produto (se existir)
+  const current = window.__currentFotoURL || "";
+  setFotoPreview(current);
+}
+
+document.getElementById("pFoto").addEventListener("change", (e)=>{
+  const file = e.target.files && e.target.files[0];
+  if(file){
+    const u = URL.createObjectURL(file);
+    setFotoPreview(u);
+    // revoga depois (preview não precisa ficar pra sempre)
+    setTimeout(()=>URL.revokeObjectURL(u), 4000);
+  }else{
+    setFotoPreview(window.__currentFotoURL || "");
+  }
+});
+
+async function uploadFotoProduto(id, file){
+  const {blob} = await compressImage(file);
+  const path = `produtos/${id}/foto-${Date.now()}.jpg`;
+  const storageRef = ref(storage, path);
+  await uploadBytes(storageRef, blob, {contentType:"image/jpeg"});
+  const fotoURL = await getDownloadURL(storageRef);
+  return {fotoURL, fotoPath: path};
+}
+
+async function removerFotoProduto(){
+  const u = auth.currentUser;
+  if(!u){ alert("Faça login."); return; }
+  const id = String((document.getElementById("pId").value||"").trim());
+  if(!id) return alert("Informe o ID do produto para remover a foto.");
+  if(!confirm("Remover a foto deste produto?")) return;
+
+  try{
+    const ds = await getDoc(doc(db,"produtos", id));
+    const data = ds.exists() ? ds.data() : {};
+    const fotoPath = data?.fotoPath;
+    if(fotoPath){
+      await deleteObject(ref(storage, fotoPath)).catch(()=>{});
+    }
+    await updateDoc(doc(db,"produtos", id), {fotoURL: deleteField(), fotoPath: deleteField()});
+    window.__currentFotoURL = "";
+    window.__currentFotoPath = "";
+    setFotoPreview("");
+    alert("Foto removida!");
+    await carregarProdutos();
+  }catch(e){
+    console.error(e);
+    alert("Erro ao remover foto. Verifique rules do Storage/Firestore.");
+  }
+}
+window.removerFotoProduto = removerFotoProduto;
+window.limparFotoInput = limparFotoInput;
 
 const pill = document.getElementById("pill");
 const loginCard = document.getElementById("loginCard");
@@ -206,8 +319,10 @@ async function carregarProdutos(){
   snap.forEach(d=>{
     const p = d.data();
     const tr = document.createElement("tr");
+    const thumb = p.fotoURL ? `<img class="thumb" src="${p.fotoURL}" alt="foto">` : `<span class="muted">—</span>`;
     tr.innerHTML = `
       <td>${d.id}</td>
+      <td>${thumb}</td>
       <td>${p.nome||""}</td>
       <td><small>${p.cat||""}</small></td>
       <td>R$ ${(Number(p.preco||0)).toFixed(2)}</td>
@@ -226,14 +341,19 @@ async function carregarProdutos(){
   };
 
   window.__edit = async (id)=>{
-    const snap2 = await getDocs(query(collection(db,"produtos"), orderBy("ord","asc"), limit(300)));
-    const docx = snap2.docs.find(x=>x.id===id);
-    const p = docx?.data() || {};
-    document.getElementById("pId").value = id;
+    const ds = await getDoc(doc(db,"produtos", String(id)));
+    const p = ds.exists() ? ds.data() : {};
+    document.getElementById("pId").value = String(id);
     document.getElementById("pCat").value = p.cat||"";
     document.getElementById("pNome").value = p.nome||"";
     document.getElementById("pPreco").value = p.preco||"";
     document.getElementById("pOrd").value = p.ord ?? "";
+    // preview foto atual
+    window.__currentFotoURL = p.fotoURL || "";
+    window.__currentFotoPath = p.fotoPath || "";
+    setFotoPreview(window.__currentFotoURL);
+    // limpa seleção nova
+    document.getElementById("pFoto").value = "";
     window.scrollTo({top:0,behavior:"smooth"});
   };
 }
@@ -253,14 +373,38 @@ async function salvarProduto(){
   const nome = (document.getElementById("pNome").value||"").trim();
   const preco = parseFloat(String(document.getElementById("pPreco").value||"").replace(",","."));
   const ord = parseInt(document.getElementById("pOrd").value||"0",10) || 999;
+  const file = document.getElementById("pFoto").files[0];
 
   if(!id || !/^[0-9]+$/.test(id)) return alert("ID deve ser numérico (ex: 101).");
   if(!nome) return alert("Informe o nome.");
   if(!Number.isFinite(preco)) return alert("Preço inválido.");
 
-  await setDoc(doc(db,"produtos", id), {cat, nome, preco, ord}, {merge:true});
-  alert("Salvo!");
-  await carregarProdutos();
+  const data = {cat, nome, preco, ord};
+
+  try{
+    if(file){
+      // se já existia foto, tenta apagar a anterior (opcional)
+      const ds = await getDoc(doc(db,"produtos", id));
+      const prev = ds.exists() ? ds.data() : {};
+      if(prev?.fotoPath){
+        await deleteObject(ref(storage, prev.fotoPath)).catch(()=>{});
+      }
+      const up = await uploadFotoProduto(id, file);
+      data.fotoURL = up.fotoURL;
+      data.fotoPath = up.fotoPath;
+      window.__currentFotoURL = up.fotoURL;
+      window.__currentFotoPath = up.fotoPath;
+    }
+
+    await setDoc(doc(db,"produtos", id), data, {merge:true});
+    alert("Salvo!");
+    document.getElementById("pFoto").value = "";
+    setFotoPreview(window.__currentFotoURL || "");
+    await carregarProdutos();
+  }catch(e){
+    console.error(e);
+    alert("Erro ao salvar/enviar foto. Verifique Rules do Storage/Firestore.");
+  }
 }
 
 async function carregarPedidos(){
