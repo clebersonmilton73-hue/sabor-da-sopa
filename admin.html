@@ -128,6 +128,14 @@
     .prodActions{grid-template-columns:1fr}
   }
 
+
+  .statusP{display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border-radius:999px;
+    border:1px solid rgba(148,163,184,.14);background:rgba(148,163,184,.08);font-weight:1000;font-size:12px}
+  .statusP.on{background:rgba(34,197,94,.16);border-color:rgba(34,197,94,.30)}
+  .statusP.off{background:rgba(239,68,68,.12);border-color:rgba(239,68,68,.28)}
+  .searchRow{display:flex;gap:10px;flex-wrap:wrap}
+  .searchRow > *{flex:1;min-width:160px}
+
 </style>
 </head>
 <body>
@@ -191,6 +199,22 @@
 
             <!-- VIEW: PRODUTOS -->
             <section class="section" id="viewProdutos">
+              <div class="card" style="margin-top:12px">
+                <div class="sectionHd" style="margin:0 0 8px 0">
+                  <b>Buscar / Filtrar</b>
+                  <div class="muted" style="font-size:12px">Encontra produtos rápido</div>
+                </div>
+                <div class="searchRow">
+                  <input id="qBusca" class="input" placeholder="Buscar por nome...">
+                  <input id="qCat" class="input" placeholder="Filtrar por categoria (opcional)">
+                  <select id="qAtivo" class="select">
+                    <option value="TODOS">Todos</option>
+                    <option value="ATIVOS">Somente ativos</option>
+                    <option value="INATIVOS">Somente inativos</option>
+                  </select>
+                </div>
+              </div>
+
               <div class="sectionHd">
                 <b>Produtos</b>
                 <div class="muted" style="font-size:12px">Somente admin edita (rules).</div>
@@ -210,6 +234,16 @@
 
                 <div style="margin-top:10px">
                   <input id="pFotoURL" class="input" placeholder="Link direto da imagem (https://... .jpg/.png/.webp)">
+                </div>
+
+                <div style="margin-top:10px" class="row" style="align-items:center">
+                  <label class="muted" style="display:flex;align-items:center;gap:10px;font-size:13px">
+                    <input type="checkbox" id="pAtivo" checked style="transform:scale(1.1)"> Produto ativo (aparece no cardápio)
+                  </label>
+                </div>
+
+                <div style="margin-top:10px">
+
                   <div class="muted" style="font-size:12px;margin-top:6px">Use link direto da imagem. Ex: termina com .jpg / .png / .webp</div>
                 </div>
 
@@ -256,7 +290,7 @@
 import { firebaseConfig, ADMIN_EMAILS } from "./firebase-config.js";
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-app.js";
 import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-auth.js";
-import { getFirestore, collection, doc, setDoc, deleteDoc, getDocs, query, orderBy, limit } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-firestore.js";
+import { getFirestore, collection, doc, setDoc, deleteDoc, getDocs, query, orderBy, limit, updateDoc } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-firestore.js";
 
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
@@ -343,15 +377,35 @@ async function carregarProdutos(){
   if(!box) return;
   box.innerHTML = "";
 
-  const snap = await getDocs(query(collection(db,"produtos"), orderBy("ord","asc"), limit(300)));
-  const countPedidos = document.getElementById('countPedidos');
-  if(countPedidos) countPedidos.textContent = `(${snap.size})`;
-  snap.forEach(d=>{
-    const p = d.data() || {};
+  const snap = await getDocs(query(collection(db,"produtos"), orderBy("ord","asc"), limit(500)));
+  const all = snap.docs.map(d=>({docId:d.id, ...d.data()}));
+
+  // contadores
+  const cp = document.getElementById('countProdutos');
+  if(cp) cp.textContent = `(${all.length})`;
+
+  // filtros
+  const q = (document.getElementById("qBusca")?.value || "").trim().toLowerCase();
+  const qCat = (document.getElementById("qCat")?.value || "").trim().toLowerCase();
+  const qAtivo = (document.getElementById("qAtivo")?.value || "TODOS");
+
+  const filtrado = all.filter(p=>{
+    const nome = String(p.nome||"").toLowerCase();
+    const cat = String(p.cat||"").toLowerCase();
+    const ativo = (p.ativo !== false); // padrão: ativo
+    if(q && !nome.includes(q)) return false;
+    if(qCat && !cat.includes(qCat)) return false;
+    if(qAtivo==="ATIVOS" && !ativo) return false;
+    if(qAtivo==="INATIVOS" && ativo) return false;
+    return true;
+  });
+
+  filtrado.forEach(p=>{
     const foto = p.fotoURL || "";
     const nome = p.nome || "";
     const cat  = p.cat || "";
     const preco = Number(p.preco||0);
+    const ativo = (p.ativo !== false);
 
     const card = document.createElement("div");
     card.className = "prodCard";
@@ -361,21 +415,34 @@ async function carregarProdutos(){
         <div class="prodTop">
           <div>
             <div class="prodName">${nome}</div>
-            <div class="prodMeta">ID: ${d.id} • ${cat}</div>
+            <div class="prodMeta">ID: ${p.docId} • ${cat}</div>
           </div>
           <div class="prodPrice">R$ ${preco.toFixed(2)}</div>
         </div>
-        ${foto ? `<a class="prodMeta" href="${foto}" target="_blank" rel="noopener">Abrir imagem</a>` : `<div class="prodMeta">Sem foto</div>`}
+
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:10px">
+          <span class="statusP ${ativo ? "on" : "off"}">${ativo ? "✅ Ativo" : "⛔ Inativo"}</span>
+          <button class="btn ghost sm" onclick="window.__toggleAtivo('${p.docId}', ${ativo ? "true" : "false"})">${ativo ? "Desativar" : "Ativar"}</button>
+        </div>
+
         <div class="prodActions">
-          <button class="btn ghost sm" onclick="window.__edit('${d.id}')">Editar</button>
-          <button class="btn ghost sm" onclick="window.__del('${d.id}')">Excluir</button>
+          <button class="btn ghost sm" onclick="window.__edit('${p.docId}')">Editar</button>
+          <button class="btn ghost sm" onclick="window.__del('${p.docId}')">Excluir</button>
         </div>
       </div>
     `;
     box.appendChild(card);
   });
-  const cp = document.getElementById('countProdutos');
-  if(cp) cp.textContent = `(${snap.size})`;
+
+  window.__toggleAtivo = async (id, atual)=>{
+    try{
+      await updateDoc(doc(db,"produtos", String(id)), {ativo: !atual});
+      await carregarProdutos();
+    }catch(e){
+      console.error(e);
+      alert("Erro ao alterar ativo. Verifique Rules.");
+    }
+  };
 
   window.__del = async (id)=>{
     if(!confirm("Excluir produto "+id+"?")) return;
@@ -384,7 +451,7 @@ async function carregarProdutos(){
   };
 
   window.__edit = async (id)=>{
-    const snap2 = await getDocs(query(collection(db,"produtos"), orderBy("ord","asc"), limit(300)));
+    const snap2 = await getDocs(query(collection(db,"produtos"), orderBy("ord","asc"), limit(500)));
     const docx = snap2.docs.find(x=>x.id===id);
     const p = docx?.data() || {};
     document.getElementById("pId").value = id;
@@ -392,6 +459,7 @@ async function carregarProdutos(){
     document.getElementById("pNome").value = p.nome||"";
     document.getElementById("pPreco").value = p.preco||"";
     document.getElementById("pFotoURL").value = p.fotoURL||"";
+    document.getElementById("pAtivo").checked = (p.ativo !== false);
     document.getElementById("pOrd").value = p.ord ?? "";
     window.scrollTo({top:0,behavior:"smooth"});
   };
@@ -423,7 +491,8 @@ async function salvarProduto(){
     return alert("O link da foto deve começar com http:// ou https://");
   }
 
-  await setDoc(doc(db,"produtos", id), {cat, nome, preco, ord, fotoURL}, {merge:true});
+  const ativo = !!document.getElementById("pAtivo").checked;
+  await setDoc(doc(db,"produtos", id), {cat, nome, preco, ord, fotoURL, ativo}, {merge:true});
   alert("Salvo!");
   await carregarProdutos();
 }
@@ -510,12 +579,24 @@ function toggleSide(open){
 window.showView = showView;
 window.toggleSide = toggleSide;
 
+function hookFiltros(){
+  const ids = ["qBusca","qCat","qAtivo"];
+  ids.forEach(id=>{
+    const el = document.getElementById(id);
+    if(!el) return;
+    el.addEventListener("input", ()=>carregarProdutos());
+    el.addEventListener("change", ()=>carregarProdutos());
+  });
+}
+window.hookFiltros = hookFiltros;
+
 onAuthStateChanged(auth, async (user)=>{
   setUI(user);
   showLockUI();
   if(!user) return;
   // carrega dados
   await carregarProdutos();
+  hookFiltros();
   await carregarPedidos();
 });
 </script>
