@@ -329,6 +329,138 @@ header{
   100%{transform:scale(1)}
 }
 
+
+/* ===== TEMPLATE 2.0 PROFISSIONAL ===== */
+
+.item{
+  display:flex;
+  gap:12px;
+  align-items:center;
+  padding:14px;
+  border-radius:18px;
+}
+
+.item img{
+  width:90px;
+  height:90px;
+  object-fit:cover;
+  border-radius:16px;
+}
+
+.itemInfo{
+  flex:1;
+}
+
+.itemName{
+  font-weight:700;
+  font-size:15px;
+}
+
+.itemPrice{
+  color:var(--primary-dark);
+  font-weight:700;
+  margin-top:4px;
+}
+
+.qtyBox{
+  display:flex;
+  align-items:center;
+  gap:8px;
+}
+
+.qtyBtn{
+  width:32px;
+  height:32px;
+  border-radius:10px;
+  border:none;
+  background:var(--primary);
+  color:white;
+  font-weight:bold;
+  cursor:pointer;
+}
+
+.qtyNum{
+  font-weight:bold;
+  min-width:20px;
+  text-align:center;
+}
+
+/* Carrinho deslizante */
+.cart{
+  transition:transform .25s ease;
+}
+
+@media(max-width:980px){
+  .cart{
+    position:fixed;
+    bottom:0;
+    left:0;
+    right:0;
+    transform:translateY(100%);
+    border-radius:20px 20px 0 0;
+    z-index:999;
+  }
+
+  .cart.open{
+    transform:translateY(0);
+  }
+}
+
+
+/* ===== TEMPLATE 3.0 (App real) ===== */
+.cartBar{
+  position:fixed;
+  left:12px; right:12px; bottom:12px;
+  z-index:1000;
+  display:none;
+}
+.cartBar button{
+  width:100%;
+  border:none;
+  border-radius:18px;
+  padding:14px 14px;
+  font-weight:1100;
+  cursor:pointer;
+  background:linear-gradient(180deg,var(--primary),var(--primary-dark));
+  color:white;
+  box-shadow:0 18px 50px rgba(0,0,0,.35);
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+}
+.cartBadge{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  min-width:26px;
+  height:26px;
+  padding:0 8px;
+  border-radius:999px;
+  background:rgba(255,255,255,.18);
+  border:1px solid rgba(255,255,255,.22);
+  font-weight:1100;
+}
+.cartOverlay{
+  position:fixed; inset:0;
+  background:rgba(0,0,0,.55);
+  z-index:990;
+  display:none;
+}
+.cartOverlay.show{display:block}
+
+.pop{animation:pop .22s ease}
+@keyframes pop{
+  0%{transform:translateY(0) scale(1)}
+  55%{transform:translateY(-2px) scale(1.02)}
+  100%{transform:translateY(0) scale(1)}
+}
+
+@media(max-width:980px){
+  .cartBar{display:block}
+  .wrap{margin-bottom:110px}
+}
+
 </style>
 </head>
 <body>
@@ -351,7 +483,10 @@ header{
   <aside class="panel cart">
     <div class="hd">
       <h2>🛒 Seu pedido</h2>
-      <div class="muted"><span id="qtd">0</span> itens</div>
+      <div style="display:flex;align-items:center;gap:10px">
+        <div class="muted"><span id="qtd">0</span> itens</div>
+        <button class="btn2 ghost" style="padding:8px 10px" onclick="toggleCart(false)">Fechar</button>
+      </div>
     </div>
     <div class="cartBody">
       <div>
@@ -395,6 +530,8 @@ header{
 
 <div class="toast" id="toast"></div>
 <div class="snack" id="snack"><div class="txt"><div class="title" id="snackTitle"></div><div class="sub" id="snackSub"></div></div><button class="act" id="snackBtn">Ver carrinho</button></div>
+<div class="cartOverlay" id="cartOverlay" onclick="toggleCart(false)"></div>
+<div class="cartBar" id="cartBar"><button onclick="toggleCart(true)"><span>🛒 Carrinho <span class="cartBadge" id="barQtd">0</span></span><span id="barTot">R$ 0,00</span></button></div>
 
 <script type="module">
 import { firebaseConfig } from "./firebase-config.js";
@@ -440,6 +577,8 @@ function showSnack(title, sub){
   // ação: no desktop, só dá um highlight no carrinho; no mobile, sugere rolar
   b.onclick = ()=>{
     // foca no carrinho
+    const isMobile = window.matchMedia('(max-width:980px)').matches;
+    if(isMobile) toggleCart(true);
     const cartEl = document.querySelector(".cart");
     if(cartEl){
       cartEl.classList.add("cartPulse");
@@ -473,17 +612,8 @@ function setEntrega(tipo){
   document.getElementById("chipRetirada").classList.toggle("active", entregaTipo==="RETIRADA");
 }
 
-function add(id){
-  const it = cart.find(x=>x.id===id);
-  if(it) it.qtd++;
-  else cart.push({id, qtd:1});
-  recalc();
-  const p = produtos.find(x=>x.id===id);
-  showSnack("✅ Adicionado", (p?.nome||"Item") + " no carrinho");
-  const cartEl = document.querySelector('.cart');
-  if(cartEl){ cartEl.classList.add('cartPulse'); setTimeout(()=>cartEl.classList.remove('cartPulse'), 380); }
+function add(id){ inc(id); }
 
-}
 
 function recalc(){
   let qtd = 0;
@@ -497,7 +627,69 @@ function recalc(){
   qtdEl.textContent = qtd;
   subEl.textContent = moneyBR(sub);
   totEl.textContent = moneyBR(sub);
+  updateBar(qtd, sub);
 }
+
+
+function cartQty(id){
+  const it = cart.find(x=>x.id===id);
+  return it ? it.qtd : 0;
+}
+
+function inc(id){
+  id = Number(id);
+  const it = cart.find(x=>x.id===id);
+  if(it) it.qtd++;
+  else cart.push({id, qtd:1});
+  recalc();
+  render(); // atualiza contadores do card
+  pulseBar();
+}
+
+function dec(id){
+  id = Number(id);
+  const it = cart.find(x=>x.id===id);
+  if(!it) return;
+  it.qtd--;
+  if(it.qtd<=0) cart = cart.filter(x=>x.id!==id);
+  recalc();
+  render();
+  pulseBar();
+}
+
+function pulseBar(){
+  const bar = document.getElementById("cartBar");
+  if(!bar) return;
+  bar.classList.remove("pop");
+  // force reflow
+  void bar.offsetWidth;
+  bar.classList.add("pop");
+}
+
+function updateBar(qtd, total){
+  const q = document.getElementById("barQtd");
+  const t = document.getElementById("barTot");
+  if(q) q.textContent = String(qtd||0);
+  if(t) t.textContent = moneyBR(total||0);
+}
+
+function toggleCart(open){
+  const cartEl = document.querySelector(".cart");
+  const ovl = document.getElementById("cartOverlay");
+  const isMobile = window.matchMedia("(max-width:980px)").matches;
+  if(!isMobile) return;
+  if(open){
+    cartEl?.classList.add("open");
+    ovl?.classList.add("show");
+  }else{
+    cartEl?.classList.remove("open");
+    ovl?.classList.remove("show");
+  }
+}
+window.toggleCart = toggleCart;
+window.__add = inc;
+window.__dec = dec;
+
 
 function render(){
   grid.innerHTML="";
@@ -509,17 +701,20 @@ function render(){
       ? `<img class="pimg" src="${p.fotoURL}" alt="${(p.nome||"").replace(/"/g,'&quot;')}">`
       : "";
 
-    div.innerHTML = `
-      ${img}
-      <div class="t">
-        <div>
-          <b>${p.nome}</b><br>
-          <small>${p.cat || "Sopas"}</small>
-        </div>
-        <div class="price">${moneyBR(p.preco||0)}</div>
-      </div>
-      <button class="btn" onclick="window.__add(${Number(p.id)})">Adicionar</button>
-    `;
+    
+div.innerHTML = `
+  ${p.fotoURL ? `<img src="${p.fotoURL}">` : ``}
+  <div class="itemInfo">
+    <div class="itemName">${p.nome}</div>
+    <div class="itemPrice">${moneyBR(p.preco||0)}</div>
+  </div>
+  <div class="qtyBox">
+    <button class="qtyBtn" onclick="window.__dec(${p.id})">-</button>
+    <div class="qtyNum">${cartQty(p.id)}</div>
+    <button class="qtyBtn" onclick="window.__add(${p.id})">+</button>
+  </div>
+`;
+
     grid.appendChild(div);
   });
   window.__add = add;
@@ -610,6 +805,14 @@ async function finalizar(){
 }
 window.finalizar = finalizar;
 window.setEntrega = setEntrega;
+
+
+function toggleCartSheet(){
+  const cartEl = document.querySelector('.cart');
+  if(!cartEl) return;
+  cartEl.classList.toggle('open');
+}
+window.toggleCartSheet = toggleCartSheet;
 
 carregar();
 </script>
