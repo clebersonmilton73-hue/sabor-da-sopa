@@ -215,6 +215,55 @@
   }
 }
 
+
+/* ===== Feedback tipo app (99food) ao adicionar ===== */
+.snack{
+  position:fixed;
+  left:50%;
+  bottom:16px;
+  transform:translateX(-50%);
+  background:#0b1220;
+  color:#e2e8f0;
+  border:1px solid rgba(255,255,255,.10);
+  border-radius:16px;
+  padding:10px 12px;
+  display:flex;
+  align-items:center;
+  gap:10px;
+  box-shadow:0 16px 40px rgba(0,0,0,.45);
+  z-index:9998;
+  max-width:min(560px, calc(100vw - 24px));
+  width:fit-content;
+  opacity:0;
+  pointer-events:none;
+  transition:opacity .16s ease, transform .16s ease;
+}
+.snack.show{
+  opacity:1;
+  pointer-events:auto;
+  transform:translateX(-50%) translateY(-2px);
+}
+.snack .txt{min-width:0}
+.snack .title{font-weight:1100;font-size:13px;line-height:1.2}
+.snack .sub{color:#94a3b8;font-weight:800;font-size:12px;margin-top:2px}
+.snack .act{
+  border:none;
+  background:rgba(96,165,250,.18);
+  color:#bfdbfe;
+  border:1px solid rgba(96,165,250,.35);
+  padding:8px 10px;
+  border-radius:14px;
+  font-weight:1100;
+  cursor:pointer;
+  white-space:nowrap;
+}
+.cartPulse{animation:cartPulse .35s ease}
+@keyframes cartPulse{
+  0%{transform:scale(1)}
+  40%{transform:scale(1.03)}
+  100%{transform:scale(1)}
+}
+
 </style>
 </head>
 <body>
@@ -280,6 +329,7 @@
 </div>
 
 <div class="toast" id="toast"></div>
+<div class="snack" id="snack"><div class="txt"><div class="title" id="snackTitle"></div><div class="sub" id="snackSub"></div></div><button class="act" id="snackBtn">Ver carrinho</button></div>
 
 <script type="module">
 import { firebaseConfig } from "./firebase-config.js";
@@ -310,6 +360,35 @@ function toast(msg){
   clearTimeout(window.__tt);
   window.__tt = setTimeout(()=>t.style.display="none", 2200);
 }
+
+
+function showSnack(title, sub){
+  const el = document.getElementById("snack");
+  const t = document.getElementById("snackTitle");
+  const s = document.getElementById("snackSub");
+  const b = document.getElementById("snackBtn");
+  if(!el || !t || !s || !b) return;
+
+  t.textContent = title || "Adicionado ao carrinho";
+  s.textContent = sub || "";
+
+  // ação: no desktop, só dá um highlight no carrinho; no mobile, sugere rolar
+  b.onclick = ()=>{
+    // foca no carrinho
+    const cartEl = document.querySelector(".cart");
+    if(cartEl){
+      cartEl.classList.add("cartPulse");
+      setTimeout(()=>cartEl.classList.remove("cartPulse"), 380);
+      cartEl.scrollIntoView({behavior:"smooth", block:"start"});
+    }
+    el.classList.remove("show");
+  };
+
+  el.classList.add("show");
+  clearTimeout(window.__snackT);
+  window.__snackT = setTimeout(()=>el.classList.remove("show"), 1900);
+}
+
 function maskTel(raw){
   const digits = String(raw||"").replace(/\D/g,"").slice(0, 11);
   if(digits.length <= 2) return digits;
@@ -334,6 +413,11 @@ function add(id){
   if(it) it.qtd++;
   else cart.push({id, qtd:1});
   recalc();
+  const p = produtos.find(x=>x.id===id);
+  showSnack("✅ Adicionado", (p?.nome||"Item") + " no carrinho");
+  const cartEl = document.querySelector('.cart');
+  if(cartEl){ cartEl.classList.add('cartPulse'); setTimeout(()=>cartEl.classList.remove('cartPulse'), 380); }
+
 }
 
 function recalc(){
