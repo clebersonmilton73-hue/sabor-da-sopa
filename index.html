@@ -1,442 +1,588 @@
-
 <!doctype html>
 <html lang="pt-br">
 <head>
-<meta charset="utf-8"/>
-<meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>Sabor da Sopa</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<style>
-  :root{
-    --bg:#0b1220; --card:#0f172a; --muted:#94a3b8; --txt:#e2e8f0;
-    --accent:#22c55e; --accent2:#16a34a; --line:rgba(148,163,184,.14);
-    --shadow: 0 12px 28px rgba(0,0,0,.35);
-    --radius:18px;
-  }
-  *{box-sizing:border-box}
-  body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;background:linear-gradient(180deg,#07101f,#050814);color:var(--txt)}
-  header{position:sticky;top:0;z-index:5;background:rgba(5,8,20,.72);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
-  .top{max-width:1100px;margin:auto;padding:14px 14px;display:flex;align-items:center;justify-content:space-between;gap:10px}
-  .brand{display:flex;align-items:center;gap:10px}
-  .logo{width:40px;height:40px;border-radius:14px;background:radial-gradient(circle at 30% 30%, #34d399, #16a34a 60%, #0b1220);box-shadow:0 10px 20px rgba(34,197,94,.25)}
-  .brand b{font-size:18px;letter-spacing:.2px}
-  .pill{display:inline-flex;align-items:center;gap:8px;background:rgba(148,163,184,.10);border:1px solid var(--line);padding:8px 10px;border-radius:999px;color:var(--txt);font-weight:800}
-  .wrap{max-width:1100px;margin:18px auto 110px;padding:0 14px;display:grid;grid-template-columns:1fr 360px;gap:14px}
-  @media (max-width:980px){.wrap{grid-template-columns:1fr} .cart{position:fixed;left:0;right:0;bottom:0;max-width:none;border-radius:18px 18px 0 0}}
-  .panel{background:rgba(15,23,42,.85);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden}
-  .panel .hd{padding:14px 14px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;gap:10px}
-  .panel .hd h2{margin:0;font-size:14px;letter-spacing:.2px}
-  .grid{padding:14px;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
-  @media (max-width:560px){.grid{grid-template-columns:1fr}}
-  .item{background:rgba(2,6,23,.55);border:1px solid var(--line);border-radius:16px;padding:12px;display:grid;gap:8px}
-  .item .t{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}
-  .item b{font-size:14px}
-  .item small{color:var(--muted);font-weight:800}
-  .price{font-weight:1000}
-  .btn{width:100%;border:none;border-radius:14px;padding:10px 12px;font-weight:1000;cursor:pointer;background:linear-gradient(180deg,var(--accent),var(--accent2));color:#06240f}
-  .btn:active{transform:translateY(1px)}
-  .cart{align-self:start}
-  .cartBody{padding:14px;display:grid;gap:10px}
-  .row{display:flex;gap:10px}
-  .row>*{flex:1}
-  .input,.select{width:100%;background:rgba(2,6,23,.55);border:1px solid var(--line);border-radius:14px;padding:10px 12px;color:var(--txt);font-weight:900}
-  textarea.input{min-height:72px;resize:vertical;padding-top:10px;line-height:1.25}
-  .chip{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--line);background:rgba(148,163,184,.10);padding:8px 10px;border-radius:999px;font-weight:1000;cursor:pointer;user-select:none}
-  .chip.active{background:rgba(34,197,94,.18);border-color:rgba(34,197,94,.35)}
-  .muted{color:var(--muted);font-weight:800}
-  .sum{border-top:1px dashed rgba(148,163,184,.35);padding-top:10px;display:grid;gap:8px}
-  .line{display:flex;justify-content:space-between;gap:10px;font-weight:900}
-  .line b{font-weight:1100}
-  .btn2{border:none;border-radius:14px;padding:10px 12px;font-weight:1000;cursor:pointer}
-  .btn2.primary{background:linear-gradient(180deg,#60a5fa,#3b82f6);color:#081426}
-  .btn2.ghost{background:rgba(148,163,184,.10);border:1px solid var(--line);color:var(--txt)}
-  .toast{position:fixed;left:50%;bottom:16px;transform:translateX(-50%);background:#111827;color:#fff;border:1px solid rgba(255,255,255,.10);padding:10px 12px;border-radius:14px;display:none;z-index:50}
-
-  .pimg{width:100%;height:140px;object-fit:cover;border-radius:12px;border:1px solid var(--line);background:rgba(2,6,23,.35)}
-
-/* ===== Mobile upgrade (cliente) ===== */
-@media (max-width: 980px){
-  .wrap{grid-template-columns:1fr;gap:12px;margin-bottom:220px}
-  .grid{grid-template-columns:1fr;gap:12px;padding:12px}
-  .item{padding:14px;gap:10px;border-radius:18px}
-  .btn{padding:14px 14px;font-size:16px;border-radius:16px}
-  .cart{left:10px;right:10px;bottom:10px;border-radius:18px;box-shadow:0 16px 40px rgba(0,0,0,.55)}
-  .cartBody{padding:12px 14px 14px;gap:10px}
-  .row{flex-direction:column;gap:10px}
-  .input,.select{padding:14px 14px;font-size:16px;border-radius:16px}
-  .btn2.primary{padding:14px 14px;font-size:16px;border-radius:16px}
-}
-@media (max-width: 420px){
-  .top{padding:12px}
-  .brand b{font-size:16px}
-  .pill{padding:7px 10px}
-}
-
-
-/* ===== MELHORIA VISUAL MOBILE (CLIENTE) ===== */
-@media (max-width: 980px){
-  .wrap{
-    grid-template-columns:1fr;
-    gap:14px;
-    margin-bottom:180px;
-  }
-
-  .grid{
-    grid-template-columns:1fr;
-    gap:14px;
-    padding:14px;
-  }
-
-  .item{
-    padding:16px;
-    border-radius:18px;
-  }
-
-  .price{
-    font-size:16px;
-  }
-
-  .btn{
-    padding:14px;
-    font-size:16px;
-    border-radius:16px;
-  }
-
-  .cart{
-    left:10px;
-    right:10px;
-    bottom:10px;
-    border-radius:20px;
-    box-shadow:0 18px 40px rgba(0,0,0,.45);
-  }
-
-  .input,.select{
-    padding:14px;
-    font-size:16px;
-    border-radius:16px;
-  }
-
-  .btn2.primary{
-    padding:14px;
-    font-size:16px;
-    border-radius:16px;
-  }
-}
-
-
-/* ===== Mobile Compacto ===== */
-@media (max-width: 980px){
-
-  body{
-    font-size:14px;
-  }
-
-  .wrap{
-    margin:10px auto 120px;
-    gap:10px;
-  }
-
-  .grid{
-    padding:10px;
-    gap:10px;
-  }
-
-  .item{
-    padding:12px;
-    border-radius:14px;
-  }
-
-  .item b{
-    font-size:14px;
-  }
-
-  .price{
-    font-size:14px;
-  }
-
-  .btn{
-    padding:10px 12px;
-    font-size:14px;
-    border-radius:14px;
-  }
-
-  .cart{
-    left:6px;
-    right:6px;
-    bottom:6px;
-    border-radius:16px;
-  }
-
-  .cartBody{
-    padding:10px;
-    gap:8px;
-  }
-
-  .input,.select{
-    padding:10px 12px;
-    font-size:14px;
-    border-radius:14px;
-  }
-
-  .btn2.primary{
-    padding:12px;
-    font-size:14px;
-    border-radius:14px;
-  }
-
-  textarea.input{
-    min-height:60px;
-  }
-}
-
-</style>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"/>
+  <title>Bus Parking Out — versão própria (3D simples)</title>
+  <style>
+    :root{
+      --bg:#070a14; --panel:#0b1024; --line:rgba(255,255,255,.12);
+      --text:#e5e7eb; --muted:#9ca3af; --accent:#22c55e; --warn:#f59e0b; --danger:#ef4444;
+    }
+    html,body{height:100%; margin:0; background:radial-gradient(1200px 600px at 25% 10%, #14245a 0%, var(--bg) 60%, #03040b 100%); color:var(--text); font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,Helvetica,Arial; overflow:hidden;}
+    .ui{
+      position:fixed; left:0; right:0; top:0; z-index:10;
+      display:flex; align-items:center; justify-content:space-between; gap:10px;
+      padding:12px 14px;
+      background:linear-gradient(180deg, rgba(0,0,0,.55), rgba(0,0,0,0));
+      pointer-events:none;
+    }
+    .ui > *{pointer-events:auto;}
+    .brand{display:flex; align-items:center; gap:10px;}
+    .logo{width:38px;height:38px;border-radius:14px;background:linear-gradient(135deg,#22c55e,#3b82f6); box-shadow:0 14px 40px rgba(34,197,94,.18);}
+    .ttl{display:flex; flex-direction:column; gap:2px;}
+    .ttl b{font-size:14px; letter-spacing:.2px;}
+    .ttl span{font-size:12px; color:var(--muted);}
+    .bar{display:flex; align-items:center; gap:8px; flex-wrap:wrap; justify-content:flex-end;}
+    button{
+      border:1px solid var(--line);
+      background:linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.02));
+      color:var(--text);
+      padding:10px 12px;
+      border-radius:14px;
+      cursor:pointer;
+      font-weight:700;
+      letter-spacing:.2px;
+      transition:transform .05s ease, border-color .2s ease;
+      user-select:none;
+      -webkit-tap-highlight-color: transparent;
+    }
+    button:hover{border-color:rgba(255,255,255,.22);}
+    button:active{transform:translateY(1px);}
+    button.primary{border-color:rgba(34,197,94,.45); box-shadow:0 10px 30px rgba(34,197,94,.10);}
+    button.danger{border-color:rgba(239,68,68,.45);}
+    .hud{
+      position:fixed; left:12px; bottom:12px; z-index:10;
+      display:flex; gap:10px; flex-wrap:wrap;
+      background:rgba(0,0,0,.35);
+      border:1px solid rgba(255,255,255,.12);
+      border-radius:18px;
+      padding:10px 12px;
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+    }
+    .stat{display:flex; flex-direction:column; gap:2px; min-width:120px;}
+    .stat small{color:var(--muted); font-size:11px;}
+    .stat b{font-size:16px;}
+    .help{
+      position:fixed; right:12px; bottom:12px; z-index:10;
+      width:min(420px, calc(100vw - 24px));
+      background:rgba(0,0,0,.35);
+      border:1px solid rgba(255,255,255,.12);
+      border-radius:18px;
+      padding:10px 12px;
+      color:rgba(229,231,235,.92);
+      font-size:12px;
+      line-height:1.45;
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+    }
+    .toast{
+      position:fixed; left:50%; bottom:82px; transform:translateX(-50%);
+      background:rgba(0,0,0,.55);
+      border:1px solid rgba(255,255,255,.15);
+      color:var(--text);
+      padding:10px 12px;
+      border-radius:999px;
+      font-size:12px;
+      opacity:0;
+      pointer-events:none;
+      transition:opacity .25s ease, transform .25s ease;
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      z-index:20;
+    }
+    .toast.show{opacity:1; transform:translateX(-50%) translateY(-6px);}
+    canvas{display:block; width:100vw; height:100vh;}
+    .badge{
+      display:inline-flex; align-items:center; gap:6px;
+      padding:6px 10px; border-radius:999px; border:1px solid rgba(255,255,255,.14);
+      background:rgba(0,0,0,.25); color:rgba(229,231,235,.9); font-size:12px;
+    }
+  </style>
 </head>
 <body>
-<header>
-  <div class="top">
-    <div class="brand"><div class="logo"></div><div><b>Sabor da Sopa</b><div class="muted" style="font-size:12px">Cardápio online</div></div></div>
-    <div class="pill" id="statusPill">🔄 carregando…</div>
+  <div class="ui">
+    <div class="brand">
+      <div class="logo"></div>
+      <div class="ttl">
+        <b>Bus Parking Out — versão própria</b>
+        <span>3D simples no navegador (sem depender do site que você mandou)</span>
+      </div>
+    </div>
+    <div class="bar">
+      <span class="badge" id="lvlBadge">Fase 1</span>
+      <button id="btnUndo">Desfazer</button>
+      <button id="btnRestart" class="danger">Reiniciar</button>
+      <button id="btnNext" class="primary">Próxima</button>
+    </div>
   </div>
-</header>
 
-<div class="wrap">
-  <section class="panel">
-    <div class="hd">
-      <h2>🍲 Cardápio</h2>
-      <div class="muted" id="catInfo"></div>
-    </div>
-    <div class="grid" id="grid"></div>
-  </section>
+  <div class="hud">
+    <div class="stat"><small>Movimentos</small><b id="moves">0</b></div>
+    <div class="stat"><small>Melhor (fase)</small><b id="best">—</b></div>
+  </div>
 
-  <aside class="panel cart">
-    <div class="hd">
-      <h2>🛒 Seu pedido</h2>
-      <div class="muted"><span id="qtd">0</span> itens</div>
-    </div>
-    <div class="cartBody">
-      <div>
-        <div class="muted" style="margin-bottom:6px">Dados do Cliente (obrigatório)</div>
-        <div class="row">
-          <input id="cliNome" class="input" placeholder="Nome">
-          <input id="cliTel" class="input" placeholder="WhatsApp (DDD + número)" inputmode="tel">
-        </div>
-        <div style="margin-top:10px">
-          <input id="cliEnd" class="input" placeholder="Endereço completo">
-        </div>
-      </div>
+  <div class="help">
+    <b>Como jogar:</b> clique/toque em um ônibus e arraste na direção que ele anda (horizontal/vertical). Ele desliza até encostar.
+    Objetivo: levar o ônibus <b>alvo ⭐</b> até a <b>saída verde</b> (lado direito).
+    <div style="margin-top:6px; color:var(--muted)">Obs: isso é um jogo próprio (clone do estilo). O HTML que você mandou era uma página do site com anúncios e o jogo real fica no servidor deles.</div>
+  </div>
 
-      <div>
-        <div style="display:flex;gap:8px;flex-wrap:wrap">
-          <div class="chip active" id="chipEntrega" onclick="setEntrega('ENTREGA')">🏍️ Entrega</div>
-          <div class="chip" id="chipRetirada" onclick="setEntrega('RETIRADA')">🏪 Retirada</div>
-        </div>
-      </div>
+  <div class="toast" id="toast">Ok</div>
 
-      <textarea id="obs" class="input" placeholder="Observação do pedido (opcional)"></textarea>
+  <canvas id="cv"></canvas>
 
-      <div class="row">
-        <select id="pay" class="select">
-          <option value="DINHEIRO">Dinheiro</option>
-          <option value="PIX">PIX</option>
-          <option value="CARTÃO">Cartão</option>
-        </select>
-        <input id="troco" class="input" placeholder="Troco para (se dinheiro)">
-      </div>
+  <!-- Three.js via CDN (precisa de internet para carregar a biblioteca) -->
+  <script src="https://unpkg.com/three@0.160.0/build/three.min.js"></script>
 
-      <div class="sum">
-        <div class="line"><span>Subtotal</span><b id="sub">R$ 0,00</b></div>
-        <div class="line"><span>Total</span><b id="tot">R$ 0,00</b></div>
-        <button class="btn2 primary" onclick="finalizar()">Finalizar e enviar no WhatsApp</button>
-        <div class="muted" style="font-size:12px">Seu pedido será salvo online (Firebase) e abrirá o WhatsApp do cliente.</div>
-      </div>
-    </div>
-  </aside>
-</div>
+  <script>
+  (() => {
+    // ====== LEVELS (grid 6x6) ======
+    const GRID_W = 6, GRID_H = 6;
+    const EXIT = {side:"right", row:2}; // saída verde
+    // vehicle {id,x,y,len,dir,color,target?} coords in cells
+    const LEVELS = [
+      [
+        {id:"T", x:1, y:2, len:2, dir:"h", color:"#f59e0b", target:true},
+        {id:"a", x:0, y:0, len:3, dir:"v", color:"#60a5fa"},
+        {id:"b", x:2, y:0, len:2, dir:"v", color:"#34d399"},
+        {id:"c", x:3, y:1, len:2, dir:"h", color:"#f87171"},
+        {id:"d", x:5, y:0, len:3, dir:"v", color:"#a78bfa"},
+        {id:"e", x:0, y:4, len:2, dir:"h", color:"#fb7185"},
+        {id:"f", x:2, y:3, len:3, dir:"v", color:"#22c55e"},
+        {id:"g", x:3, y:4, len:2, dir:"v", color:"#93c5fd"},
+      ],
+      [
+        {id:"T", x:0, y:2, len:2, dir:"h", color:"#f59e0b", target:true},
+        {id:"a", x:2, y:0, len:3, dir:"v", color:"#60a5fa"},
+        {id:"b", x:3, y:0, len:2, dir:"h", color:"#34d399"},
+        {id:"c", x:5, y:0, len:3, dir:"v", color:"#a78bfa"},
+        {id:"d", x:0, y:0, len:2, dir:"v", color:"#f87171"},
+        {id:"e", x:0, y:4, len:3, dir:"h", color:"#fb7185"},
+        {id:"f", x:3, y:3, len:2, dir:"v", color:"#22c55e"},
+        {id:"g", x:1, y:3, len:2, dir:"v", color:"#93c5fd"},
+        {id:"h", x:2, y:5, len:2, dir:"h", color:"#fde68a"},
+      ],
+      [
+        {id:"T", x:1, y:2, len:2, dir:"h", color:"#f59e0b", target:true},
+        {id:"a", x:0, y:0, len:3, dir:"v", color:"#60a5fa"},
+        {id:"b", x:1, y:0, len:2, dir:"h", color:"#34d399"},
+        {id:"c", x:3, y:0, len:3, dir:"v", color:"#a78bfa"},
+        {id:"d", x:4, y:1, len:2, dir:"h", color:"#f87171"},
+        {id:"e", x:5, y:1, len:2, dir:"v", color:"#22c55e"},
+        {id:"f", x:0, y:3, len:2, dir:"h", color:"#fb7185"},
+        {id:"g", x:2, y:3, len:2, dir:"v", color:"#93c5fd"},
+        {id:"h", x:4, y:4, len:2, dir:"h", color:"#fde68a"},
+        {id:"i", x:2, y:5, len:2, dir:"h", color:"#fca5a5"},
+      ],
+      [
+        {id:"T", x:0, y:2, len:2, dir:"h", color:"#f59e0b", target:true},
+        {id:"a", x:2, y:0, len:3, dir:"v", color:"#60a5fa"},
+        {id:"b", x:3, y:0, len:2, dir:"h", color:"#34d399"},
+        {id:"c", x:5, y:0, len:3, dir:"v", color:"#a78bfa"},
+        {id:"d", x:0, y:0, len:2, dir:"v", color:"#f87171"},
+        {id:"e", x:0, y:3, len:3, dir:"v", color:"#22c55e"},
+        {id:"f", x:1, y:4, len:2, dir:"h", color:"#fb7185"},
+        {id:"g", x:3, y:3, len:2, dir:"v", color:"#93c5fd"},
+        {id:"h", x:4, y:4, len:2, dir:"h", color:"#fde68a"},
+        {id:"i", x:2, y:5, len:2, dir:"h", color:"#fca5a5"},
+      ],
+    ];
 
-<div class="toast" id="toast"></div>
+    // ====== UI ======
+    const movesEl = document.getElementById("moves");
+    const bestEl  = document.getElementById("best");
+    const lvlBadge= document.getElementById("lvlBadge");
+    const toast = document.getElementById("toast");
+    const toastMsg = (msg) => {
+      toast.textContent = msg;
+      toast.classList.add("show");
+      clearTimeout(toast._t);
+      toast._t = setTimeout(()=>toast.classList.remove("show"), 1200);
+    };
 
-<script type="module">
-import { firebaseConfig } from "./firebase-config.js";
-import { initializeApp } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-app.js";
-import { getFirestore, collection, getDocs, query, orderBy, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-firestore.js";
+    const keyBest = (i) => "busParking3D_best_" + i;
+    const loadBest = () => {
+      const v = localStorage.getItem(keyBest(levelIndex));
+      bestEl.textContent = v ? v : "—";
+    };
+    const saveBest = () => {
+      const best = localStorage.getItem(keyBest(levelIndex));
+      if(!best || moves < parseInt(best,10)){
+        localStorage.setItem(keyBest(levelIndex), String(moves));
+        loadBest();
+      }
+    };
 
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
+    // ====== THREE SETUP ======
+    const canvas = document.getElementById("cv");
+    const renderer = new THREE.WebGLRenderer({canvas, antialias:true, alpha:true});
+    renderer.setPixelRatio(Math.min(2.5, window.devicePixelRatio || 1));
+    renderer.setSize(window.innerWidth, window.innerHeight, false);
 
-const grid = document.getElementById("grid");
-const statusPill = document.getElementById("statusPill");
-const qtdEl = document.getElementById("qtd");
-const subEl = document.getElementById("sub");
-const totEl = document.getElementById("tot");
-const catInfo = document.getElementById("catInfo");
+    const scene = new THREE.Scene();
 
-let produtos = [];
-let cart = []; // {id, qtd}
-let entregaTipo = "ENTREGA";
+    // Camera: orthographic for "puzzle board" view
+    const cam = new THREE.OrthographicCamera(-6, 6, 6, -6, 0.1, 100);
+    cam.position.set(8, 10, 8);
+    cam.lookAt(0,0,0);
 
-function moneyBR(v){
-  return (v||0).toLocaleString("pt-BR",{style:"currency",currency:"BRL"});
-}
-function toast(msg){
-  const t = document.getElementById("toast");
-  t.textContent = msg;
-  t.style.display="block";
-  clearTimeout(window.__tt);
-  window.__tt = setTimeout(()=>t.style.display="none", 2200);
-}
-function maskTel(raw){
-  const digits = String(raw||"").replace(/\D/g,"").slice(0, 11);
-  if(digits.length <= 2) return digits;
-  const ddd = digits.slice(0,2);
-  const rest = digits.slice(2);
-  if(rest.length <= 4) return `(${ddd}) ${rest}`;
-  if(rest.length <= 8) return `(${ddd}) ${rest.slice(0,4)}-${rest.slice(4)}`;
-  return `(${ddd}) ${rest.slice(0,5)}-${rest.slice(5)}`;
-}
-document.getElementById("cliTel").addEventListener("input", (e)=>{
-  e.target.value = maskTel(e.target.value);
-});
+    // Lights
+    const hemi = new THREE.HemisphereLight(0xaecbff, 0x0b1024, 0.95);
+    scene.add(hemi);
+    const dir = new THREE.DirectionalLight(0xffffff, 0.95);
+    dir.position.set(8, 14, 10);
+    dir.castShadow = false;
+    scene.add(dir);
 
-function setEntrega(tipo){
-  entregaTipo = (tipo==="RETIRADA") ? "RETIRADA" : "ENTREGA";
-  document.getElementById("chipEntrega").classList.toggle("active", entregaTipo==="ENTREGA");
-  document.getElementById("chipRetirada").classList.toggle("active", entregaTipo==="RETIRADA");
-}
+    // Floor / board
+    const board = new THREE.Group();
+    scene.add(board);
 
-function add(id){
-  const it = cart.find(x=>x.id===id);
-  if(it) it.qtd++;
-  else cart.push({id, qtd:1});
-  recalc();
-}
+    const floorGeo = new THREE.BoxGeometry(GRID_W, 0.35, GRID_H);
+    const floorMat = new THREE.MeshStandardMaterial({color:0x0b1024, metalness:0.15, roughness:0.85});
+    const floor = new THREE.Mesh(floorGeo, floorMat);
+    floor.position.set((GRID_W/2)-0.5, -0.25, (GRID_H/2)-0.5);
+    board.add(floor);
 
-function recalc(){
-  let qtd = 0;
-  let sub = 0;
-  cart.forEach(c=>{
-    const p = produtos.find(x=>x.id===c.id);
-    if(!p) return;
-    qtd += c.qtd;
-    sub += (p.preco||0) * c.qtd;
-  });
-  qtdEl.textContent = qtd;
-  subEl.textContent = moneyBR(sub);
-  totEl.textContent = moneyBR(sub);
-}
+    // Grid lines (simple)
+    const grid = new THREE.GridHelper(GRID_W, GRID_W, 0xffffff, 0xffffff);
+    grid.material.opacity = 0.12;
+    grid.material.transparent = true;
+    grid.position.set((GRID_W/2)-0.5, -0.06, (GRID_H/2)-0.5);
+    board.add(grid);
 
-function render(){
-  grid.innerHTML="";
-  produtos.forEach(p=>{
-    const div = document.createElement("div");
-    div.className = "item";
+    // Exit marker
+    const exitGroup = new THREE.Group();
+    const exitMat = new THREE.MeshStandardMaterial({color:0x22c55e, emissive:0x0a3b20, emissiveIntensity:0.7, roughness:0.5});
+    const exitGeo = new THREE.BoxGeometry(0.35, 0.12, 0.9);
+    const exitMesh = new THREE.Mesh(exitGeo, exitMat);
+    exitMesh.position.set(GRID_W - 0.15, 0.05, EXIT.row);
+    exitGroup.add(exitMesh);
+    board.add(exitGroup);
 
-    const img = p.fotoURL
-      ? `<img class="pimg" src="${p.fotoURL}" alt="${(p.nome||"").replace(/"/g,'&quot;')}">`
-      : "";
+    // ====== GAME STATE ======
+    let levelIndex = 0;
+    let vehicles = [];
+    let moves = 0;
+    let history = [];
 
-    div.innerHTML = `
-      ${img}
-      <div class="t">
-        <div>
-          <b>${p.nome}</b><br>
-          <small>${p.cat || "Sopas"}</small>
-        </div>
-        <div class="price">${moneyBR(p.preco||0)}</div>
-      </div>
-      <button class="btn" onclick="window.__add(${Number(p.id)})">Adicionar</button>
-    `;
-    grid.appendChild(div);
-  });
-  window.__add = add;
-}
+    // 3D vehicle meshes
+    const vehicleGroup = new THREE.Group();
+    board.add(vehicleGroup);
 
-async function carregar(){
-  try{
-    statusPill.textContent = "🔄 carregando…";
-    const q = query(collection(db,"produtos"), orderBy("ord","asc"));
-    const snap = await getDocs(q);
-    produtos = snap.docs.map(d=>({id: Number(d.id), ...d.data()})).filter(p=>Number.isFinite(p.id));
-    render();
-    if(catInfo) catInfo.textContent = `${produtos.length} itens`;
-    statusPill.textContent = "✅ online";
-  }catch(e){
-    console.error(e);
-    statusPill.textContent = "⚠️ offline/erro";
-    toast("Erro ao carregar produtos. Confira o Firebase.");
-  }
-}
+    // selection
+    const raycaster = new THREE.Raycaster();
+    const pointer = new THREE.Vector2();
+    let isDown = false;
+    let active = null;         // {id, mesh}
+    let downNDC = {x:0,y:0};
+    let dragAxis = null;       // "h" | "v"
+    let animating = false;
 
-function dadosCliente(){
-  const nome = document.getElementById("cliNome").value.trim();
-  const tel = document.getElementById("cliTel").value.replace(/\D/g,"").trim();
-  const end = document.getElementById("cliEnd").value.trim();
-  return {nome, tel, endereco:end};
-}
+    // ====== HELPERS ======
+    const deepCopy = (o) => JSON.parse(JSON.stringify(o));
 
-async function finalizar(){
-  if(!cart.length){ alert("Carrinho vazio."); return; }
-  const c = dadosCliente();
-  if(!(c.nome && c.tel && c.endereco)){
-    alert("Preencha Nome, WhatsApp e Endereço.");
-    return;
-  }
+    function occupancy(exceptId=null){
+      const occ = Array.from({length:GRID_H}, ()=>Array(GRID_W).fill(null));
+      for(const v of vehicles){
+        if(v.id===exceptId) continue;
+        for(let i=0;i<v.len;i++){
+          const x = v.x + (v.dir==="h" ? i : 0);
+          const y = v.y + (v.dir==="v" ? i : 0);
+          if(x>=0 && x<GRID_W && y>=0 && y<GRID_H) occ[y][x]=v.id;
+        }
+      }
+      return occ;
+    }
 
-  const itens = cart.map(ci=>{
-    const p = produtos.find(x=>x.id===ci.id);
-    return {id:ci.id, nome:p?.nome||"", preco:Number(p?.preco||0), qtd:ci.qtd};
-  });
+    function slideVehicle(id, stepDir){
+      // stepDir: +1 or -1 along allowed axis; vehicle slides until blocked
+      const v = vehicles.find(o=>o.id===id);
+      if(!v) return false;
 
-  const subtotal = itens.reduce((a,i)=>a+(i.preco*i.qtd),0);
-  const metodo = document.getElementById("pay").value;
-  const troco = document.getElementById("troco").value.trim();
-  const obs = document.getElementById("obs").value.trim();
+      const occ = occupancy(id);
+      let moved = false;
 
-  const pedido = {
-    cliente: c,
-    entregaTipo,
-    metodo,
-    troco,
-    obs,
-    itens,
-    subtotal,
-    total: subtotal,
-    criadoEm: serverTimestamp()
-  };
+      if(v.dir==="h"){
+        const step = stepDir;
+        while(true){
+          const checkX = step>0 ? (v.x + v.len) : (v.x - 1);
+          if(checkX<0 || checkX>=GRID_W) break;
+          const y = v.y;
+          if(occ[y][checkX]) break;
+          v.x += step; moved = true;
+        }
+      }else{
+        const step = stepDir;
+        while(true){
+          const checkY = step>0 ? (v.y + v.len) : (v.y - 1);
+          if(checkY<0 || checkY>=GRID_H) break;
+          const x = v.x;
+          if(occ[checkY][x]) break;
+          v.y += step; moved = true;
+        }
+      }
+      return moved;
+    }
 
-  try{
-    await addDoc(collection(db,"pedidos"), pedido);
-  }catch(e){
-    console.warn("Falha ao salvar pedido (rules?)", e);
-  }
+    function checkWin(){
+      const t = vehicles.find(v=>v.target);
+      if(!t) return false;
+      return t.y===EXIT.row && (t.x + t.len)===GRID_W;
+    }
 
-  const linhas = [];
-  linhas.push("*Sabor da Sopa* 🍲");
-  linhas.push(`Cliente: ${c.nome}`);
-  linhas.push(`Whats: ${c.tel}`);
-  linhas.push(`Endereço: ${c.endereco}`);
-  linhas.push(`Tipo: ${entregaTipo}`);
-  if(obs) linhas.push(`Obs: ${obs}`);
-  linhas.push("");
-  linhas.push("*Itens:*");
-  itens.forEach(i=>linhas.push(`- ${i.nome} x${i.qtd} (${moneyBR(i.preco*i.qtd)})`));
-  linhas.push("");
-  linhas.push(`Total: *${moneyBR(subtotal)}*`);
-  linhas.push(`Pagamento: ${metodo}`);
-  if(metodo==="DINHEIRO" && troco) linhas.push(`Troco para: ${troco}`);
+    function pushHistory(){
+      history.push(deepCopy(vehicles));
+      if(history.length>200) history.shift();
+    }
 
-  const msg = encodeURIComponent(linhas.join("\n"));
-  window.open(`https://wa.me/55${c.tel}?text=${msg}`,"_blank");
+    function undo(){
+      if(animating) return;
+      if(history.length===0) return;
+      vehicles = history.pop();
+      moves = Math.max(0, moves-1);
+      movesEl.textContent = moves;
+      rebuildMeshes();
+    }
 
-  cart = [];
-  recalc();
-  document.getElementById("obs").value="";
-  document.getElementById("troco").value="";
-  toast("Pedido enviado!");
-}
-window.finalizar = finalizar;
-window.setEntrega = setEntrega;
+    function resetLevel(idx){
+      if(animating) return;
+      levelIndex = Math.max(0, Math.min(LEVELS.length-1, idx));
+      vehicles = deepCopy(LEVELS[levelIndex]);
+      history = [];
+      moves = 0;
+      movesEl.textContent = moves;
+      lvlBadge.textContent = `Fase ${levelIndex+1}`;
+      loadBest();
+      rebuildMeshes();
+      toastMsg("Fase carregada");
+    }
 
-carregar();
-</script>
+    // ====== BUILD MESHES ======
+    function clearGroup(g){
+      while(g.children.length){
+        const o = g.children.pop();
+        if(o.geometry) o.geometry.dispose?.();
+        if(o.material){
+          if(Array.isArray(o.material)) o.material.forEach(m=>m.dispose?.());
+          else o.material.dispose?.();
+        }
+      }
+    }
+
+    function makeRoundedBox(w,h,d, colorHex, isTarget){
+      // simple box + top highlight (cheap "3D look")
+      const geo = new THREE.BoxGeometry(w, h, d);
+      const mat = new THREE.MeshStandardMaterial({
+        color: new THREE.Color(colorHex),
+        metalness: 0.18,
+        roughness: 0.65,
+        emissive: isTarget ? new THREE.Color(0x3b2006) : new THREE.Color(0x000000),
+        emissiveIntensity: isTarget ? 0.45 : 0.0
+      });
+      const mesh = new THREE.Mesh(geo, mat);
+
+      // top highlight plate
+      const topGeo = new THREE.PlaneGeometry(Math.max(0.2, w*0.86), Math.max(0.2, d*0.86));
+      const topMat = new THREE.MeshBasicMaterial({color:0xffffff, transparent:true, opacity:0.18});
+      const top = new THREE.Mesh(topGeo, topMat);
+      top.rotation.x = -Math.PI/2;
+      top.position.y = h/2 + 0.001;
+      mesh.add(top);
+
+      return mesh;
+    }
+
+    function rebuildMeshes(){
+      clearGroup(vehicleGroup);
+
+      for(const v of vehicles){
+        const w = v.dir==="h" ? v.len : 1;
+        const d = v.dir==="v" ? v.len : 1;
+        const mesh = makeRoundedBox(w*0.92, 0.55, d*0.92, v.color, !!v.target);
+        mesh.userData = { id: v.id };
+        // position: x maps to X axis, y maps to Z axis
+        mesh.position.set(v.x, 0.24, v.y);
+        // center in cell
+        if(v.dir==="h") mesh.position.x += (v.len-1)/2;
+        else mesh.position.z += (v.len-1)/2;
+
+        // target star sprite-ish (simple canvas texture)
+        if(v.target){
+          const tex = makeStarTexture();
+          const sprMat = new THREE.SpriteMaterial({map:tex, transparent:true});
+          const spr = new THREE.Sprite(sprMat);
+          spr.scale.set(0.55,0.55,0.55);
+          spr.position.set((w*0.42), 0.52, -(d*0.42));
+          mesh.add(spr);
+        }
+
+        vehicleGroup.add(mesh);
+      }
+    }
+
+    function makeStarTexture(){
+      const cnv = document.createElement("canvas");
+      cnv.width = 128; cnv.height = 128;
+      const g = cnv.getContext("2d");
+      g.clearRect(0,0,128,128);
+      g.font = "96px system-ui";
+      g.textAlign="center"; g.textBaseline="middle";
+      g.fillStyle = "#ffffff";
+      g.fillText("⭐", 64, 70);
+      const tex = new THREE.CanvasTexture(cnv);
+      tex.needsUpdate = true;
+      return tex;
+    }
+
+    // ====== INPUT ======
+    function setPointerFromEvent(e){
+      const x = (e.clientX / window.innerWidth) * 2 - 1;
+      const y = -(e.clientY / window.innerHeight) * 2 + 1;
+      pointer.set(x,y);
+      return {x,y};
+    }
+
+    function pick(){
+      raycaster.setFromCamera(pointer, cam);
+      const hits = raycaster.intersectObjects(vehicleGroup.children, true);
+      // find first parent with userData.id
+      for(const h of hits){
+        let o = h.object;
+        while(o && !o.userData.id) o = o.parent;
+        if(o && o.userData.id) return o;
+      }
+      return null;
+    }
+
+    function onDown(e){
+      if(animating) return;
+      isDown = true;
+      dragAxis = null;
+      const ndc = setPointerFromEvent(e);
+      downNDC = ndc;
+      const obj = pick();
+      active = obj ? {id: obj.userData.id, mesh: obj} : null;
+    }
+
+    function onMove(e){
+      if(!isDown || !active || animating) return;
+      const ndc = setPointerFromEvent(e);
+      const dx = ndc.x - downNDC.x;
+      const dy = ndc.y - downNDC.y;
+      if(!dragAxis){
+        if(Math.abs(dx) + Math.abs(dy) < 0.02) return;
+        dragAxis = (Math.abs(dx) > Math.abs(dy)) ? "h" : "v";
+      }
+    }
+
+    function onUp(e){
+      if(!isDown) return;
+      isDown = false;
+      if(!active || animating) { active=null; return; }
+
+      const v = vehicles.find(o=>o.id===active.id);
+      if(!v){ active=null; return; }
+
+      const ndc = setPointerFromEvent(e);
+      const dx = ndc.x - downNDC.x;
+      const dy = ndc.y - downNDC.y;
+
+      // Must drag in allowed axis
+      let stepDir = 0;
+      if(v.dir==="h"){
+        if(Math.abs(dx) < 0.03) { active=null; return; }
+        stepDir = dx > 0 ? 1 : -1;
+      } else {
+        if(Math.abs(dy) < 0.03) { active=null; return; }
+        stepDir = dy < 0 ? -1 : 1; // screen y: up is positive? actually NDC y increases up; dy>0 = up => negative Z (row decrease)
+        // We'll map dy>0 (drag up) => stepDir = -1 (y--)
+        stepDir = dy > 0 ? -1 : 1;
+      }
+
+      // Execute move
+      pushHistory();
+      const before = deepCopy(vehicles);
+      const moved = slideVehicle(v.id, stepDir);
+      if(!moved){
+        history.pop();
+        active=null;
+        return;
+      }
+
+      moves++;
+      movesEl.textContent = moves;
+
+      // Animate mesh to new position
+      animating = true;
+      const mesh = vehicleGroup.children.find(m => m.userData.id===v.id);
+      const start = mesh.position.clone();
+      const end = mesh.position.clone();
+      // compute end from v.x,v.y
+      let px = v.x, pz = v.y;
+      if(v.dir==="h") px += (v.len-1)/2;
+      else pz += (v.len-1)/2;
+      end.set(px, start.y, pz);
+
+      const t0 = performance.now();
+      const dur = 180;
+      const ease = (t)=> t<.5 ? 2*t*t : 1 - Math.pow(-2*t+2,2)/2;
+
+      function step(now){
+        const t = Math.min(1, (now - t0)/dur);
+        const k = ease(t);
+        mesh.position.lerpVectors(start, end, k);
+        if(t<1) requestAnimationFrame(step);
+        else{
+          animating = false;
+          if(checkWin()){
+            saveBest();
+            toastMsg("✅ Você venceu!");
+          }
+        }
+      }
+      requestAnimationFrame(step);
+      active = null;
+    }
+
+    // Touch support
+    function bindPointer(){
+      window.addEventListener("pointerdown", (e)=>{ onDown(e); }, {passive:true});
+      window.addEventListener("pointermove", (e)=>{ onMove(e); }, {passive:true});
+      window.addEventListener("pointerup",   (e)=>{ onUp(e); }, {passive:true});
+      window.addEventListener("pointercancel",(e)=>{ onUp(e); }, {passive:true});
+    }
+
+    // ====== UI Buttons ======
+    document.getElementById("btnUndo").addEventListener("click", ()=>undo());
+    document.getElementById("btnRestart").addEventListener("click", ()=>{ resetLevel(levelIndex); });
+    document.getElementById("btnNext").addEventListener("click", ()=>{
+      if(levelIndex < LEVELS.length-1) resetLevel(levelIndex+1);
+      else toastMsg("Você terminou as fases!");
+    });
+
+    // ====== RESIZE ======
+    function resize(){
+      renderer.setSize(window.innerWidth, window.innerHeight, false);
+
+      const aspect = window.innerWidth / window.innerHeight;
+      const viewSize = 7.2; // zoom
+      cam.left   = -viewSize * aspect;
+      cam.right  =  viewSize * aspect;
+      cam.top    =  viewSize;
+      cam.bottom = -viewSize;
+      cam.updateProjectionMatrix();
+    }
+    window.addEventListener("resize", resize);
+
+    // ====== RENDER LOOP ======
+    function tick(){
+      renderer.render(scene, cam);
+      requestAnimationFrame(tick);
+    }
+
+    // ====== INIT ======
+    if(!window.THREE){
+      alert("Não carregou o Three.js. Verifique sua internet e abra novamente.");
+      return;
+    }
+    resize();
+    bindPointer();
+    resetLevel(0);
+    tick();
+  })();
+  </script>
 </body>
 </html>
