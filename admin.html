@@ -12,30 +12,47 @@
   }
   *{box-sizing:border-box}
   body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;background:linear-gradient(180deg,#07101f,#050814);color:var(--txt)}
-  .wrap{max-width:1100px;margin:20px auto 60px;padding:0 14px}
+  .wrap{max-width:1400px;margin:28px auto 80px;padding:0 26px}
   .panel{background:rgba(15,23,42,.86);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden}
   .hd{padding:14px 14px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;gap:10px}
   .hd b{font-size:14px}
-  .grid{padding:14px;display:grid;grid-template-columns:320px 1fr;gap:14px}
-  @media(max-width:980px){.grid{grid-template-columns:1fr}}
+  .grid{padding:24px;display:grid;grid-template-columns:420px 1fr;gap:24px}
+  @media(max-width:980px){.wrap{padding:0 14px}.grid{grid-template-columns:1fr;padding:16px;gap:16px}}
   .card{background:rgba(2,6,23,.55);border:1px solid var(--line);border-radius:16px;padding:12px}
   .row{display:flex;gap:10px;flex-wrap:wrap}
   .row>*{flex:1}
-  .input,.select{width:100%;background:rgba(2,6,23,.55);border:1px solid var(--line);border-radius:14px;padding:10px 12px;color:var(--txt);font-weight:900}
-  .btn{border:none;border-radius:14px;padding:10px 12px;font-weight:1000;cursor:pointer}
+  .input,.select{width:100%;background:rgba(2,6,23,.55);border:1px solid var(--line);border-radius:16px;padding:14px 16px;color:var(--txt);font-weight:900;font-size:15px}
+  .btn{border:none;border-radius:16px;padding:14px 16px;font-weight:1000;cursor:pointer;font-size:15px}
   .btn.primary{background:linear-gradient(180deg,#60a5fa,#3b82f6);color:#081426}
   .btn.good{background:linear-gradient(180deg,#34d399,#22c55e);color:#05210f}
   .btn.ghost{background:rgba(148,163,184,.10);border:1px solid var(--line);color:var(--txt)}
   .muted{color:var(--muted);font-weight:800}
   .pill{display:inline-flex;align-items:center;gap:8px;background:rgba(148,163,184,.10);border:1px solid var(--line);padding:8px 10px;border-radius:999px;font-weight:900}
   table{width:100%;border-collapse:collapse}
-  th,td{border-bottom:1px solid rgba(148,163,184,.14);padding:10px 6px;text-align:left;font-weight:900}
+  th,td{border-bottom:1px solid rgba(148,163,184,.14);padding:14px 10px;text-align:left;font-weight:900}
   th{color:var(--muted);font-size:12px}
   td small{color:var(--muted);font-weight:800}
   .danger{color:var(--bad)}
   .ok{color:var(--good)}
 
   .thumb{width:52px;height:40px;object-fit:cover;border-radius:10px;border:1px solid rgba(148,163,184,.20)}
+
+  /* ===== Cards de Produtos ===== */
+  .prodGrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px}
+  .prodCard{background:rgba(2,6,23,.55);border:1px solid var(--line);border-radius:16px;overflow:hidden;display:grid}
+  .prodImg{width:100%;height:150px;object-fit:cover;background:rgba(2,6,23,.35)}
+  .prodPad{padding:12px;display:grid;gap:8px}
+  .prodTop{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}
+  .prodName{font-size:14px;font-weight:1000;line-height:1.2}
+  .prodMeta{color:var(--muted);font-weight:800;font-size:12px}
+  .prodPrice{font-weight:1100}
+  .prodActions{display:flex;gap:8px;flex-wrap:wrap}
+  .btn.sm{padding:10px 12px;border-radius:14px;font-size:14px}
+  @media(max-width:520px){
+    .prodGrid{grid-template-columns:1fr}
+    .prodImg{height:160px}
+  }
+
 </style>
 </head>
 <body>
@@ -92,11 +109,8 @@
         <div style="margin-top:16px">
           <b>Produtos</b>
           <div class="muted" style="font-size:12px;margin-top:6px">Apenas o email admin pode editar (rules).</div>
-          <div style="margin-top:10px;overflow:auto">
-            <table>
-              <thead><tr><th>ID</th><th>Foto</th><th>Produto</th><th>Categoria</th><th>Preço</th><th>Ações</th></tr></thead>
-              <tbody id="tbProd"></tbody>
-            </table>
+          <div style="margin-top:10px">
+            <div id="prodCards" class="prodGrid"></div>
           </div>
         </div>
 
@@ -208,25 +222,38 @@ function setUI(user){
 }
 
 async function carregarProdutos(){
-  const tb = document.getElementById("tbProd");
-  tb.innerHTML = "";
+  const box = document.getElementById("prodCards");
+  if(!box) return;
+  box.innerHTML = "";
+
   const snap = await getDocs(query(collection(db,"produtos"), orderBy("ord","asc"), limit(300)));
   snap.forEach(d=>{
-    const p = d.data();
-    const tr = document.createElement("tr");
-    const thumb = p.fotoURL ? `<img class="thumb" src="${p.fotoURL}" alt="foto">` : `<span class="muted">—</span>`;
-    tr.innerHTML = `
-      <td>${d.id}</td>
-      <td>${thumb}</td>
-      <td>${p.nome||""}</td>
-      <td><small>${p.cat||""}</small></td>
-      <td>R$ ${(Number(p.preco||0)).toFixed(2)}</td>
-      <td>
-        <button class="btn ghost" onclick="window.__edit('${d.id}')">Editar</button>
-        <button class="btn ghost" onclick="window.__del('${d.id}')">Excluir</button>
-      </td>
+    const p = d.data() || {};
+    const foto = p.fotoURL || "";
+    const nome = p.nome || "";
+    const cat  = p.cat || "";
+    const preco = Number(p.preco||0);
+
+    const card = document.createElement("div");
+    card.className = "prodCard";
+    card.innerHTML = `
+      ${foto ? `<img class="prodImg" src="${foto}" alt="foto">` : `<div class="prodImg"></div>`}
+      <div class="prodPad">
+        <div class="prodTop">
+          <div>
+            <div class="prodName">${nome}</div>
+            <div class="prodMeta">ID: ${d.id} • ${cat}</div>
+          </div>
+          <div class="prodPrice">R$ ${preco.toFixed(2)}</div>
+        </div>
+        ${foto ? `<a class="prodMeta" href="${foto}" target="_blank" rel="noopener">Abrir imagem</a>` : `<div class="prodMeta">Sem foto</div>`}
+        <div class="prodActions">
+          <button class="btn ghost sm" onclick="window.__edit('${d.id}')">Editar</button>
+          <button class="btn ghost sm" onclick="window.__del('${d.id}')">Excluir</button>
+        </div>
+      </div>
     `;
-    tb.appendChild(tr);
+    box.appendChild(card);
   });
 
   window.__del = async (id)=>{
