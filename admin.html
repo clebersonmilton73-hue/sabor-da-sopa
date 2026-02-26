@@ -4,442 +4,601 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>Sabor da Sopa</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
+<title>Admin - Sabor da Sopa</title>
 <style>
   :root{
-    --bg:#0b1220; --card:#0f172a; --muted:#94a3b8; --txt:#e2e8f0;
-    --accent:#22c55e; --accent2:#16a34a; --line:rgba(148,163,184,.14);
-    --shadow: 0 12px 28px rgba(0,0,0,.35);
-    --radius:18px;
+    --bg:#050814; --card:#0f172a; --line:rgba(148,163,184,.16); --txt:#e2e8f0; --muted:#94a3b8;
+    --good:#22c55e; --bad:#ef4444; --shadow:0 12px 28px rgba(0,0,0,.35); --radius:18px;
   }
   *{box-sizing:border-box}
   body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;background:linear-gradient(180deg,#07101f,#050814);color:var(--txt)}
-  header{position:sticky;top:0;z-index:5;background:rgba(5,8,20,.72);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
-  .top{max-width:1100px;margin:auto;padding:14px 14px;display:flex;align-items:center;justify-content:space-between;gap:10px}
-  .brand{display:flex;align-items:center;gap:10px}
-  .logo{width:40px;height:40px;border-radius:14px;background:radial-gradient(circle at 30% 30%, #34d399, #16a34a 60%, #0b1220);box-shadow:0 10px 20px rgba(34,197,94,.25)}
-  .brand b{font-size:18px;letter-spacing:.2px}
-  .pill{display:inline-flex;align-items:center;gap:8px;background:rgba(148,163,184,.10);border:1px solid var(--line);padding:8px 10px;border-radius:999px;color:var(--txt);font-weight:800}
-  .wrap{max-width:1100px;margin:18px auto 110px;padding:0 14px;display:grid;grid-template-columns:1fr 360px;gap:14px}
-  @media (max-width:980px){.wrap{grid-template-columns:1fr} .cart{position:fixed;left:0;right:0;bottom:0;max-width:none;border-radius:18px 18px 0 0}}
-  .panel{background:rgba(15,23,42,.85);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden}
-  .panel .hd{padding:14px 14px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;gap:10px}
-  .panel .hd h2{margin:0;font-size:14px;letter-spacing:.2px}
-  .grid{padding:14px;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
-  @media (max-width:560px){.grid{grid-template-columns:1fr}}
-  .item{background:rgba(2,6,23,.55);border:1px solid var(--line);border-radius:16px;padding:12px;display:grid;gap:8px}
-  .item .t{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}
-  .item b{font-size:14px}
-  .item small{color:var(--muted);font-weight:800}
-  .price{font-weight:1000}
-  .btn{width:100%;border:none;border-radius:14px;padding:10px 12px;font-weight:1000;cursor:pointer;background:linear-gradient(180deg,var(--accent),var(--accent2));color:#06240f}
-  .btn:active{transform:translateY(1px)}
-  .cart{align-self:start}
-  .cartBody{padding:14px;display:grid;gap:10px}
-  .row{display:flex;gap:10px}
+  .wrap{max-width:1400px;margin:28px auto 80px;padding:0 26px}
+  .panel{background:rgba(15,23,42,.86);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden}
+  .hd{padding:14px 14px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;gap:10px}
+  .hd b{font-size:14px}
+  .grid{padding:24px;display:grid;grid-template-columns:420px 1fr;gap:24px}
+  @media(max-width:980px){.wrap{padding:0 14px}.grid{grid-template-columns:1fr;padding:16px;gap:16px}}
+  .card{background:rgba(2,6,23,.55);border:1px solid var(--line);border-radius:16px;padding:12px}
+  .row{display:flex;gap:10px;flex-wrap:wrap}
   .row>*{flex:1}
-  .input,.select{width:100%;background:rgba(2,6,23,.55);border:1px solid var(--line);border-radius:14px;padding:10px 12px;color:var(--txt);font-weight:900}
-  textarea.input{min-height:72px;resize:vertical;padding-top:10px;line-height:1.25}
-  .chip{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--line);background:rgba(148,163,184,.10);padding:8px 10px;border-radius:999px;font-weight:1000;cursor:pointer;user-select:none}
-  .chip.active{background:rgba(34,197,94,.18);border-color:rgba(34,197,94,.35)}
+  .input,.select{width:100%;background:rgba(2,6,23,.55);border:1px solid var(--line);border-radius:16px;padding:14px 16px;color:var(--txt);font-weight:900;font-size:15px}
+  .btn{border:none;border-radius:16px;padding:14px 16px;font-weight:1000;cursor:pointer;font-size:15px}
+  .btn.primary{background:linear-gradient(180deg,#60a5fa,#3b82f6);color:#081426}
+  .btn.good{background:linear-gradient(180deg,#34d399,#22c55e);color:#05210f}
+  .btn.ghost{background:rgba(148,163,184,.10);border:1px solid var(--line);color:var(--txt)}
   .muted{color:var(--muted);font-weight:800}
-  .sum{border-top:1px dashed rgba(148,163,184,.35);padding-top:10px;display:grid;gap:8px}
-  .line{display:flex;justify-content:space-between;gap:10px;font-weight:900}
-  .line b{font-weight:1100}
-  .btn2{border:none;border-radius:14px;padding:10px 12px;font-weight:1000;cursor:pointer}
-  .btn2.primary{background:linear-gradient(180deg,#60a5fa,#3b82f6);color:#081426}
-  .btn2.ghost{background:rgba(148,163,184,.10);border:1px solid var(--line);color:var(--txt)}
-  .toast{position:fixed;left:50%;bottom:16px;transform:translateX(-50%);background:#111827;color:#fff;border:1px solid rgba(255,255,255,.10);padding:10px 12px;border-radius:14px;display:none;z-index:50}
+  .pill{display:inline-flex;align-items:center;gap:8px;background:rgba(148,163,184,.10);border:1px solid var(--line);padding:8px 10px;border-radius:999px;font-weight:900}
+  table{width:100%;border-collapse:collapse}
+  th,td{border-bottom:1px solid rgba(148,163,184,.14);padding:14px 10px;text-align:left;font-weight:900}
+  th{color:var(--muted);font-size:12px}
+  td small{color:var(--muted);font-weight:800}
+  .danger{color:var(--bad)}
+  .ok{color:var(--good)}
 
-  .pimg{width:100%;height:140px;object-fit:cover;border-radius:12px;border:1px solid var(--line);background:rgba(2,6,23,.35)}
+  .thumb{width:52px;height:40px;object-fit:cover;border-radius:10px;border:1px solid rgba(148,163,184,.20)}
 
-/* ===== Mobile upgrade (cliente) ===== */
-@media (max-width: 980px){
-  .wrap{grid-template-columns:1fr;gap:12px;margin-bottom:220px}
-  .grid{grid-template-columns:1fr;gap:12px;padding:12px}
-  .item{padding:14px;gap:10px;border-radius:18px}
-  .btn{padding:14px 14px;font-size:16px;border-radius:16px}
-  .cart{left:10px;right:10px;bottom:10px;border-radius:18px;box-shadow:0 16px 40px rgba(0,0,0,.55)}
-  .cartBody{padding:12px 14px 14px;gap:10px}
-  .row{flex-direction:column;gap:10px}
-  .input,.select{padding:14px 14px;font-size:16px;border-radius:16px}
-  .btn2.primary{padding:14px 14px;font-size:16px;border-radius:16px}
-}
-@media (max-width: 420px){
-  .top{padding:12px}
-  .brand b{font-size:16px}
-  .pill{padding:7px 10px}
-}
+  /* ===== Cards de Produtos ===== */
+  .prodGrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px}
+  .prodCard{background:rgba(2,6,23,.55);border:1px solid var(--line);border-radius:16px;overflow:hidden;display:grid}
+  .prodImg{width:100%;height:150px;object-fit:cover;background:rgba(2,6,23,.35)}
+  .prodPad{padding:12px;display:grid;gap:8px}
+  .prodTop{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}
+  .prodName{font-size:14px;font-weight:1000;line-height:1.2}
+  .prodMeta{color:var(--muted);font-weight:800;font-size:12px}
+  .prodPrice{font-weight:1100}
+  .prodActions{display:flex;gap:8px;flex-wrap:wrap}
+  .btn.sm{padding:10px 12px;border-radius:14px;font-size:14px}
+  @media(max-width:520px){
+    .prodGrid{grid-template-columns:1fr}
+    .prodImg{height:160px}
+  }
 
 
-/* ===== Carrinho abre/fecha (mobile) + lista de itens ===== */
-.cartItems{display:grid;gap:10px}
-.ci{display:flex;align-items:center;justify-content:space-between;gap:10px;
-  padding:10px 10px;border:1px solid var(--line);border-radius:14px;background:rgba(2,6,23,.35)}
-.ci .left{min-width:0}
-.ci .name{font-weight:1000;font-size:13px;line-height:1.1}
-.ci .meta{color:var(--muted);font-weight:800;font-size:12px;margin-top:4px}
-.ci .qty{display:flex;align-items:center;gap:8px}
-.ci .qbtn{border:1px solid var(--line);background:rgba(148,163,184,.10);color:var(--txt);
-  width:34px;height:34px;border-radius:12px;font-weight:1100;cursor:pointer}
-.ci .qnum{min-width:22px;text-align:center;font-weight:1100}
-.ci .rm{border:none;background:transparent;color:var(--muted);font-weight:1000;cursor:pointer}
+  
+  .mobBar{display:none}
+  @media(max-width:980px){.mobBar{display:flex}}
 
-.cartOverlay{position:fixed;inset:0;background:rgba(0,0,0,.55);display:none;z-index:40}
-.cartOverlay.show{display:block}
+  /* ===== ERP Layout ===== */
+  .erpShell{display:flex;min-height:calc(100vh - 0px);gap:0}
+  .side{
+    width:320px;flex:0 0 320px;
+    border-right:1px solid rgba(148,163,184,.14);
+    background:rgba(2,6,23,.35);
+    padding:18px 16px;
+    position:sticky;top:0;align-self:flex-start;height:calc(100vh - 0px);
+    overflow:auto
+  }
+  .main{flex:1;min-width:0;padding:18px 18px 26px}
+  .navTitle{font-size:12px;color:var(--muted);font-weight:900;margin:4px 0 10px}
+  .navBtn{
+    width:100%;text-align:left;
+    display:flex;align-items:center;justify-content:space-between;gap:10px;
+    padding:12px 12px;border-radius:14px;
+    background:rgba(148,163,184,.08);
+    border:1px solid rgba(148,163,184,.12);
+    color:var(--txt);font-weight:1000;cursor:pointer
+  }
+  .navBtn + .navBtn{margin-top:10px}
+  .navBtn.active{background:rgba(96,165,250,.18);border-color:rgba(96,165,250,.32)}
+  .topbar{
+    display:flex;align-items:center;justify-content:space-between;gap:12px;
+    padding:14px 14px;border:1px solid rgba(148,163,184,.14);
+    background:rgba(2,6,23,.25);
+    border-radius:16px
+  }
+  .topbar .actions{display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end}
+  .section{margin-top:16px}
+  .sectionHd{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;margin-bottom:10px}
+  .sectionHd b{font-size:14px}
+  .hide{display:none !important}
 
-.cartFab{position:fixed;left:12px;right:12px;bottom:12px;z-index:45;display:none}
-.cartFab button{
-  width:100%;border:none;border-radius:18px;padding:14px 14px;font-weight:1100;cursor:pointer;
-  background:linear-gradient(180deg,#60a5fa,#3b82f6);color:#081426;box-shadow:0 16px 40px rgba(0,0,0,.45)
-}
-.cartFab .sub{display:flex;align-items:center;justify-content:space-between;gap:10px}
-.cartFab .sub span{font-weight:1100}
+  /* full-width wrap/panel */
+  .wrap{width:100%;max-width:100%;margin:0;padding:0}
+  .panel{border-radius:0;min-height:100vh}
+  .grid{padding:0;grid-template-columns:1fr} /* we control layout ourselves */
+  @media(max-width:980px){
+    .side{position:fixed;left:0;top:0;height:100vh;z-index:40;transform:translateX(-102%);transition:.18s ease;box-shadow:0 20px 50px rgba(0,0,0,.55)}
+    .side.open{transform:translateX(0)}
+    .main{padding:14px}
+    .mobBar{display:flex;gap:10px;align-items:center;margin-bottom:10px}
+    .mobBtn{padding:12px 14px;border-radius:14px;border:1px solid rgba(148,163,184,.14);background:rgba(148,163,184,.10);color:var(--txt);font-weight:1000;cursor:pointer}
+    .overlay{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:35;display:none}
+    .overlay.show{display:block}
+  }
 
-@media (max-width:980px){
-  /* carrinho vira sheet fechado por padrão */
-  .cart{display:none}
-  .cartFab{display:block}
-  .wrap{margin-bottom:120px}
-  .cartSheet{position:fixed;left:10px;right:10px;bottom:10px;z-index:50;
-    border-radius:18px;box-shadow:0 18px 50px rgba(0,0,0,.60);max-height:78vh;overflow:auto}
-}
+
+  /* ===== Mobile (Admin) ===== */
+  @media(max-width:980px){
+    .top{padding:12px}
+    .pill{max-width:70vw;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .topbar{flex-direction:column;align-items:stretch}
+    .topbar .actions{justify-content:stretch}
+    .topbar .actions .btn{width:100%}
+    .card{padding:14px}
+    .row{flex-direction:column}
+    .row>*{flex:unset}
+    .prodGrid{grid-template-columns:1fr;gap:12px}
+    .prodPad{padding:14px}
+    .prodActions{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    .btn.sm{width:100%}
+    .main{padding:14px}
+    .side{width:86vw;max-width:360px}
+  }
+  @media(max-width:420px){
+    .prodActions{grid-template-columns:1fr}
+  }
+
+
+  .statusP{display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border-radius:999px;
+    border:1px solid rgba(148,163,184,.14);background:rgba(148,163,184,.08);font-weight:1000;font-size:12px}
+  .statusP.on{background:rgba(34,197,94,.16);border-color:rgba(34,197,94,.30)}
+  .statusP.off{background:rgba(239,68,68,.12);border-color:rgba(239,68,68,.28)}
+  .searchRow{display:flex;gap:10px;flex-wrap:wrap}
+  .searchRow > *{flex:1;min-width:160px}
 
 </style>
 </head>
 <body>
-<header>
-  <div class="top">
-    <div class="brand"><div class="logo"></div><div><b>Sabor da Sopa</b><div class="muted" style="font-size:12px">Cardápio online</div></div></div>
-    <div class="pill" id="statusPill">🔄 carregando…</div>
-  </div>
-</header>
-
 <div class="wrap">
-  <section class="panel">
+  <div class="panel">
     <div class="hd">
-      <h2>🍲 Cardápio</h2>
-      <div class="muted" id="catInfo"></div>
-    </div>
-    <div class="grid" id="grid"></div>
-  </section>
-
-  <aside class="panel cart cartSheet" id="cartSheet" style="display:none">
-    <div class="hd">
-      <h2>🛒 Seu pedido</h2>
-      <button class="btn2 ghost" style="padding:8px 10px" onclick="toggleCart(false)">Fechar</button>
-      <div class="muted"><span id="qtd">0</span> itens</div>
-    </div>
-    <div class="cartBody">
       <div>
-        <div class="muted" style="margin-bottom:6px">Dados do Cliente (obrigatório)</div>
-        <div class="row">
-          <input id="cliNome" class="input" placeholder="Nome">
-          <input id="cliTel" class="input" placeholder="WhatsApp (DDD + número)" inputmode="tel">
-        </div>
-        <div style="margin-top:10px">
-          <input id="cliEnd" class="input" placeholder="Endereço completo">
+        <b>🛡️ Admin - Sabor da Sopa</b>
+        <div class="muted" style="font-size:12px">Login com Firebase Auth + bloqueio após 3 tentativas</div>
+      </div>
+      <div class="pill" id="pill">🔒 desconectado</div>
+    </div>
+
+    <div class="grid">
+      <div class="card" id="loginCard">
+        <b>Entrar</b>
+        <div class="muted" style="margin-top:6px;font-size:12px">Use seu email/senha do Firebase Authentication.</div>
+
+        <div style="margin-top:12px;display:grid;gap:10px">
+          <input id="user" class="input" placeholder="Email" autocomplete="username">
+          <input id="pass" class="input" type="password" placeholder="Senha" autocomplete="current-password">
+          <button class="btn primary" onclick="entrar()">Entrar</button>
+          <div class="muted" id="lockInfo" style="font-size:12px"></div>
         </div>
       </div>
 
-      <div>
-        <div style="display:flex;gap:8px;flex-wrap:wrap">
-          <div class="chip active" id="chipEntrega" onclick="setEntrega('ENTREGA')">🏍️ Entrega</div>
-          <div class="chip" id="chipRetirada" onclick="setEntrega('RETIRADA')">🏪 Retirada</div>
+      <div class="card" id="panelCard" style="display:none">
+        <div class="erpShell">
+          <div class="overlay" id="ovl" onclick="toggleSide(false)"></div>
+
+          <aside class="side" id="side">
+            <div class="navTitle">Navegação</div>
+            <button class="navBtn active" id="navProdutos" onclick="showView('produtos')">🧾 Produtos <span class="muted" id="countProdutos"></span></button>
+            <button class="navBtn" id="navPedidos" onclick="showView('pedidos')">🧾 Pedidos <span class="muted" id="countPedidos"></span></button>
+
+            <div class="navTitle" style="margin-top:16px">Ações</div>
+            <button class="navBtn" onclick="exportarCSV()">⬇️ Exportar CSV</button>
+            <button class="navBtn" onclick="sair()">🚪 Sair</button>
+
+            <div class="muted" style="font-size:12px;margin-top:14px;line-height:1.35">
+              Dica: no celular, toque em “Menu” para abrir a lateral.
+            </div>
+          </aside>
+
+          <main class="main">
+            <div class="mobBar">
+              <button class="mobBtn" onclick="toggleSide(true)">☰ Menu</button>
+              <div class="muted" style="font-weight:900">Admin</div>
+            </div>
+
+            <div class="topbar">
+              <div>
+                <b>Painel</b>
+                <div class="muted" style="font-size:12px">Gerencie produtos e visualize pedidos.</div>
+              </div>
+              <div class="actions">
+                <button class="btn ghost" onclick="exportarCSV()">Exportar CSV (pedidos)</button>
+                <button class="btn ghost" onclick="sair()">Sair</button>
+              </div>
+            </div>
+
+            <!-- VIEW: PRODUTOS -->
+            <section class="section" id="viewProdutos">
+              <div class="card" style="margin-top:12px">
+                <div class="sectionHd" style="margin:0 0 8px 0">
+                  <b>Buscar / Filtrar</b>
+                  <div class="muted" style="font-size:12px">Encontra produtos rápido</div>
+                </div>
+                <div class="searchRow">
+                  <input id="qBusca" class="input" placeholder="Buscar por nome...">
+                  <input id="qCat" class="input" placeholder="Filtrar por categoria (opcional)">
+                  <select id="qAtivo" class="select">
+                    <option value="TODOS">Todos</option>
+                    <option value="ATIVOS">Somente ativos</option>
+                    <option value="INATIVOS">Somente inativos</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="sectionHd">
+                <b>Produtos</b>
+                <div class="muted" style="font-size:12px">Somente admin edita (rules).</div>
+              </div>
+
+              <div class="card" style="margin-bottom:14px">
+                <b>Criar / Editar produto</b>
+
+                <div style="margin-top:12px" class="row">
+                  <input id="pId" class="input" placeholder="ID numérico (ex: 101)">
+                  <input id="pCat" class="input" placeholder="Categoria">
+                </div>
+                <div style="margin-top:10px" class="row">
+                  <input id="pNome" class="input" placeholder="Nome do produto">
+                  <input id="pPreco" class="input" placeholder="Preço" inputmode="decimal">
+                </div>
+
+                <div style="margin-top:10px">
+                  <input id="pFotoURL" class="input" placeholder="Link direto da imagem (https://... .jpg/.png/.webp)">
+                </div>
+
+                <div style="margin-top:10px" class="row" style="align-items:center">
+                  <label class="muted" style="display:flex;align-items:center;gap:10px;font-size:13px">
+                    <input type="checkbox" id="pAtivo" checked style="transform:scale(1.1)"> Produto ativo (aparece no cardápio)
+                  </label>
+                </div>
+
+                <div style="margin-top:10px">
+
+                  <div class="muted" style="font-size:12px;margin-top:6px">Use link direto da imagem. Ex: termina com .jpg / .png / .webp</div>
+                </div>
+
+                <div style="margin-top:10px" class="row">
+                  <input id="pOrd" class="input" placeholder="Ordem (opcional)" inputmode="numeric">
+                  <button class="btn good" onclick="salvarProduto()">Salvar/Atualizar</button>
+                </div>
+              </div>
+
+              <div id="prodCards" class="prodGrid"></div>
+            </section>
+
+            <!-- VIEW: PEDIDOS -->
+            <section class="section hide" id="viewPedidos">
+              <div class="sectionHd">
+                <b>Pedidos</b>
+                <div class="muted" style="font-size:12px">Clientes criam, mas não leem. Admin lê.</div>
+              </div>
+
+              <div class="card" style="overflow:auto">
+                <table>
+                  <thead><tr><th>Data</th><th>Cliente</th><th>Total</th><th>Tipo</th><th>Obs</th></tr></thead>
+                  <tbody id="tbPed"></tbody>
+                </table>
+              </div>
+            </section>
+
+          </main>
         </div>
-      </div>
+</div>
+        </div>
 
-      <div class="muted" style="margin-bottom:6px">Itens no carrinho</div>
-      <div id="cartItems" class="cartItems"></div>
-
-      <textarea id="obs" class="input" placeholder="Observação do pedido (opcional)"></textarea>
-
-      <div class="row">
-        <select id="pay" class="select">
-          <option value="DINHEIRO">Dinheiro</option>
-          <option value="PIX">PIX</option>
-          <option value="CARTÃO">Cartão</option>
-        </select>
-        <input id="troco" class="input" placeholder="Troco para (se dinheiro)">
-      </div>
-
-      <div class="sum">
-        <div class="line"><span>Subtotal</span><b id="sub">R$ 0,00</b></div>
-        <div class="line"><span>Total</span><b id="tot">R$ 0,00</b></div>
-        <button class="btn2 primary" onclick="finalizar()">Finalizar e enviar no WhatsApp</button>
-        <div class="muted" style="font-size:12px">Seu pedido será salvo online (Firebase) e abrirá o WhatsApp da loja (configure LOJA_WA no código).</div>
       </div>
     </div>
-  </aside>
+  </div>
+
+  <div class="muted" style="margin-top:14px;font-size:12px">
+    ✅ Senha “criptografada”: no Firebase Auth, senhas são armazenadas com hash/segurança do servidor (você não guarda a senha em arquivo).<br>
+    🛡️ O bloqueio após 3 tentativas é local (neste navegador) para evitar força bruta rápida.
+  </div>
 </div>
 
-<div class="toast" id="toast"></div>
-<div class="cartOverlay" id="cartOverlay" onclick="toggleCart(false)"></div>
-<div class="cartFab" id="cartFab"><button onclick="toggleCart(true)"><div class="sub"><span id="fabLeft">🛒 Carrinho (0)</span><span id="fabRight">R$ 0,00</span></div></button></div>
-
 <script type="module">
-import { firebaseConfig } from "./firebase-config.js";
+import { firebaseConfig, ADMIN_EMAILS } from "./firebase-config.js";
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-app.js";
-import { getFirestore, collection, getDocs, query, orderBy, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-firestore.js";
+import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-auth.js";
+import { getFirestore, collection, doc, setDoc, deleteDoc, getDocs, query, orderBy, limit, updateDoc } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-firestore.js";
 
 const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
 const db = getFirestore(app);
 
-const grid = document.getElementById("grid");
-const statusPill = document.getElementById("statusPill");
-const qtdEl = document.getElementById("qtd");
-const subEl = document.getElementById("sub");
-const totEl = document.getElementById("tot");
-const catInfo = document.getElementById("catInfo");
+const pill = document.getElementById("pill");
+const loginCard = document.getElementById("loginCard");
+const panelCard = document.getElementById("panelCard");
+const lockInfo = document.getElementById("lockInfo");
 
-// WhatsApp da LOJA (coloque DDD+numero, só dígitos). Ex: "5581999999999"
-const LOJA_WA = "55SEU_DDD_SEU_NUMERO";
+const LOCK_KEY = "SABOR_ADMIN_LOCK_v1";
 
-let produtos = [];
-let cart = []; // {id, qtd}
-let entregaTipo = "ENTREGA";
-
-function moneyBR(v){
-  return (v||0).toLocaleString("pt-BR",{style:"currency",currency:"BRL"});
+function now(){ return Date.now(); }
+function getLock(){
+  try{ return JSON.parse(localStorage.getItem(LOCK_KEY) || "{}"); }catch(e){ return {}; }
 }
-function toast(msg){
-  const t = document.getElementById("toast");
-  t.textContent = msg;
-  t.style.display="block";
-  clearTimeout(window.__tt);
-  window.__tt = setTimeout(()=>t.style.display="none", 2200);
+function setLock(o){ localStorage.setItem(LOCK_KEY, JSON.stringify(o||{})); }
+function isLocked(){
+  const l = getLock();
+  if(!l.until) return false;
+  return now() < l.until;
 }
-function maskTel(raw){
-  const digits = String(raw||"").replace(/\D/g,"").slice(0, 11);
-  if(digits.length <= 2) return digits;
-  const ddd = digits.slice(0,2);
-  const rest = digits.slice(2);
-  if(rest.length <= 4) return `(${ddd}) ${rest}`;
-  if(rest.length <= 8) return `(${ddd}) ${rest.slice(0,4)}-${rest.slice(4)}`;
-  return `(${ddd}) ${rest.slice(0,5)}-${rest.slice(5)}`;
+function lockMsg(){
+  const l = getLock();
+  if(!l.until) return "";
+  const sec = Math.max(0, Math.ceil((l.until - now())/1000));
+  return sec ? `Bloqueado por ${sec}s (após 3 tentativas).` : "";
 }
-document.getElementById("cliTel").addEventListener("input", (e)=>{
-  e.target.value = maskTel(e.target.value);
-});
+function resetAttempts(){ setLock({attempts:0, until:0}); }
 
-function setEntrega(tipo){
-  entregaTipo = (tipo==="RETIRADA") ? "RETIRADA" : "ENTREGA";
-  document.getElementById("chipEntrega").classList.toggle("active", entregaTipo==="ENTREGA");
-  document.getElementById("chipRetirada").classList.toggle("active", entregaTipo==="RETIRADA");
+function showLockUI(){
+  lockInfo.textContent = lockMsg();
+  lockInfo.className = "muted";
+  if(isLocked()) lockInfo.className = "muted danger";
 }
+setInterval(showLockUI, 500);
 
-function add(id){
-  id = Number(id);
-  const it = cart.find(x=>x.id===id);
-  if(it) it.qtd++;
-  else cart.push({id, qtd:1});
-  recalc();
-  // abre o carrinho no celular quando adicionar
-  const isMobile = window.matchMedia('(max-width:980px)').matches;
-  if(isMobile) toggleCart(true);
-}
+async function entrar(){
+  if(isLocked()){
+    alert(lockMsg());
+    return;
+  }
+  const email = (document.getElementById("user").value||"").trim();
+  const pass  = (document.getElementById("pass").value||"").trim();
 
+  if(!email || !pass){ alert("Preencha email e senha."); return; }
 
-function recalc(){
-  let qtd = 0;
-  let sub = 0;
-  cart.forEach(c=>{
-    const p = produtos.find(x=>x.id===c.id);
-    if(!p) return;
-    qtd += c.qtd;
-    sub += (p.preco||0) * c.qtd;
-  });
-  qtdEl.textContent = qtd;
-  subEl.textContent = moneyBR(sub);
-  totEl.textContent = moneyBR(sub);
-  renderCart();
-  updateFab(qtd, sub);
+  try{
+    await signInWithEmailAndPassword(auth, email, pass);
+    resetAttempts();
+  }catch(e){
+    console.warn(e);
+    const l = getLock();
+    const attempts = (l.attempts||0) + 1;
+    // bloqueio 15 minutos após 3 tentativas
+    if(attempts >= 3){
+      setLock({attempts, until: now() + 15*60*1000});
+      alert("Muitas tentativas. Bloqueado por 15 minutos.");
+    }else{
+      setLock({attempts, until: 0});
+      alert("Login inválido. Tentativas: " + attempts + "/3");
+    }
+  }
 }
 
+async function sair(){
+  await signOut(auth);
+}
 
-function renderCart(){
-  const box = document.getElementById("cartItems");
+function setUI(user){
+  if(user){
+    pill.textContent = "✅ logado: " + user.email;
+    loginCard.style.display="none";
+    panelCard.style.display="";
+  }else{
+    pill.textContent = "🔒 desconectado";
+    loginCard.style.display="";
+    panelCard.style.display="none";
+  }
+}
+
+async function carregarProdutos(){
+  const box = document.getElementById("prodCards");
   if(!box) return;
   box.innerHTML = "";
-  if(!cart.length){
-    box.innerHTML = '<div class="muted">Carrinho vazio. Clique em Adicionar no cardápio.</div>';
-    return;
-  }
-  cart.forEach(c=>{
-    const p = produtos.find(x=>x.id===c.id);
-    if(!p) return;
-    const line = document.createElement("div");
-    line.className = "ci";
-    line.innerHTML = `
-      <div class="left">
-        <div class="name">${p.nome}</div>
-        <div class="meta">${moneyBR((p.preco||0) * c.qtd)}</div>
-      </div>
-      <div class="qty">
-        <button class="qbtn" onclick="window.__dec(${c.id})">−</button>
-        <div class="qnum">${c.qtd}</div>
-        <button class="qbtn" onclick="window.__inc(${c.id})">+</button>
-        <button class="rm" title="Remover" onclick="window.__rm(${c.id})">🗑️</button>
-      </div>
-    `;
-    box.appendChild(line);
+
+  const snap = await getDocs(query(collection(db,"produtos"), orderBy("ord","asc"), limit(500)));
+  const all = snap.docs.map(d=>({docId:d.id, ...d.data()}));
+
+  // contadores
+  const cp = document.getElementById('countProdutos');
+  if(cp) cp.textContent = `(${all.length})`;
+
+  // filtros
+  const q = (document.getElementById("qBusca")?.value || "").trim().toLowerCase();
+  const qCat = (document.getElementById("qCat")?.value || "").trim().toLowerCase();
+  const qAtivo = (document.getElementById("qAtivo")?.value || "TODOS");
+
+  const filtrado = all.filter(p=>{
+    const nome = String(p.nome||"").toLowerCase();
+    const cat = String(p.cat||"").toLowerCase();
+    const ativo = (p.ativo !== false); // padrão: ativo
+    if(q && !nome.includes(q)) return false;
+    if(qCat && !cat.includes(qCat)) return false;
+    if(qAtivo==="ATIVOS" && !ativo) return false;
+    if(qAtivo==="INATIVOS" && ativo) return false;
+    return true;
   });
-  window.__inc = (id)=>{ const it = cart.find(x=>x.id===id); if(it){ it.qtd++; recalc(); } };
-  window.__dec = (id)=>{ const it = cart.find(x=>x.id===id); if(!it) return; it.qtd--; if(it.qtd<=0) cart = cart.filter(x=>x.id!==id); recalc(); };
-  window.__rm  = (id)=>{ cart = cart.filter(x=>x.id!==id); recalc(); };
-}
 
-function updateFab(qtd, total){
-  const l = document.getElementById("fabLeft");
-  const r = document.getElementById("fabRight");
-  if(l) l.textContent = `🛒 Carrinho (${qtd})`;
-  if(r) r.textContent = moneyBR(total);
-}
+  filtrado.forEach(p=>{
+    const foto = p.fotoURL || "";
+    const nome = p.nome || "";
+    const cat  = p.cat || "";
+    const preco = Number(p.preco||0);
+    const ativo = (p.ativo !== false);
 
-function toggleCart(open){
-  const sheet = document.getElementById("cartSheet");
-  const ovl = document.getElementById("cartOverlay");
-  const isMobile = window.matchMedia("(max-width:980px)").matches;
-  if(!isMobile) return; // no desktop continua sidebar
-  if(open){
-    if(sheet) sheet.style.display = "";
-    if(ovl) ovl.classList.add("show");
-  }else{
-    if(sheet) sheet.style.display = "none";
-    if(ovl) ovl.classList.remove("show");
-  }
-}
-window.toggleCart = toggleCart;
-
-// fecha o carrinho ao carregar no mobile
-window.addEventListener("load", ()=>{
-  const isMobile = window.matchMedia("(max-width:980px)").matches;
-  if(isMobile) toggleCart(false);
-});
-
-
-function render(){
-  grid.innerHTML="";
-  produtos.forEach(p=>{
-    const div = document.createElement("div");
-    div.className = "item";
-
-    const img = p.fotoURL
-      ? `<img class="pimg" src="${p.fotoURL}" alt="${(p.nome||"").replace(/"/g,'&quot;')}">`
-      : "";
-
-    div.innerHTML = `
-      ${img}
-      <div class="t">
-        <div>
-          <b>${p.nome}</b><br>
-          <small>${p.cat || "Sopas"}</small>
+    const card = document.createElement("div");
+    card.className = "prodCard";
+    card.innerHTML = `
+      ${foto ? `<img class="prodImg" src="${foto}" alt="foto">` : `<div class="prodImg"></div>`}
+      <div class="prodPad">
+        <div class="prodTop">
+          <div>
+            <div class="prodName">${nome}</div>
+            <div class="prodMeta">ID: ${p.docId} • ${cat}</div>
+          </div>
+          <div class="prodPrice">R$ ${preco.toFixed(2)}</div>
         </div>
-        <div class="price">${moneyBR(p.preco||0)}</div>
+
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:10px">
+          <span class="statusP ${ativo ? "on" : "off"}">${ativo ? "✅ Ativo" : "⛔ Inativo"}</span>
+          <button class="btn ghost sm" onclick="window.__toggleAtivo('${p.docId}', ${ativo ? "true" : "false"})">${ativo ? "Desativar" : "Ativar"}</button>
+        </div>
+
+        <div class="prodActions">
+          <button class="btn ghost sm" onclick="window.__edit('${p.docId}')">Editar</button>
+          <button class="btn ghost sm" onclick="window.__del('${p.docId}')">Excluir</button>
+        </div>
       </div>
-      <button class="btn" onclick="window.__add(${Number(p.id)})">Adicionar</button>
     `;
-    grid.appendChild(div);
-  });
-  window.__add = add;
-}
-
-async function carregar(){
-  try{
-    statusPill.textContent = "🔄 carregando…";
-    const q = query(collection(db,"produtos"), orderBy("ord","asc"));
-    const snap = await getDocs(q);
-    produtos = snap.docs.map(d=>({id: Number(d.id), ...d.data()})).filter(p=>Number.isFinite(p.id));
-    render();
-    if(catInfo) catInfo.textContent = `${produtos.length} itens`;
-    statusPill.textContent = "✅ online";
-  }catch(e){
-    console.error(e);
-    statusPill.textContent = "⚠️ offline/erro";
-    toast("Erro ao carregar produtos. Confira o Firebase.");
-  }
-}
-
-function dadosCliente(){
-  const nome = document.getElementById("cliNome").value.trim();
-  const tel = document.getElementById("cliTel").value.replace(/\D/g,"").trim();
-  const end = document.getElementById("cliEnd").value.trim();
-  return {nome, tel, endereco:end};
-}
-
-async function finalizar(){
-  if(!cart.length){ alert("Carrinho vazio."); return; }
-  const c = dadosCliente();
-  if(!(c.nome && c.tel && c.endereco)){
-    alert("Preencha Nome, WhatsApp e Endereço.");
-    return;
-  }
-
-  const itens = cart.map(ci=>{
-    const p = produtos.find(x=>x.id===ci.id);
-    return {id:ci.id, nome:p?.nome||"", preco:Number(p?.preco||0), qtd:ci.qtd};
+    box.appendChild(card);
   });
 
-  const subtotal = itens.reduce((a,i)=>a+(i.preco*i.qtd),0);
-  const metodo = document.getElementById("pay").value;
-  const troco = document.getElementById("troco").value.trim();
-  const obs = document.getElementById("obs").value.trim();
-
-  const pedido = {
-    cliente: c,
-    entregaTipo,
-    metodo,
-    troco,
-    obs,
-    itens,
-    subtotal,
-    total: subtotal,
-    criadoEm: serverTimestamp()
+  window.__toggleAtivo = async (id, atual)=>{
+    try{
+      await updateDoc(doc(db,"produtos", String(id)), {ativo: !atual});
+      await carregarProdutos();
+    }catch(e){
+      console.error(e);
+      alert("Erro ao alterar ativo. Verifique Rules.");
+    }
   };
 
-  try{
-    await addDoc(collection(db,"pedidos"), pedido);
-  }catch(e){
-    console.warn("Falha ao salvar pedido (rules?)", e);
+  window.__del = async (id)=>{
+    if(!confirm("Excluir produto "+id+"?")) return;
+    await deleteDoc(doc(db,"produtos", String(id)));
+    await carregarProdutos();
+  };
+
+  window.__edit = async (id)=>{
+    const snap2 = await getDocs(query(collection(db,"produtos"), orderBy("ord","asc"), limit(500)));
+    const docx = snap2.docs.find(x=>x.id===id);
+    const p = docx?.data() || {};
+    document.getElementById("pId").value = id;
+    document.getElementById("pCat").value = p.cat||"";
+    document.getElementById("pNome").value = p.nome||"";
+    document.getElementById("pPreco").value = p.preco||"";
+    document.getElementById("pFotoURL").value = p.fotoURL||"";
+    document.getElementById("pAtivo").checked = (p.ativo !== false);
+    document.getElementById("pOrd").value = p.ord ?? "";
+    window.scrollTo({top:0,behavior:"smooth"});
+  };
+}
+
+async function salvarProduto(){
+  const u = auth.currentUser;
+  if(!u){ alert("Faça login."); return; }
+  const email = String(u.email||"").toLowerCase();
+  const ok = (ADMIN_EMAILS||[]).map(x=>String(x||"").toLowerCase()).includes(email);
+  if(!ok){
+    alert("Este email não é admin. Ajuste ADMIN_EMAILS no firebase-config.js.");
+    return;
   }
 
-  const linhas = [];
-  linhas.push("*Sabor da Sopa* 🍲");
-  linhas.push(`Cliente: ${c.nome}`);
-  linhas.push(`Whats: ${c.tel}`);
-  linhas.push(`Endereço: ${c.endereco}`);
-  linhas.push(`Tipo: ${entregaTipo}`);
-  if(obs) linhas.push(`Obs: ${obs}`);
-  linhas.push("");
-  linhas.push("*Itens:*");
-  const totalItens = itens.reduce((a,i)=>a+Number(i.qtd||0),0);
-  itens.forEach(i=>{
-    const unit = moneyBR(i.preco);
-    const totalLinha = moneyBR(i.preco*i.qtd);
-    linhas.push(`- ${i.nome}  x${i.qtd}  (${unit} cada) = ${totalLinha}`);
-  });
-  linhas.push(`Itens no total: ${totalItens}`);
-  linhas.push("");
-  linhas.push(`Total: *${moneyBR(subtotal)}*`);
-  linhas.push(`Pagamento: ${metodo}`);
-  if(metodo==="DINHEIRO" && troco) linhas.push(`Troco para: ${troco}`);
+  const id = String((document.getElementById("pId").value||"").trim());
+  const cat = (document.getElementById("pCat").value||"").trim() || "Sopas";
+  const nome = (document.getElementById("pNome").value||"").trim();
+  const preco = parseFloat(String(document.getElementById("pPreco").value||"").replace(",","."));
+  const fotoURL = (document.getElementById("pFotoURL").value||"").trim();
+  const ord = parseInt(document.getElementById("pOrd").value||"0",10) || 999;
 
-  const msg = encodeURIComponent(linhas.join("\n"));
-  const alvo = (LOJA_WA && LOJA_WA.includes("SEU")) ? (`55${c.tel}`) : LOJA_WA;
-  window.open(`https://wa.me/${alvo}?text=${msg}`,"_blank");
+  if(!id || !/^[0-9]+$/.test(id)) return alert("ID deve ser numérico (ex: 101).");
+  if(!nome) return alert("Informe o nome.");
+  if(!Number.isFinite(preco)) return alert("Preço inválido.");
 
-  cart = [];
-  recalc();
-  toggleCart(false);
-  document.getElementById("obs").value="";
-  document.getElementById("troco").value="";
-  toast("Pedido enviado!");
+  // validação simples do link (opcional)
+  if(fotoURL && !/^https?:\/\//i.test(fotoURL)){
+    return alert("O link da foto deve começar com http:// ou https://");
+  }
+
+  const ativo = !!document.getElementById("pAtivo").checked;
+  await setDoc(doc(db,"produtos", id), {cat, nome, preco, ord, fotoURL, ativo}, {merge:true});
+  alert("Salvo!");
+  await carregarProdutos();
 }
-window.finalizar = finalizar;
-window.setEntrega = setEntrega;
 
-carregar();
+async function carregarPedidos(){
+  const tb = document.getElementById("tbPed");
+  tb.innerHTML="";
+  // últimos 120 pedidos
+  const snap = await getDocs(query(collection(db,"pedidos"), orderBy("criadoEm","desc"), limit(120)));
+  snap.forEach(d=>{
+    const p = d.data();
+    const dt = p.criadoEm?.toDate ? p.criadoEm.toDate() : null;
+    const data = dt ? dt.toLocaleString("pt-BR") : "";
+    const nome = p.cliente?.nome || "";
+    const total = Number(p.total||0).toFixed(2);
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td><small>${data}</small></td>
+      <td>${nome}<br><small>${p.cliente?.tel||""}</small></td>
+      <td>R$ ${total}</td>
+      <td><small>${p.entregaTipo||""}</small></td>
+      <td><small>${(p.obs||"").slice(0,40)}</small></td>
+    `;
+    tb.appendChild(tr);
+  });
+}
+
+async function exportarCSV(){
+  const snap = await getDocs(query(collection(db,"pedidos"), orderBy("criadoEm","desc"), limit(500)));
+  const rows = [["id","data","cliente_nome","cliente_tel","cliente_endereco","tipo","metodo","subtotal","total","obs","itens"]];
+  snap.forEach(d=>{
+    const p = d.data();
+    const dt = p.criadoEm?.toDate ? p.criadoEm.toDate().toISOString() : "";
+    const itens = (p.itens||[]).map(i=>`${i.nome} x${i.qtd} (${(Number(i.preco||0)*Number(i.qtd||0)).toFixed(2)})`).join(" | ");
+    rows.push([
+      d.id, dt, p.cliente?.nome||"", p.cliente?.tel||"", p.cliente?.endereco||"",
+      p.entregaTipo||"", p.metodo||"", p.subtotal||0, p.total||0, (p.obs||""), itens
+    ]);
+  });
+  const csv = rows.map(r=>r.map(x=>('"'+String(x??"").replace(/"/g,'""')+'"')).join(";")).join("\n");
+  const blob = new Blob([csv], {type:"text/csv;charset=utf-8;"});
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "pedidos_sabor_da_sopa.csv";
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+window.entrar = entrar;
+window.sair = sair;
+window.salvarProduto = salvarProduto;
+window.exportarCSV = exportarCSV;
+
+function showView(v){
+  const vp = document.getElementById("viewProdutos");
+  const ve = document.getElementById("viewPedidos");
+  const np = document.getElementById("navProdutos");
+  const ne = document.getElementById("navPedidos");
+  if(v==="pedidos"){
+    vp?.classList.add("hide");
+    ve?.classList.remove("hide");
+    np?.classList.remove("active");
+    ne?.classList.add("active");
+  }else{
+    ve?.classList.add("hide");
+    vp?.classList.remove("hide");
+    ne?.classList.remove("active");
+    np?.classList.add("active");
+  }
+  toggleSide(false);
+}
+function toggleSide(open){
+  const side = document.getElementById("side");
+  const ovl  = document.getElementById("ovl");
+  if(!side || !ovl) return;
+  if(open){
+    side.classList.add("open");
+    ovl.classList.add("show");
+  }else{
+    side.classList.remove("open");
+    ovl.classList.remove("show");
+  }
+}
+window.showView = showView;
+window.toggleSide = toggleSide;
+
+function hookFiltros(){
+  const ids = ["qBusca","qCat","qAtivo"];
+  ids.forEach(id=>{
+    const el = document.getElementById(id);
+    if(!el) return;
+    el.addEventListener("input", ()=>carregarProdutos());
+    el.addEventListener("change", ()=>carregarProdutos());
+  });
+}
+window.hookFiltros = hookFiltros;
+
+onAuthStateChanged(auth, async (user)=>{
+  setUI(user);
+  showLockUI();
+  if(!user) return;
+  // carrega dados
+  await carregarProdutos();
+  hookFiltros();
+  await carregarPedidos();
+});
 </script>
 </body>
 </html>
