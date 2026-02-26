@@ -53,6 +53,55 @@
     .prodImg{height:160px}
   }
 
+
+  /* ===== ERP Layout ===== */
+  .erpShell{display:flex;min-height:calc(100vh - 0px);gap:0}
+  .side{
+    width:320px;flex:0 0 320px;
+    border-right:1px solid rgba(148,163,184,.14);
+    background:rgba(2,6,23,.35);
+    padding:18px 16px;
+    position:sticky;top:0;align-self:flex-start;height:calc(100vh - 0px);
+    overflow:auto
+  }
+  .main{flex:1;min-width:0;padding:18px 18px 26px}
+  .navTitle{font-size:12px;color:var(--muted);font-weight:900;margin:4px 0 10px}
+  .navBtn{
+    width:100%;text-align:left;
+    display:flex;align-items:center;justify-content:space-between;gap:10px;
+    padding:12px 12px;border-radius:14px;
+    background:rgba(148,163,184,.08);
+    border:1px solid rgba(148,163,184,.12);
+    color:var(--txt);font-weight:1000;cursor:pointer
+  }
+  .navBtn + .navBtn{margin-top:10px}
+  .navBtn.active{background:rgba(96,165,250,.18);border-color:rgba(96,165,250,.32)}
+  .topbar{
+    display:flex;align-items:center;justify-content:space-between;gap:12px;
+    padding:14px 14px;border:1px solid rgba(148,163,184,.14);
+    background:rgba(2,6,23,.25);
+    border-radius:16px
+  }
+  .topbar .actions{display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end}
+  .section{margin-top:16px}
+  .sectionHd{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;margin-bottom:10px}
+  .sectionHd b{font-size:14px}
+  .hide{display:none !important}
+
+  /* full-width wrap/panel */
+  .wrap{width:100%;max-width:100%;margin:0;padding:0}
+  .panel{border-radius:0;min-height:100vh}
+  .grid{padding:0;grid-template-columns:1fr} /* we control layout ourselves */
+  @media(max-width:980px){
+    .side{position:fixed;left:0;top:0;height:100vh;z-index:40;transform:translateX(-102%);transition:.18s ease;box-shadow:0 20px 50px rgba(0,0,0,.55)}
+    .side.open{transform:translateX(0)}
+    .main{padding:14px}
+    .mobBar{display:flex;gap:10px;align-items:center;margin-bottom:10px}
+    .mobBtn{padding:12px 14px;border-radius:14px;border:1px solid rgba(148,163,184,.14);background:rgba(148,163,184,.10);color:var(--txt);font-weight:1000;cursor:pointer}
+    .overlay{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:35;display:none}
+    .overlay.show{display:block}
+  }
+
 </style>
 </head>
 <body>
@@ -80,49 +129,91 @@
       </div>
 
       <div class="card" id="panelCard" style="display:none">
-        <div class="row" style="align-items:center;justify-content:space-between">
-          <b>Painel</b>
-          <div class="row" style="justify-content:flex-end">
-            <button class="btn ghost" onclick="exportarCSV()">Exportar CSV (pedidos)</button>
-            <button class="btn ghost" onclick="sair()">Sair</button>
-          </div>
-        </div>
+        <div class="erpShell">
+          <div class="overlay" id="ovl" onclick="toggleSide(false)"></div>
 
-        <div style="margin-top:12px" class="row">
-          <input id="pId" class="input" placeholder="ID numérico (ex: 101)">
-          <input id="pCat" class="input" placeholder="Categoria">
-        </div>
-        <div style="margin-top:10px" class="row">
-          <input id="pNome" class="input" placeholder="Nome do produto">
-          <input id="pPreco" class="input" placeholder="Preço" inputmode="decimal">
-        </div>
+          <aside class="side" id="side">
+            <div class="navTitle">Navegação</div>
+            <button class="navBtn active" id="navProdutos" onclick="showView('produtos')">🧾 Produtos <span class="muted" id="countProdutos"></span></button>
+            <button class="navBtn" id="navPedidos" onclick="showView('pedidos')">🧾 Pedidos <span class="muted" id="countPedidos"></span></button>
 
-        <div style="margin-top:10px">
-          <input id="pFotoURL" class="input" placeholder="Link direto da imagem (https://... .jpg/.png/.webp)">
-          <div class="muted" style="font-size:12px;margin-top:6px">Use link direto da imagem. Ex: termina com .jpg / .png / .webp</div>
-        </div>
-        <div style="margin-top:10px" class="row">
-          <input id="pOrd" class="input" placeholder="Ordem (opcional)" inputmode="numeric">
-          <button class="btn good" onclick="salvarProduto()">Salvar/Atualizar</button>
-        </div>
+            <div class="navTitle" style="margin-top:16px">Ações</div>
+            <button class="navBtn" onclick="exportarCSV()">⬇️ Exportar CSV</button>
+            <button class="navBtn" onclick="sair()">🚪 Sair</button>
 
-        <div style="margin-top:16px">
-          <b>Produtos</b>
-          <div class="muted" style="font-size:12px;margin-top:6px">Apenas o email admin pode editar (rules).</div>
-          <div style="margin-top:10px">
-            <div id="prodCards" class="prodGrid"></div>
-          </div>
-        </div>
+            <div class="muted" style="font-size:12px;margin-top:14px;line-height:1.35">
+              Dica: no celular, toque em “Menu” para abrir a lateral.
+            </div>
+          </aside>
 
-        <div style="margin-top:18px">
-          <b>Pedidos</b>
-          <div class="muted" style="font-size:12px;margin-top:6px">Clientes criam, mas não leem. Admin lê.</div>
-          <div style="margin-top:10px;overflow:auto">
-            <table>
-              <thead><tr><th>Data</th><th>Cliente</th><th>Total</th><th>Tipo</th><th>Obs</th></tr></thead>
-              <tbody id="tbPed"></tbody>
-            </table>
-          </div>
+          <main class="main">
+            <div class="mobBar">
+              <button class="mobBtn" onclick="toggleSide(true)">☰ Menu</button>
+              <div class="muted" style="font-weight:900">Admin</div>
+            </div>
+
+            <div class="topbar">
+              <div>
+                <b>Painel</b>
+                <div class="muted" style="font-size:12px">Gerencie produtos e visualize pedidos.</div>
+              </div>
+              <div class="actions">
+                <button class="btn ghost" onclick="exportarCSV()">Exportar CSV (pedidos)</button>
+                <button class="btn ghost" onclick="sair()">Sair</button>
+              </div>
+            </div>
+
+            <!-- VIEW: PRODUTOS -->
+            <section class="section" id="viewProdutos">
+              <div class="sectionHd">
+                <b>Produtos</b>
+                <div class="muted" style="font-size:12px">Somente admin edita (rules).</div>
+              </div>
+
+              <div class="card" style="margin-bottom:14px">
+                <b>Criar / Editar produto</b>
+
+                <div style="margin-top:12px" class="row">
+                  <input id="pId" class="input" placeholder="ID numérico (ex: 101)">
+                  <input id="pCat" class="input" placeholder="Categoria">
+                </div>
+                <div style="margin-top:10px" class="row">
+                  <input id="pNome" class="input" placeholder="Nome do produto">
+                  <input id="pPreco" class="input" placeholder="Preço" inputmode="decimal">
+                </div>
+
+                <div style="margin-top:10px">
+                  <input id="pFotoURL" class="input" placeholder="Link direto da imagem (https://... .jpg/.png/.webp)">
+                  <div class="muted" style="font-size:12px;margin-top:6px">Use link direto da imagem. Ex: termina com .jpg / .png / .webp</div>
+                </div>
+
+                <div style="margin-top:10px" class="row">
+                  <input id="pOrd" class="input" placeholder="Ordem (opcional)" inputmode="numeric">
+                  <button class="btn good" onclick="salvarProduto()">Salvar/Atualizar</button>
+                </div>
+              </div>
+
+              <div id="prodCards" class="prodGrid"></div>
+            </section>
+
+            <!-- VIEW: PEDIDOS -->
+            <section class="section hide" id="viewPedidos">
+              <div class="sectionHd">
+                <b>Pedidos</b>
+                <div class="muted" style="font-size:12px">Clientes criam, mas não leem. Admin lê.</div>
+              </div>
+
+              <div class="card" style="overflow:auto">
+                <table>
+                  <thead><tr><th>Data</th><th>Cliente</th><th>Total</th><th>Tipo</th><th>Obs</th></tr></thead>
+                  <tbody id="tbPed"></tbody>
+                </table>
+              </div>
+            </section>
+
+          </main>
+        </div>
+</div>
         </div>
 
       </div>
@@ -227,6 +318,8 @@ async function carregarProdutos(){
   box.innerHTML = "";
 
   const snap = await getDocs(query(collection(db,"produtos"), orderBy("ord","asc"), limit(300)));
+  const countPedidos = document.getElementById('countPedidos');
+  if(countPedidos) countPedidos.textContent = `(${snap.size})`;
   snap.forEach(d=>{
     const p = d.data() || {};
     const foto = p.fotoURL || "";
@@ -255,6 +348,8 @@ async function carregarProdutos(){
     `;
     box.appendChild(card);
   });
+  const cp = document.getElementById('countProdutos');
+  if(cp) cp.textContent = `(${snap.size})`;
 
   window.__del = async (id)=>{
     if(!confirm("Excluir produto "+id+"?")) return;
@@ -355,6 +450,39 @@ window.entrar = entrar;
 window.sair = sair;
 window.salvarProduto = salvarProduto;
 window.exportarCSV = exportarCSV;
+
+function showView(v){
+  const vp = document.getElementById("viewProdutos");
+  const ve = document.getElementById("viewPedidos");
+  const np = document.getElementById("navProdutos");
+  const ne = document.getElementById("navPedidos");
+  if(v==="pedidos"){
+    vp?.classList.add("hide");
+    ve?.classList.remove("hide");
+    np?.classList.remove("active");
+    ne?.classList.add("active");
+  }else{
+    ve?.classList.add("hide");
+    vp?.classList.remove("hide");
+    ne?.classList.remove("active");
+    np?.classList.add("active");
+  }
+  toggleSide(false);
+}
+function toggleSide(open){
+  const side = document.getElementById("side");
+  const ovl  = document.getElementById("ovl");
+  if(!side || !ovl) return;
+  if(open){
+    side.classList.add("open");
+    ovl.classList.add("show");
+  }else{
+    side.classList.remove("open");
+    ovl.classList.remove("show");
+  }
+}
+window.showView = showView;
+window.toggleSide = toggleSide;
 
 onAuthStateChanged(auth, async (user)=>{
   setUI(user);
