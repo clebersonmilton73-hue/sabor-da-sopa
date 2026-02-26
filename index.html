@@ -72,6 +72,40 @@
   .pill{padding:7px 10px}
 }
 
+
+/* ===== Carrinho abre/fecha (mobile) + lista de itens ===== */
+.cartItems{display:grid;gap:10px}
+.ci{display:flex;align-items:center;justify-content:space-between;gap:10px;
+  padding:10px 10px;border:1px solid var(--line);border-radius:14px;background:rgba(2,6,23,.35)}
+.ci .left{min-width:0}
+.ci .name{font-weight:1000;font-size:13px;line-height:1.1}
+.ci .meta{color:var(--muted);font-weight:800;font-size:12px;margin-top:4px}
+.ci .qty{display:flex;align-items:center;gap:8px}
+.ci .qbtn{border:1px solid var(--line);background:rgba(148,163,184,.10);color:var(--txt);
+  width:34px;height:34px;border-radius:12px;font-weight:1100;cursor:pointer}
+.ci .qnum{min-width:22px;text-align:center;font-weight:1100}
+.ci .rm{border:none;background:transparent;color:var(--muted);font-weight:1000;cursor:pointer}
+
+.cartOverlay{position:fixed;inset:0;background:rgba(0,0,0,.55);display:none;z-index:40}
+.cartOverlay.show{display:block}
+
+.cartFab{position:fixed;left:12px;right:12px;bottom:12px;z-index:45;display:none}
+.cartFab button{
+  width:100%;border:none;border-radius:18px;padding:14px 14px;font-weight:1100;cursor:pointer;
+  background:linear-gradient(180deg,#60a5fa,#3b82f6);color:#081426;box-shadow:0 16px 40px rgba(0,0,0,.45)
+}
+.cartFab .sub{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.cartFab .sub span{font-weight:1100}
+
+@media (max-width:980px){
+  /* carrinho vira sheet fechado por padrão */
+  .cart{display:none}
+  .cartFab{display:block}
+  .wrap{margin-bottom:120px}
+  .cartSheet{position:fixed;left:10px;right:10px;bottom:10px;z-index:50;
+    border-radius:18px;box-shadow:0 18px 50px rgba(0,0,0,.60);max-height:78vh;overflow:auto}
+}
+
 </style>
 </head>
 <body>
@@ -91,9 +125,10 @@
     <div class="grid" id="grid"></div>
   </section>
 
-  <aside class="panel cart">
+  <aside class="panel cart cartSheet" id="cartSheet" style="display:none">
     <div class="hd">
       <h2>🛒 Seu pedido</h2>
+      <button class="btn2 ghost" style="padding:8px 10px" onclick="toggleCart(false)">Fechar</button>
       <div class="muted"><span id="qtd">0</span> itens</div>
     </div>
     <div class="cartBody">
@@ -114,6 +149,9 @@
           <div class="chip" id="chipRetirada" onclick="setEntrega('RETIRADA')">🏪 Retirada</div>
         </div>
       </div>
+
+      <div class="muted" style="margin-bottom:6px">Itens no carrinho</div>
+      <div id="cartItems" class="cartItems"></div>
 
       <textarea id="obs" class="input" placeholder="Observação do pedido (opcional)"></textarea>
 
@@ -137,6 +175,8 @@
 </div>
 
 <div class="toast" id="toast"></div>
+<div class="cartOverlay" id="cartOverlay" onclick="toggleCart(false)"></div>
+<div class="cartFab" id="cartFab"><button onclick="toggleCart(true)"><div class="sub"><span id="fabLeft">🛒 Carrinho (0)</span><span id="fabRight">R$ 0,00</span></div></button></div>
 
 <script type="module">
 import { firebaseConfig } from "./firebase-config.js";
@@ -187,11 +227,16 @@ function setEntrega(tipo){
 }
 
 function add(id){
+  id = Number(id);
   const it = cart.find(x=>x.id===id);
   if(it) it.qtd++;
   else cart.push({id, qtd:1});
   recalc();
+  // abre o carrinho no celular quando adicionar
+  const isMobile = window.matchMedia('(max-width:980px)').matches;
+  if(isMobile) toggleCart(true);
 }
+
 
 function recalc(){
   let qtd = 0;
@@ -205,7 +250,71 @@ function recalc(){
   qtdEl.textContent = qtd;
   subEl.textContent = moneyBR(sub);
   totEl.textContent = moneyBR(sub);
+  renderCart();
+  updateFab(qtd, sub);
 }
+
+
+function renderCart(){
+  const box = document.getElementById("cartItems");
+  if(!box) return;
+  box.innerHTML = "";
+  if(!cart.length){
+    box.innerHTML = '<div class="muted">Carrinho vazio. Clique em Adicionar no cardápio.</div>';
+    return;
+  }
+  cart.forEach(c=>{
+    const p = produtos.find(x=>x.id===c.id);
+    if(!p) return;
+    const line = document.createElement("div");
+    line.className = "ci";
+    line.innerHTML = `
+      <div class="left">
+        <div class="name">${p.nome}</div>
+        <div class="meta">${moneyBR((p.preco||0) * c.qtd)}</div>
+      </div>
+      <div class="qty">
+        <button class="qbtn" onclick="window.__dec(${c.id})">−</button>
+        <div class="qnum">${c.qtd}</div>
+        <button class="qbtn" onclick="window.__inc(${c.id})">+</button>
+        <button class="rm" title="Remover" onclick="window.__rm(${c.id})">🗑️</button>
+      </div>
+    `;
+    box.appendChild(line);
+  });
+  window.__inc = (id)=>{ const it = cart.find(x=>x.id===id); if(it){ it.qtd++; recalc(); } };
+  window.__dec = (id)=>{ const it = cart.find(x=>x.id===id); if(!it) return; it.qtd--; if(it.qtd<=0) cart = cart.filter(x=>x.id!==id); recalc(); };
+  window.__rm  = (id)=>{ cart = cart.filter(x=>x.id!==id); recalc(); };
+}
+
+function updateFab(qtd, total){
+  const l = document.getElementById("fabLeft");
+  const r = document.getElementById("fabRight");
+  if(l) l.textContent = `🛒 Carrinho (${qtd})`;
+  if(r) r.textContent = moneyBR(total);
+}
+
+function toggleCart(open){
+  const sheet = document.getElementById("cartSheet");
+  const ovl = document.getElementById("cartOverlay");
+  const isMobile = window.matchMedia("(max-width:980px)").matches;
+  if(!isMobile) return; // no desktop continua sidebar
+  if(open){
+    if(sheet) sheet.style.display = "";
+    if(ovl) ovl.classList.add("show");
+  }else{
+    if(sheet) sheet.style.display = "none";
+    if(ovl) ovl.classList.remove("show");
+  }
+}
+window.toggleCart = toggleCart;
+
+// fecha o carrinho ao carregar no mobile
+window.addEventListener("load", ()=>{
+  const isMobile = window.matchMedia("(max-width:980px)").matches;
+  if(isMobile) toggleCart(false);
+});
+
 
 function render(){
   grid.innerHTML="";
@@ -312,6 +421,7 @@ async function finalizar(){
 
   cart = [];
   recalc();
+  toggleCart(false);
   document.getElementById("obs").value="";
   document.getElementById("troco").value="";
   toast("Pedido enviado!");
