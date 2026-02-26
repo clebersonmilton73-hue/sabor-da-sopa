@@ -1,3 +1,4 @@
+
 <!doctype html>
 <html lang="pt-br">
 <head>
@@ -50,6 +51,9 @@
   .btn2.primary{background:linear-gradient(180deg,#60a5fa,#3b82f6);color:#081426}
   .btn2.ghost{background:rgba(148,163,184,.10);border:1px solid var(--line);color:var(--txt)}
   .toast{position:fixed;left:50%;bottom:16px;transform:translateX(-50%);background:#111827;color:#fff;border:1px solid rgba(255,255,255,.10);padding:10px 12px;border-radius:14px;display:none;z-index:50}
+
+  .pimg{width:100%;height:140px;object-fit:cover;border-radius:12px;border:1px solid var(--line);background:rgba(2,6,23,.35)}
+
 </style>
 </head>
 <body>
@@ -129,6 +133,7 @@ const statusPill = document.getElementById("statusPill");
 const qtdEl = document.getElementById("qtd");
 const subEl = document.getElementById("sub");
 const totEl = document.getElementById("tot");
+const catInfo = document.getElementById("catInfo");
 
 let produtos = [];
 let cart = []; // {id, qtd}
@@ -189,7 +194,13 @@ function render(){
   produtos.forEach(p=>{
     const div = document.createElement("div");
     div.className = "item";
+
+    const img = p.fotoURL
+      ? `<img class="pimg" src="${p.fotoURL}" alt="${(p.nome||"").replace(/"/g,'&quot;')}">`
+      : "";
+
     div.innerHTML = `
+      ${img}
       <div class="t">
         <div>
           <b>${p.nome}</b><br>
@@ -197,7 +208,7 @@ function render(){
         </div>
         <div class="price">${moneyBR(p.preco||0)}</div>
       </div>
-      <button class="btn" onclick="window.__add(${p.id})">Adicionar</button>
+      <button class="btn" onclick="window.__add(${Number(p.id)})">Adicionar</button>
     `;
     grid.appendChild(div);
   });
@@ -211,6 +222,7 @@ async function carregar(){
     const snap = await getDocs(q);
     produtos = snap.docs.map(d=>({id: Number(d.id), ...d.data()})).filter(p=>Number.isFinite(p.id));
     render();
+    if(catInfo) catInfo.textContent = `${produtos.length} itens`;
     statusPill.textContent = "✅ online";
   }catch(e){
     console.error(e);
