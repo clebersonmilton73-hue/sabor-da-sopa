@@ -892,6 +892,113 @@ window.limparRelatoriosVendas = function(){
   renderRelatorios();
 };
 
+
+function escHtml(v){
+  return String(v ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+function dinheiro(v){
+  return Number(v||0).toFixed(2).replace('.', ',');
+}
+function montarCupomPDVHtml(venda){
+  const perfil = getPerfilLoja();
+  const loja = perfil.nome || 'Sabor da Sopa';
+  const telLoja = perfil.tel || '';
+  const endLoja = perfil.end || '';
+  const logo = perfil.logo || '';
+  const cli = venda?.cliente || null;
+  const itens = Array.isArray(venda?.itens) ? venda.itens : [];
+  const total = Number(venda?.total || itens.reduce((s,i)=> s + Number(i.preco||0), 0));
+  const data = venda?.data || new Date().toLocaleString('pt-BR');
+
+  const itensHtml = itens.map(i => {
+    const nome = escHtml(i?.nome || '-');
+    const preco = dinheiro(i?.preco || 0);
+    return `<div class="item"><div class="item-nome">${nome}</div><div class="item-preco">R$ ${preco}</div></div>`;
+  }).join('');
+
+  const clienteHtml = cli && (cli.nome || cli.tel || cli.endereco) ? `
+    <div class="linha"></div>
+    <div class="bloco bloco-left">
+      ${cli.nome ? `<div><b>Cliente:</b> ${escHtml(cli.nome)}</div>` : ''}
+      ${cli.tel ? `<div><b>Tel:</b> ${escHtml(cli.tel)}</div>` : ''}
+      ${cli.endereco ? `<div><b>End:</b> ${escHtml(cli.endereco)}</div>` : ''}
+    </div>
+  ` : '';
+
+  return `<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Cupom</title>
+<style>
+  @page{ size: 58mm auto; margin: 0; }
+  html,body{ margin:0; padding:0; background:#fff; color:#000; }
+  body{ width:58mm; font-family:Arial, Helvetica, sans-serif; }
+  .cupom{ width:58mm; padding:2.5mm 2mm 3mm; box-sizing:border-box; color:#000; }
+  .topo{ text-align:center; }
+  .logo-wrap{ text-align:center; margin-bottom:2mm; }
+  .logo{ max-width:42mm; max-height:18mm; object-fit:contain; }
+  .loja{ font-size:13px; font-weight:700; line-height:1.2; }
+  .meta{ font-size:10px; line-height:1.35; word-break:break-word; }
+  .linha{ border-top:1px dashed #000; margin:2mm 0; }
+  .bloco{ font-size:10px; line-height:1.35; }
+  .bloco-left{ text-align:left; }
+  .titulo{ text-align:center; font-size:11px; font-weight:700; }
+  .item{ display:flex; align-items:flex-start; justify-content:space-between; gap:2mm; font-size:10px; line-height:1.3; margin:1.2mm 0; }
+  .item-nome{ flex:1; text-align:left; word-break:break-word; }
+  .item-preco{ width:17mm; text-align:right; white-space:nowrap; }
+  .total{ display:flex; justify-content:space-between; gap:2mm; font-size:12px; font-weight:700; margin-top:1.2mm; }
+  .rodape{ text-align:center; font-size:10px; margin-top:2mm; line-height:1.35; }
+</style>
+</head>
+<body>
+  <div class="cupom">
+    ${logo ? `<div class="logo-wrap"><img class="logo" src="${escHtml(logo)}" alt="Logo"></div>` : ''}
+    <div class="topo">
+      <div class="loja">${escHtml(loja)}</div>
+      ${telLoja ? `<div class="meta">${escHtml(telLoja)}</div>` : ''}
+      ${endLoja ? `<div class="meta">${escHtml(endLoja)}</div>` : ''}
+      <div class="meta">${escHtml(data)}</div>
+    </div>
+    ${clienteHtml}
+    <div class="linha"></div>
+    <div class="titulo">CUPOM NÃO FISCAL</div>
+    <div class="linha"></div>
+    ${itensHtml || '<div class="bloco">Sem itens.</div>'}
+    <div class="linha"></div>
+    <div class="total"><span>TOTAL</span><span>R$ ${dinheiro(total)}</span></div>
+    <div class="linha"></div>
+    <div class="rodape">Obrigado pela preferência!</div>
+  </div>
+</body>
+</html>`;
+}
+function imprimirHtmlCupom58mm(html){
+  const iframe = document.createElement('iframe');
+  iframe.style.position = 'fixed';
+  iframe.style.right = '0';
+  iframe.style.bottom = '0';
+  iframe.style.width = '0';
+  iframe.style.height = '0';
+  iframe.style.border = '0';
+  document.body.appendChild(iframe);
+  const frameWin = iframe.contentWindow;
+  const doc = frameWin.document;
+  doc.open();
+  doc.write(html);
+  doc.close();
+  const doPrint = () => {
+    try{ frameWin.focus(); }catch(e){}
+    try{ frameWin.print(); }catch(e){ console.warn(e); }
+    setTimeout(() => { if(iframe.parentNode) iframe.parentNode.removeChild(iframe); }, 1500);
+  };
+  if (iframe.onload !== undefined) iframe.onload = () => setTimeout(doPrint, 250);
+  setTimeout(doPrint, 700);
+}
+function imprimirVenda58mm(venda){
+  imprimirHtmlCupom58mm(montarCupomPDVHtml(venda));
+}
+
 window.apagarVendaRelatorio = function(id){
   if(!confirm('Apagar esta venda do relatório?')) return;
   const lista = getRelatorioVendas().filter(v => String(v.id) !== String(id));
@@ -901,24 +1008,7 @@ window.apagarVendaRelatorio = function(id){
 }
 window.reimprimirVendaPDV = function(venda){
   if(!venda) return;
-  const cli = venda.cliente || null;
-  let total = 0;
-  let cupom = 'SABOR DA SOPA\n------------------\n';
-  if(cli && (cli.nome || cli.tel || cli.endereco)){
-    cupom += 'CLIENTE: ' + (cli.nome || '-') + '\n';
-    cupom += 'TEL: ' + (cli.tel || '-') + '\n';
-    cupom += 'END: ' + (cli.endereco || '-') + '\n';
-    cupom += '------------------\n';
-  }
-  (venda.itens || []).forEach(i=>{
-    total += Number(i.preco||0);
-    cupom += `${i.nome} - R$ ${Number(i.preco||0).toFixed(2)}\n`;
-  });
-  cupom += '------------------\n';
-  cupom += 'TOTAL: R$ ' + Number(venda.total||0).toFixed(2);
-  const w = window.open('', '_blank');
-  w.document.write('<pre style="font-family:monospace;font-size:14px">'+cupom+'</pre>');
-  w.print();
+  imprimirVenda58mm(venda);
 }
 
 let pdvCart = [];
@@ -1168,23 +1258,14 @@ window.finalizarPDV = function(){
 window.imprimirCupomPDV = function(){
   if(!pdvCart.length) return alert('Carrinho vazio');
   const cli = clienteAtualPDV();
-  let total = 0;
-  let cupom = 'SABOR DA SOPA\n------------------\n';
-  if(cli && (cli.nome || cli.tel || cli.endereco)){
-    cupom += 'CLIENTE: ' + (cli.nome || '-') + '\n';
-    cupom += 'TEL: ' + (cli.tel || '-') + '\n';
-    cupom += 'END: ' + (cli.endereco || '-') + '\n';
-    cupom += '------------------\n';
-  }
-  pdvCart.forEach(i=>{
-    total += Number(i.preco||0);
-    cupom += `${i.nome} - R$ ${Number(i.preco||0).toFixed(2)}\n`;
-  });
-  cupom += '------------------\n';
-  cupom += 'TOTAL: R$ ' + total.toFixed(2);
-  const w = window.open('', '_blank');
-  w.document.write('<pre style="font-family:monospace;font-size:14px">'+cupom+'</pre>');
-  w.print();
+  const venda = {
+    id: 'preview_' + Date.now(),
+    data: new Date().toLocaleString('pt-BR'),
+    cliente: cli,
+    itens: pdvCart.map(i=>({nome:i.nome, preco:Number(i.preco||0)})),
+    total: pdvCart.reduce((s,i)=> s + Number(i.preco||0), 0)
+  };
+  imprimirVenda58mm(venda);
 };
 
 
