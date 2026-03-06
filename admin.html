@@ -4,7 +4,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Sabor da Sopa - Admin</title>
+<title>Sabor da Sopa - Admin PRO</title>
 
 <style>
 body{margin:0;font-family:Arial;background:#0b1220;color:#e5eefc}
@@ -19,8 +19,10 @@ body{margin:0;font-family:Arial;background:#0b1220;color:#e5eefc}
 .card{background:#111827;border:1px solid rgba(148,163,184,.15);border-radius:12px;padding:16px;margin-bottom:16px}
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px}
 .prod{background:#1f2937;padding:12px;border-radius:10px}
-input,select{padding:10px;border-radius:8px;border:none;width:100%;margin-bottom:8px}
 button.primary{background:#3b82f6;color:white;border:none;padding:10px 14px;border-radius:8px;font-weight:bold;cursor:pointer}
+button.good{background:#22c55e;color:white;border:none;padding:6px 10px;border-radius:6px;margin-right:5px;cursor:pointer}
+button.warn{background:#f59e0b;color:black;border:none;padding:6px 10px;border-radius:6px;margin-right:5px;cursor:pointer}
+button.bad{background:#ef4444;color:white;border:none;padding:6px 10px;border-radius:6px;cursor:pointer}
 </style>
 
 <script>
@@ -43,7 +45,7 @@ function openView(id){
 <button onclick="openView('dashboard')">📊 Dashboard</button>
 <button onclick="openView('pedidos')">🛵 Pedidos Online</button>
 <button onclick="openView('pdv')">💰 Venda Presencial</button>
-<button onclick="openView('produtos')">🍲 Editar Cardápio</button>
+<button onclick="openView('produtos')">🍲 Cardápio</button>
 <button onclick="openView('clientes')">👥 Clientes</button>
 </div>
 </div>
@@ -52,37 +54,36 @@ function openView(id){
 
 <div id="dashboard" class="section active">
 <div class="card">
-<b>Painel</b><br>
-Admin do sistema Sabor da Sopa.
+<b>Dashboard</b><br>
+<span id="infoPedidos"></span>
 </div>
 </div>
 
 <div id="pedidos" class="section">
 <div class="card">
 <b>Pedidos Online</b>
-<div id="listaPedidos">Carregando pedidos...</div>
+<div id="listaPedidos">Carregando...</div>
 </div>
 </div>
 
 <div id="pdv" class="section">
 <div class="card">
-<b>Venda Presencial</b>
+<b>PDV</b>
 <div id="pdvProdutos" class="grid"></div>
-<div style="margin-top:20px">
+
 <h3>Carrinho</h3>
 <div id="pdvCart"></div>
-<b>Total: <span id="pdvTotal">0</span></b><br><br>
+<b>Total: R$ <span id="pdvTotal">0</span></b><br><br>
 <button class="primary" onclick="finalizarVenda()">Finalizar Venda</button>
-</div>
 </div>
 </div>
 
 <div id="produtos" class="section">
 <div class="card">
-<b>Adicionar Produto</b>
-<input id="nome" placeholder="Nome da sopa">
-<input id="preco" placeholder="Preço">
-<input id="categoria" placeholder="Categoria">
+<b>Adicionar Produto</b><br><br>
+<input id="nome" placeholder="Nome da sopa"><br>
+<input id="preco" placeholder="Preço"><br>
+<input id="categoria" placeholder="Categoria"><br><br>
 <button class="primary" onclick="addProduto()">Salvar</button>
 </div>
 
@@ -102,6 +103,10 @@ Admin do sistema Sabor da Sopa.
 </div>
 </div>
 
+<audio id="somPedido">
+<source src="https://actions.google.com/sounds/v1/alarms/digital_watch_alarm_long.ogg">
+</audio>
+
 <script type="module">
 
 import { firebaseConfig } from "./firebase-config.js";
@@ -113,21 +118,17 @@ const db = getFirestore(app);
 
 let produtos=[]
 let cart=[]
+let pedidosCache=0
 
 async function carregarProdutos(){
-
  const snap = await getDocs(collection(db,'produtos'))
  produtos = snap.docs.map(d=>({id:d.id,...d.data()}))
-
  renderProdutos()
  renderPDV()
-
 }
 
 function renderProdutos(){
-
  const el=document.getElementById("listaProdutos")
-
  el.innerHTML=produtos.map(p=>`
  <div class="prod">
  <b>${p.nome}</b><br>
@@ -135,61 +136,42 @@ function renderProdutos(){
  <button onclick="removerProduto('${p.id}')">Excluir</button>
  </div>
  `).join("")
-
 }
 
 function renderPDV(){
-
  const el=document.getElementById("pdvProdutos")
-
  el.innerHTML=produtos.map(p=>`
  <div class="prod" onclick="addPDV('${p.id}')">
  ${p.nome}<br>
  R$ ${p.preco}
  </div>
  `).join("")
-
 }
 
 window.addPDV=function(id){
-
  const p=produtos.find(x=>x.id==id)
  cart.push(p)
-
  renderCart()
-
 }
 
 function renderCart(){
-
  const el=document.getElementById("pdvCart")
  let total=0
-
  el.innerHTML=cart.map(i=>{
-
  total+=Number(i.preco)
-
  return `<div>${i.nome} - R$ ${i.preco}</div>`
-
  }).join("")
-
  document.getElementById("pdvTotal").innerText=total
-
 }
 
 window.finalizarVenda=function(){
-
  if(!cart.length) return alert("Carrinho vazio")
-
  alert("Venda realizada")
-
  cart=[]
  renderCart()
-
 }
 
 window.addProduto=async function(){
-
  const nome=document.getElementById("nome").value
  const preco=document.getElementById("preco").value
  const categoria=document.getElementById("categoria").value
@@ -202,36 +184,49 @@ window.addProduto=async function(){
  })
 
  alert("Produto salvo")
-
  carregarProdutos()
-
 }
 
 window.removerProduto=async function(id){
-
  await deleteDoc(doc(db,'produtos',id))
-
  carregarProdutos()
-
 }
 
 async function carregarPedidos(){
 
  const snap = await getDocs(collection(db,'pedidos'))
+ const pedidos = snap.docs.map(d=>({id:d.id,...d.data()}))
 
- const pedidos = snap.docs.map(d=>d.data())
+ if(pedidos.length>pedidosCache){
+   document.getElementById("somPedido").play()
+ }
+
+ pedidosCache=pedidos.length
+
+ document.getElementById("infoPedidos").innerText="Pedidos hoje: "+pedidos.length
 
  document.getElementById("listaPedidos").innerHTML = pedidos.map(p=>`
  <div class="prod">
  <b>${p.cliente?.nome}</b><br>
- Total: R$ ${p.total}
+ Total: R$ ${p.total}<br><br>
+
+ <button class="good" onclick="zap('${p.cliente?.tel}')">WhatsApp</button>
+ <button class="warn">Preparando</button>
+ <button class="primary">Saiu</button>
+ <button class="bad">Entregue</button>
+
  </div>
  `).join("")
 
 }
 
+window.zap=function(tel){
+ window.open("https://wa.me/55"+tel,"_blank")
+}
+
 carregarProdutos()
 carregarPedidos()
+setInterval(carregarPedidos,5000)
 
 </script>
 
