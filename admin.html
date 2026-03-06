@@ -112,15 +112,17 @@
         <div class="erpShell">
           <div class="overlay" id="ovl" onclick="toggleSide(false)"></div>
           <aside class="side" id="side">
-            <div class="navTitle">Navegação</div>
-            <button class="navBtn" id="navPDV" onclick="showView('pdv')">💰 Venda Presencial</button>
-            <button class="navBtn" id="navPedidos" onclick="showView('pedidos')">🛵 Pedidos <span class="muted" id="countPedidos"></span></button>
-            <button class="navBtn" id="navClientes" onclick="showView('clientes')">👥 Clientes <span class="muted" id="countClientes"></span></button>
-            <button class="navBtn active" id="navProdutos" onclick="showView('produtos')">🧾 Produtos <span class="muted" id="countProdutos"></span></button>
-            <button class="navBtn" id="navRelatorios" onclick="showView('relatorios')">📊 Relatórios</button>
-            <button class="navBtn" id="navCaixa" onclick="showView('caixa')">💵 Movimento de Caixa</button>
-            <button class="navBtn" id="navConfig" onclick="showView('config')">⚙️ Configurações</button>
-            <div class="navTitle" style="margin-top:16px">Ações</div>
+            
+<div class="navTitle">Navegação</div>
+<button class="navBtn" id="navPDV" onclick="showView('pdv')">💰 Venda Presencial</button>
+<button class="navBtn" id="navPedidos" onclick="showView('pedidos')">🛵 Pedidos</button>
+<button class="navBtn" id="navClientes" onclick="showView('clientes')">👥 Clientes</button>
+<button class="navBtn" id="navProdutos" onclick="showView('produtos')">🧾 Produtos</button>
+<button class="navBtn" id="navRelatorios" onclick="showView('relatorios')">📊 Relatórios</button>
+<button class="navBtn" id="navCaixa" onclick="showView('caixa')">💵 Movimento de Caixa</button>
+<button class="navBtn" id="navConfig" onclick="showView('config')">⚙️ Configurações</button>
+<div class="navTitle" style="margin-top:16px">Ações</div>
+
             <button class="navBtn" onclick="exportarCSV()">⬇️ Exportar CSV</button>
             <button class="navBtn" onclick="sair()">🚪 Sair</button>
             <div class="muted" style="font-size:12px;margin-top:14px;line-height:1.35">Dica: no celular, toque em “Menu” para abrir a lateral.</div>
@@ -855,7 +857,7 @@ function renderRelatorios(){
   tb.innerHTML = '';
   lista.forEach(v=>{
     const tr = document.createElement('tr');
-    const itensTxt = (v.itens||[]).map(i=> `${i.nome} (${Number(i.preco||0).toFixed(2)})`).join(' | ');
+    const itensTxt = (v.itens||[]).map(i=> `${Number(i.qtd||1)}x ${i.nome} (${(Number(i.preco||0)*Number(i.qtd||1)).toFixed(2)})`).join(' | ');
     tr.innerHTML = `
       <td><small>${v.data || '-'}</small></td>
       <td>${v.cliente?.nome || '-'}<br><small>${v.cliente?.tel || ''}</small></td>
@@ -904,8 +906,9 @@ window.reimprimirVendaPDV = function(venda){
     cupom += '------------------\n';
   }
   (venda.itens || []).forEach(i=>{
-    total += Number(i.preco||0);
-    cupom += `${i.nome} - R$ ${Number(i.preco||0).toFixed(2)}\n`;
+    const qtd = Number(i.qtd||1);
+    total += Number(i.preco||0) * qtd;
+    cupom += `${qtd}x ${i.nome} - R$ ${(Number(i.preco||0) * qtd).toFixed(2)}\n`;
   });
   cupom += '------------------\n';
   cupom += 'TOTAL: R$ ' + Number(venda.total||0).toFixed(2);
@@ -1066,7 +1069,12 @@ function renderPDVProdutos(){
         </div>
       </div>`;
     card.onclick = ()=> {
-      pdvCart.push({ id:p.docId, nome:p.nome, preco:Number(p.preco||0) });
+      const existing = pdvCart.find(x => String(x.id) === String(p.docId));
+      if(existing){
+        existing.qtd = Number(existing.qtd || 1) + 1;
+      }else{
+        pdvCart.push({ id:p.docId, nome:p.nome, preco:Number(p.preco||0), qtd:1 });
+      }
       renderCarrinhoPDV();
     };
     box.appendChild(card);
@@ -1080,7 +1088,8 @@ function renderCarrinhoPDV(){
   box.innerHTML = '';
   let total = 0;
   pdvCart.forEach((p,i)=>{
-    total += Number(p.preco||0);
+    const qtd = Number(p.qtd || 1);
+    total += Number(p.preco||0) * qtd;
     const row = document.createElement('div');
     row.className = 'card';
     row.style.padding = '10px';
@@ -1088,7 +1097,8 @@ function renderCarrinhoPDV(){
       <div style="display:flex;justify-content:space-between;gap:10px;align-items:center">
         <div style="min-width:0">
           <div style="font-weight:1000;font-size:13px">${p.nome}</div>
-          <div class="muted" style="font-size:12px">R$ ${Number(p.preco||0).toFixed(2)}</div>
+          <div class="muted" style="font-size:12px">R$ ${Number(p.preco||0).toFixed(2)} cada</div>
+          <div class="muted" style="font-size:12px">Qtd: ${qtd} • Total: R$ ${(Number(p.preco||0) * qtd).toFixed(2)}</div>
         </div>
         <div style="display:flex;align-items:center;gap:6px">
           <button class="btn ghost sm" onclick="window.diminuirQtdPDV(${i})">−</button>
@@ -1108,13 +1118,16 @@ window.removerItemPDV = function(i){
 window.aumentarQtdPDV = function(i){
   const item = pdvCart[i];
   if(!item) return;
-  pdvCart.splice(i, 0, { ...item });
+  item.qtd = Number(item.qtd || 1) + 1;
   renderCarrinhoPDV();
 };
 window.diminuirQtdPDV = function(i){
   const item = pdvCart[i];
   if(!item) return;
-  pdvCart.splice(i,1);
+  item.qtd = Number(item.qtd || 1) - 1;
+  if(item.qtd <= 0){
+    pdvCart.splice(i,1);
+  }
   renderCarrinhoPDV();
 };
 
@@ -1146,7 +1159,7 @@ window.finalizarPDV = function(){
     id: 'venda_' + Date.now(),
     data: new Date().toLocaleString('pt-BR'),
     cliente: cli,
-    itens: pdvCart.map(i=>({nome:i.nome, preco:Number(i.preco||0)})),
+    itens: pdvCart.map(i=>({nome:i.nome, preco:Number(i.preco||0), qtd:Number(i.qtd||1)})),
     total
   };
   salvarVendaNoRelatorio(venda);
@@ -1170,8 +1183,9 @@ window.imprimirCupomPDV = function(){
     cupom += '------------------\n';
   }
   pdvCart.forEach(i=>{
-    total += Number(i.preco||0);
-    cupom += `${i.nome} - R$ ${Number(i.preco||0).toFixed(2)}\n`;
+    const qtd = Number(i.qtd||1);
+    total += Number(i.preco||0) * qtd;
+    cupom += `${qtd}x ${i.nome} - R$ ${(Number(i.preco||0) * qtd).toFixed(2)}\n`;
   });
   cupom += '------------------\n';
   cupom += 'TOTAL: R$ ' + total.toFixed(2);
@@ -1436,7 +1450,30 @@ function showView(v){
   if(v==='relatorios') document.getElementById('navRelatorios')?.classList.add('active');
   if(v==='caixa') document.getElementById('navCaixa')?.classList.add('active');
 }
+
+const ZOOM_KEY = 'SABOR_ZOOM';
+
+function setZoom(v){
+  const z = Math.max(70, Math.min(120, Number(v)||90));
+  document.documentElement.style.zoom = (z/100);
+  const lbl = document.getElementById('zoomLabel');
+  if(lbl) lbl.textContent = z + '%';
+  localStorage.setItem(ZOOM_KEY, String(z));
+}
+
+function initZoom(){
+  const saved = Number(localStorage.getItem(ZOOM_KEY) || 90);
+  const range = document.getElementById('zoomRange');
+  if(range){
+    range.value = saved;
+    range.addEventListener('input', e=> setZoom(e.target.value));
+  }
+  setZoom(saved);
+}
+
+
 document.addEventListener('DOMContentLoaded',()=>{
+  initZoom();
   showView('pdv');
   renderPerfilConfig();
   atualizarNomeInterface();
