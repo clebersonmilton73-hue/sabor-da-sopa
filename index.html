@@ -274,6 +274,20 @@ header{
   .qtyBtn{width:32px;height:32px}
 }
 
+.closeCartBtn{
+  display:none;border:none;border-radius:12px;padding:8px 10px;
+  background:rgba(148,163,184,.12);color:var(--txt);font-weight:1100;cursor:pointer;
+  border:1px solid var(--line)
+}
+.cartGrip{display:none}
+@media(max-width:980px){
+  .closeCartBtn{display:inline-flex;align-items:center;justify-content:center}
+  .cartGrip{display:flex;justify-content:center;align-items:center;padding:2px 0 8px}
+  .cartGrip::before{
+    content:"";width:54px;height:6px;border-radius:999px;background:rgba(148,163,184,.36)
+  }
+}
+
 </style>
 </head>
 <body>
@@ -314,9 +328,13 @@ header{
   <aside class="cart" id="cartSheet">
     <div class="hd">
       <h2>🛒 Seu pedido</h2>
-      <div class="small"><span id="qtd">0</span> itens</div>
+      <div style="display:flex;align-items:center;gap:10px">
+        <div class="small"><span id="qtd">0</span> itens</div>
+        <button class="closeCartBtn" type="button" onclick="toggleCart(false)">✕</button>
+      </div>
     </div>
     <div class="cartBody">
+      <div class="cartGrip" onclick="toggleCart(false)"></div>
       <div class="customer">
         <div class="pill" style="justify-content:center">🧾 Preencha seus dados para concluir o pedido</div>
         <div class="row">
@@ -778,6 +796,24 @@ function calcularFreteLocalizacao(){
     alert("Permita a localização para calcular o frete.");
   });
 }
+
+
+document.addEventListener('DOMContentLoaded', ()=>{
+  const cartSheet = document.getElementById('cartSheet');
+  const cartBody = cartSheet?.querySelector('.cartBody');
+  if(cartSheet && cartBody){
+    cartSheet.addEventListener('click', (e)=>{
+      if(window.matchMedia('(max-width:980px)').matches){
+        if(e.target === cartSheet){
+          toggleCart(false);
+        }
+      }
+    });
+    cartBody.addEventListener('click', (e)=>{
+      e.stopPropagation();
+    });
+  }
+});
 
 carregar();
 </script>
