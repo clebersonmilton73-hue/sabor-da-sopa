@@ -406,6 +406,10 @@ let produtos = [];
 let cart = [];
 let entregaTipo = 'ENTREGA';
 
+// COLOQUE AQUI O WHATSAPP DA LOJA COM DDI + DDD + NÚMERO
+// Exemplo: 5581999999999
+const WHATSAPP_LOJA = '5581000000000';
+
 function moneyBR(v){ return Number(v||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'}); }
 function escAttr(v){ return String(v||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 function normalizeGroups(prod){
@@ -686,9 +690,10 @@ async function finalizar(){
   }
 
   const linhas = [];
-  linhas.push('*Sabor da Sopa* 🍲');
+  linhas.push('*NOVO PEDIDO ONLINE - Sabor da Sopa* 🍲');
   linhas.push('');
   linhas.push(`*Cliente:* ${c.nome}`);
+  linhas.push(`*Origem:* Cardápio online`);
   linhas.push(`*WhatsApp:* ${c.tel}`);
   linhas.push(`*Tipo:* ${entregaTipo}`);
   if(entregaTipo === 'ENTREGA') linhas.push(`*Endereço:* ${c.endereco}`);
@@ -705,7 +710,12 @@ async function finalizar(){
   linhas.push(`*Total:* ${moneyBR(subtotal)}`);
 
   const msg = encodeURIComponent(linhas.join('\n'));
-  window.open(`https://wa.me/55${c.tel}?text=${msg}`, '_blank');
+  if(!WHATSAPP_LOJA || WHATSAPP_LOJA === '5581000000000'){
+    alert('Configure o número do WhatsApp da loja no arquivo, na constante WHATSAPP_LOJA.');
+    return;
+  }
+
+  window.open(`https://wa.me/${WHATSAPP_LOJA}?text=${msg}`, '_blank');
 
   cart = [];
   document.getElementById('obs').value = '';
@@ -791,7 +801,7 @@ function calcularFreteLocalizacao(){
     btn.textContent = "⏳ Calculando frete...";
   }
 
-  navigator.geolocation.getCurrentPosition(function(pos){
+  navigator.geolocation.getCurrentPosition((pos)=>{
 
     const lat = pos.coords.latitude;
     const lon = pos.coords.longitude;
@@ -851,8 +861,6 @@ document.addEventListener('DOMContentLoaded', ()=>{
     });
   }
 });
-
-window.calcularFreteLocalizacao = calcularFreteLocalizacao;
 
 carregar();
 </script>
