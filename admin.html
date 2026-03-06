@@ -158,25 +158,38 @@
             </section>
 
             
-            <section class="section hide" id="viewPDV">
-              <div class="sectionHd"><b>Venda Presencial (PDV)</b></div>
-              <div class="card">
-                <div style="display:grid;grid-template-columns:2fr 1fr;gap:14px">
-                  <div>
-                    <b>Produtos</b>
-                    <div id="pdvProdutos" style="margin-top:10px;display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px"></div>
-                  </div>
-                  <div>
-                    <b>Carrinho</b>
-                    <div id="pdvCarrinho" style="margin-top:10px"></div>
-                    <div style="margin-top:10px;font-weight:900">Total: R$ <span id="pdvTotal">0</span></div>
-                    <button class="btn good" style="margin-top:10px" onclick="finalizarPDV()">Finalizar Venda</button>
-                  </div>
-                </div>
-              </div>
-            </section>
+<section class="section hide" id="viewPDV">
+  <div class="sectionHd"><b>Venda Presencial (PDV)</b></div>
 
-            <section class="section" id="viewProdutos">
+  <div class="card">
+    <div style="display:grid;grid-template-columns:2fr 1fr;gap:16px">
+
+      <div>
+        <b>Menu de Venda</b>
+        <div id="pdvProdutos" class="prodGrid" style="margin-top:10px"></div>
+      </div>
+
+      <div>
+        <b>Carrinho</b>
+        <div id="pdvCarrinho" style="margin-top:10px"></div>
+
+        <div style="margin-top:12px;font-weight:1000">
+          Total: R$ <span id="pdvTotal">0.00</span>
+        </div>
+
+        <div style="margin-top:10px;display:grid;gap:8px">
+          <button class="btn good" onclick="finalizarPDV()">Finalizar Venda</button>
+          <button class="btn primary" onclick="imprimirCupom()">🖨 Imprimir Cupom</button>
+          <button class="btn ghost" onclick="limparCarrinho()">Limpar Carrinho</button>
+        </div>
+
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<section class="section" id="viewProdutos">
               <div class="card" style="margin-top:12px">
                 <div class="sectionHd" style="margin:0 0 8px 0">
                   <b>Buscar / Filtrar</b>
@@ -503,49 +516,93 @@ let pdvCart = [];
 
 function renderPDVProdutos(){
   const box = document.getElementById("pdvProdutos");
-  if(!box) return;
+  if(!box || !window.allProdutos) return;
   box.innerHTML = "";
-  allProdutos.forEach(p=>{
-    const el = document.createElement("div");
-    el.className = "card";
-    el.style.cursor = "pointer";
-    el.innerHTML = `<b>${p.nome}</b><div class="muted">R$ ${Number(p.preco||0).toFixed(2)}</div>`;
-    el.onclick = ()=>{
+
+  window.allProdutos.forEach(p=>{
+    const card = document.createElement("div");
+    card.className = "prodCard";
+    card.innerHTML = `
+      <div class="prodPad">
+        <div class="prodName">${p.nome}</div>
+        <div class="prodMeta">R$ ${Number(p.preco||0).toFixed(2)}</div>
+      </div>`;
+
+    card.onclick = ()=>{
       pdvCart.push(p);
-      renderPDVCarrinho();
+      renderCarrinho();
     };
-    box.appendChild(el);
+
+    box.appendChild(card);
   });
 }
 
-function renderPDVCarrinho(){
+function renderCarrinho(){
   const box = document.getElementById("pdvCarrinho");
   const totalEl = document.getElementById("pdvTotal");
   if(!box) return;
+
   box.innerHTML = "";
   let total = 0;
+
   pdvCart.forEach((p,i)=>{
     total += Number(p.preco||0);
+
     const row = document.createElement("div");
-    row.innerHTML = `${p.nome} - R$ ${Number(p.preco).toFixed(2)} <button onclick="remPDV(${i})">x</button>`;
+    row.style.display="flex";
+    row.style.justifyContent="space-between";
+    row.style.marginBottom="6px";
+
+    row.innerHTML = `
+      <span>${p.nome}</span>
+      <span>R$ ${Number(p.preco).toFixed(2)} 
+      <button onclick="remItem(${i})">x</button></span>
+    `;
+
     box.appendChild(row);
   });
+
   if(totalEl) totalEl.textContent = total.toFixed(2);
 }
 
-window.remPDV = function(i){
+window.remItem = function(i){
   pdvCart.splice(i,1);
-  renderPDVCarrinho();
+  renderCarrinho();
+}
+
+window.limparCarrinho = function(){
+  pdvCart = [];
+  renderCarrinho();
 }
 
 window.finalizarPDV = function(){
   if(!pdvCart.length) return alert("Carrinho vazio");
-  alert("Venda finalizada");
+  alert("Venda realizada com sucesso!");
   pdvCart=[];
-  renderPDVCarrinho();
+  renderCarrinho();
 }
 
-setTimeout(renderPDVProdutos,2000);
+window.imprimirCupom = function(){
+
+  if(!pdvCart.length) return alert("Carrinho vazio");
+
+  let total = 0;
+  let cupom = "SABOR DA SOPA\n------------------\n";
+
+  pdvCart.forEach(i=>{
+    total += Number(i.preco||0);
+    cupom += `${i.nome} - R$ ${Number(i.preco).toFixed(2)}\n`;
+  });
+
+  cupom += "------------------\n";
+  cupom += "TOTAL: R$ "+total.toFixed(2);
+
+  const w = window.open("", "_blank");
+  w.document.write("<pre>"+cupom+"</pre>");
+  w.print();
+}
+
+setTimeout(renderPDVProdutos,1500);
 
 </script>
 
@@ -553,8 +610,8 @@ setTimeout(renderPDVProdutos,2000);
 function showView(v){
   const views = {
     produtos:'viewProdutos',
-    pedidos:'viewPedidos',
-    pdv:'viewPDV'
+    pdv:'viewPDV',
+    pedidos:'viewPedidos'
   };
   const id = views[v] || v;
   document.querySelectorAll('[id^="view"]').forEach(el=>el.style.display='none');
