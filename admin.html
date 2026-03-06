@@ -113,13 +113,13 @@
           <div class="overlay" id="ovl" onclick="toggleSide(false)"></div>
           <aside class="side" id="side">
             <div class="navTitle">Navegação</div>
-            <button class="navBtn active" id="navProdutos" onclick="showView('produtos')">🧾 Produtos <span class="muted" id="countProdutos"></span></button>
+            <button class="navBtn" id="navPDV" onclick="showView('pdv')">💰 Venda Presencial</button>
             <button class="navBtn" id="navPedidos" onclick="showView('pedidos')">🛵 Pedidos <span class="muted" id="countPedidos"></span></button>
             <button class="navBtn" id="navClientes" onclick="showView('clientes')">👥 Clientes <span class="muted" id="countClientes"></span></button>
-            <button class="navBtn" id="navPDV" onclick="showView('pdv')">💰 Venda Presencial</button>
-            <button class="navBtn" id="navConfig" onclick="showView('config')">⚙️ Configurações</button>
+            <button class="navBtn active" id="navProdutos" onclick="showView('produtos')">🧾 Produtos <span class="muted" id="countProdutos"></span></button>
             <button class="navBtn" id="navRelatorios" onclick="showView('relatorios')">📊 Relatórios</button>
             <button class="navBtn" id="navCaixa" onclick="showView('caixa')">💵 Movimento de Caixa</button>
+            <button class="navBtn" id="navConfig" onclick="showView('config')">⚙️ Configurações</button>
             <div class="navTitle" style="margin-top:16px">Ações</div>
             <button class="navBtn" onclick="exportarCSV()">⬇️ Exportar CSV</button>
             <button class="navBtn" onclick="sair()">🚪 Sair</button>
@@ -143,6 +143,26 @@
               </div>
             </div>
 
+
+            <section class="section hide" id="viewDashboard">
+              <div class="sectionHd" style="margin-top:16px">
+                <b>Dashboard</b>
+                <div class="muted" style="font-size:12px">Resumo das vendas e pedidos do dia.</div>
+              </div>
+              <div class="stats">
+                <div class="stat"><div class="muted">Pedidos hoje</div><div class="v" id="dashPedidosHoje">0</div></div>
+                <div class="stat"><div class="muted">Vendas presenciais hoje</div><div class="v" id="dashVendasHoje">0</div></div>
+                <div class="stat"><div class="muted">Faturamento do dia</div><div class="v" id="dashFaturamentoHoje">R$ 0,00</div></div>
+              </div>
+              <div class="card" style="margin-top:14px">
+                <b>Impressão automática</b>
+                <div class="muted" style="font-size:12px;margin-top:6px">Ative para abrir a impressão do cupom automaticamente ao finalizar venda presencial.</div>
+                <label style="display:flex;align-items:center;gap:10px;margin-top:10px" class="muted">
+                  <input type="checkbox" id="autoPrintToggle"> Ativar impressão automática
+                </label>
+              </div>
+            </section>
+
             <section class="section hide" id="viewPedidos">
               <div class="stats">
                 <div class="stat"><div class="muted">Pedidos hoje</div><div class="v" id="statPedidos">0</div></div>
@@ -165,6 +185,15 @@
             </section>
 
 
+
+            <section class="section hide" id="viewCozinha">
+              <div class="sectionHd" style="margin-top:16px">
+                <b>Painel Cozinha</b>
+                <div class="muted" style="font-size:12px">Tela grande com pedidos online para preparo.</div>
+              </div>
+              <div id="cozinhaGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px"></div>
+            </section>
+
             <section class="section hide" id="viewClientes">
               <div class="sectionHd" style="margin-top:16px">
                 <b>Clientes</b>
@@ -184,7 +213,10 @@
             <section class="section hide" id="viewRelatorios">
               <div class="sectionHd" style="margin-top:16px">
                 <b>Relatórios de Vendas</b>
-                <div class="muted" style="font-size:12px">Vendas presenciais salvas no relatório.</div>
+                <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+                  <div class="muted" style="font-size:12px">Vendas presenciais salvas no relatório.</div>
+                  <button class="btn bad sm" onclick="limparRelatoriosVendas()">🧹 Limpar</button>
+                </div>
               </div>
               <div class="stats">
                 <div class="stat"><div class="muted">Vendas registradas</div><div class="v" id="relQtd">0</div></div>
@@ -203,7 +235,10 @@
             <section class="section hide" id="viewCaixa">
               <div class="sectionHd" style="margin-top:16px">
                 <b>Movimento de Caixa</b>
-                <div class="muted" style="font-size:12px">Entradas e saídas manuais do caixa.</div>
+                <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+                  <div class="muted" style="font-size:12px">Entradas e saídas manuais do caixa.</div>
+                  <button class="btn bad sm" onclick="limparMovCaixaTudo()">🧹 Limpar</button>
+                </div>
               </div>
               <div class="card">
                 <div class="row">
@@ -364,6 +399,7 @@
     </div>
   </div>
 </div>
+<audio id="pedidoAlertAudio" preload="auto"></audio>
 
 <script type="module">
 import { firebaseConfig, ADMIN_EMAILS } from "./firebase-config.js";
@@ -624,6 +660,97 @@ const RELATORIO_VENDAS_KEY = 'SABOR_RELATORIO_VENDAS_PDV';
 
 const MOV_CAIXA_KEY = 'SABOR_MOVIMENTO_CAIXA';
 
+const AUTO_PRINT_KEY = 'SABOR_AUTO_PRINT';
+function getAutoPrint(){ return localStorage.getItem(AUTO_PRINT_KEY) === '1'; }
+function setAutoPrint(v){ localStorage.setItem(AUTO_PRINT_KEY, v ? '1' : '0'); }
+
+function tocarSomNovoPedidoForte(){
+  try{
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const play = (freq, start, dur) => {
+      const o = ctx.createOscillator();
+      const g = ctx.createGain();
+      o.type = 'sine';
+      o.frequency.value = freq;
+      g.gain.value = 0.0001;
+      o.connect(g); g.connect(ctx.destination);
+      o.start(ctx.currentTime + start);
+      g.gain.exponentialRampToValueAtTime(0.15, ctx.currentTime + start + 0.02);
+      g.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + start + dur);
+      o.stop(ctx.currentTime + start + dur + 0.01);
+    };
+    play(880, 0.00, 0.18);
+    play(1174,0.22, 0.18);
+    play(1568,0.44, 0.22);
+  }catch(e){ console.warn(e); }
+}
+
+function renderCozinha(docs){
+  const grid = document.getElementById('cozinhaGrid');
+  if(!grid) return;
+  grid.innerHTML = '';
+  if(!docs.length){
+    grid.innerHTML = '<div class="card"><b>Nenhum pedido na cozinha.</b></div>';
+    return;
+  }
+  docs.forEach(d=>{
+    const p = d.data() || {};
+    const itens = (p.itens||[]).map(i => `<div style="padding:4px 0"><b>${i.qtd || 1}x</b> ${i.nome || '-'}</div>`).join('');
+    const nome = p.cliente?.nome || 'Cliente';
+    const tel = p.cliente?.tel || '';
+    const total = Number(p.total||0).toFixed(2);
+    const status = String(p.status||'NOVO').toUpperCase();
+    const card = document.createElement('div');
+    card.className = 'card';
+    card.style.padding = '16px';
+    card.innerHTML = `
+      <div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-start">
+        <div>
+          <div style="font-size:20px;font-weight:1000">${nome}</div>
+          <div class="muted" style="font-size:12px">${tel}</div>
+        </div>
+        <div class="statusPedido ${status==='PREPARANDO' ? 'status-preparando' : status==='SAIU' ? 'status-saiu' : status==='ENTREGUE' ? 'status-entregue' : 'status-novo'}">${status}</div>
+      </div>
+      <div style="margin-top:12px;font-size:16px">${itens}</div>
+      <div style="margin-top:12px;font-weight:1000">Total: R$ ${total}</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px">
+        <button class="btn ghost sm" onclick="window.__status('${d.id}','PREPARANDO','${str(tel).replace("'", "\\'")}','${str(nome).replace("'", "\\'")}')">Preparando</button>
+        <button class="btn warn sm" onclick="window.__status('${d.id}','SAIU','${str(tel).replace("'", "\\'")}','${str(nome).replace("'", "\\'")}')">Saiu</button>
+        <button class="btn good sm" onclick="window.__status('${d.id}','ENTREGUE','${str(tel).replace("'", "\\'")}','${str(nome).replace("'", "\\'")}')">Entregue</button>
+      </div>
+    `;
+    grid.appendChild(card);
+  })
+}
+
+function renderDashboardHoje(docs){
+  const hoje = new Date();
+  let pedidosHoje = 0;
+  let faturamentoOnline = 0;
+  docs.forEach(d=>{
+    const p = d.data() || {};
+    const dt = p.criadoEm?.toDate ? p.criadoEm.toDate() : null;
+    if(dt && dt.toDateString() === hoje.toDateString()){
+      pedidosHoje++;
+      faturamentoOnline += Number(p.total||0);
+    }
+  });
+  const vendas = getRelatorioVendas();
+  const vendasHoje = vendas.filter(v => {
+    const dt = new Date((v.data||'').replace(',', ''));
+    return !isNaN(dt) && dt.toDateString() === hoje.toDateString();
+  });
+  const totalPresencial = vendasHoje.reduce((s,v)=> s + Number(v.total||0), 0);
+  const fmt = (n)=> Number(n||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
+  const dp = document.getElementById('dashPedidosHoje');
+  const dv = document.getElementById('dashVendasHoje');
+  const df = document.getElementById('dashFaturamentoHoje');
+  if(dp) dp.textContent = String(pedidosHoje);
+  if(dv) dv.textContent = String(vendasHoje.length);
+  if(df) df.textContent = fmt(faturamentoOnline + totalPresencial);
+}
+
+
 function getMovCaixa(){
   try{ return JSON.parse(localStorage.getItem(MOV_CAIXA_KEY) || '[]') || []; }
   catch(e){ return []; }
@@ -650,6 +777,12 @@ window.salvarMovCaixa = function(){
   document.getElementById('cxValor').value = '';
   renderCaixa();
 };
+window.limparMovCaixaTudo = function(){
+  if(!confirm('Limpar todo o movimento de caixa?')) return;
+  setMovCaixa([]);
+  renderCaixa();
+};
+
 window.apagarMovCaixa = function(id){
   if(!confirm('Apagar este movimento?')) return;
   const lista = getMovCaixa().filter(i => String(i.id) !== String(id));
@@ -746,6 +879,12 @@ function renderRelatorios(){
     tb.appendChild(tr);
   });
 }
+window.limparRelatoriosVendas = function(){
+  if(!confirm('Limpar todo o relatório de vendas?')) return;
+  setRelatorioVendas([]);
+  renderRelatorios();
+};
+
 window.apagarVendaRelatorio = function(id){
   if(!confirm('Apagar esta venda do relatório?')) return;
   const lista = getRelatorioVendas().filter(v => String(v.id) !== String(id));
@@ -1011,6 +1150,9 @@ window.finalizarPDV = function(){
     total
   };
   salvarVendaNoRelatorio(venda);
+  if(getAutoPrint()){
+    setTimeout(()=> window.reimprimirVendaPDV(venda), 80);
+  }
   alert('Venda finalizada. Total: R$ ' + total.toFixed(2) + (cli?.nome ? (' • Cliente: ' + cli.nome) : ''));
   pdvCart = [];
   renderCarrinhoPDV();
@@ -1148,12 +1290,14 @@ function ouvirPedidos(){
     const ids = new Set(docs.map(d=>d.id));
     if(!firstPedidosLoad){
       const novos = docs.filter(d=>!lastSeenPedidoIds.has(d.id));
-      if(novos.length){ tocarNovoPedido(); alert(`Novo pedido recebido: ${novos.length}`); }
+      if(novos.length){ tocarNovoPedido(); tocarSomNovoPedidoForte(); alert(`Novo pedido recebido: ${novos.length}`); }
     }
     lastSeenPedidoIds = ids;
     firstPedidosLoad = false;
     renderPedidos(docs);
     renderClientesFromPedidos(docs);
+    renderCozinha(docs);
+    renderDashboardHoje(docs);
   }, (e)=>{ console.error(e); });
 }
 
@@ -1209,6 +1353,8 @@ function showView(v){
   const vcfg = document.getElementById('viewConfig');
   const vr = document.getElementById('viewRelatorios');
   const vx = document.getElementById('viewCaixa');
+  const vdash = document.getElementById('viewDashboard');
+  const vcoz = document.getElementById('viewCozinha');
   const np = document.getElementById('navProdutos');
   const ne = document.getElementById('navPedidos');
   const nc = document.getElementById('navClientes');
@@ -1216,6 +1362,8 @@ function showView(v){
   const ncfg = document.getElementById('navConfig');
   const nr = document.getElementById('navRelatorios');
   const nx = document.getElementById('navCaixa');
+  const ndash = document.getElementById('navDashboard');
+  const ncoz = document.getElementById('navCozinha');
 
   vp?.classList.add('hide');
   ve?.classList.add('hide');
@@ -1224,6 +1372,8 @@ function showView(v){
   vcfg?.classList.add('hide');
   vr?.classList.add('hide');
   vx?.classList.add('hide');
+  vdash?.classList.add('hide');
+  vcoz?.classList.add('hide');
   np?.classList.remove('active');
   ne?.classList.remove('active');
   nc?.classList.remove('active');
@@ -1231,8 +1381,12 @@ function showView(v){
   ncfg?.classList.remove('active');
   nr?.classList.remove('active');
   nx?.classList.remove('active');
+  ndash?.classList.remove('active');
+  ncoz?.classList.remove('active');
 
-  if(v==='pedidos'){ ve?.classList.remove('hide'); ne?.classList.add('active'); }
+  if(v==='dashboard'){ vdash?.classList.remove('hide'); ndash?.classList.add('active'); }
+  else if(v==='pedidos'){ ve?.classList.remove('hide'); ne?.classList.add('active'); }
+  else if(v==='cozinha'){ vcoz?.classList.remove('hide'); ncoz?.classList.add('active'); }
   else if(v==='clientes'){ vc?.classList.remove('hide'); nc?.classList.add('active'); }
   else if(v==='pdv'){ vd?.classList.remove('hide'); nd?.classList.add('active'); renderPDVProdutos(); renderCarrinhoPDV(); renderPDVClienteSelect(); }
   else if(v==='config'){ vcfg?.classList.remove('hide'); ncfg?.classList.add('active'); renderPerfilConfig(); }
@@ -1256,8 +1410,10 @@ onAuthStateChanged(auth, async (user)=>{
 <script>
 function showView(v){
   const views = {
+    dashboard:'viewDashboard',
     produtos:'viewProdutos',
     pedidos:'viewPedidos',
+    cozinha:'viewCozinha',
     clientes:'viewClientes',
     pdv:'viewPDV',
     config:'viewConfig',
@@ -1270,8 +1426,10 @@ function showView(v){
   if(target) target.style.display='block';
 
   document.querySelectorAll('.navBtn').forEach(b=>b.classList.remove('active'));
+  if(v==='dashboard') document.getElementById('navDashboard')?.classList.add('active');
   if(v==='produtos') document.getElementById('navProdutos')?.classList.add('active');
   if(v==='pedidos') document.getElementById('navPedidos')?.classList.add('active');
+  if(v==='cozinha') document.getElementById('navCozinha')?.classList.add('active');
   if(v==='clientes') document.getElementById('navClientes')?.classList.add('active');
   if(v==='pdv') document.getElementById('navPDV')?.classList.add('active');
   if(v==='config') document.getElementById('navConfig')?.classList.add('active');
@@ -1279,7 +1437,7 @@ function showView(v){
   if(v==='caixa') document.getElementById('navCaixa')?.classList.add('active');
 }
 document.addEventListener('DOMContentLoaded',()=>{
-  showView('produtos');
+  showView('pdv');
   renderPerfilConfig();
   atualizarNomeInterface();
   renderRelatorios();
@@ -1287,6 +1445,11 @@ document.addEventListener('DOMContentLoaded',()=>{
   const cfgFile = document.getElementById('cfgLogoFile');
   if(cfgFile){
     cfgFile.addEventListener('change', (e)=> carregarLogoArquivo(e.target.files && e.target.files[0]));
+  }
+  const autoPrint = document.getElementById('autoPrintToggle');
+  if(autoPrint){
+    autoPrint.checked = getAutoPrint();
+    autoPrint.addEventListener('change', ()=> setAutoPrint(autoPrint.checked));
   }
 });
 </script>
