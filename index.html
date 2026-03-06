@@ -298,7 +298,9 @@ header{
       <div class="small" id="catInfo">0 itens</div>
     </div>
     <div class="catalogBody">
+      <div class="heroNote promoPulse"><b>🍲 Sopas quentinhas feitas na hora</b><span>Pedido rápido no WhatsApp • escolha a categoria e finalize em poucos toques</span></div>
       <div class="pill" style="margin-bottom:14px;background:rgba(52,211,153,.10);border-color:rgba(52,211,153,.22);color:#d1fae5">🍲 Escolha sua sopa, marque os extras e finalize no WhatsApp</div>
+      <div id="quickCats" class="quickCats"></div>
       <div class="searchBar">
         <input id="busca" class="input" placeholder="Buscar sopa, caldo, canja...">
         <select id="filtroCat" class="select">
@@ -376,6 +378,7 @@ const subEl = document.getElementById('sub');
 const totEl = document.getElementById('tot');
 const buscaEl = document.getElementById('busca');
 const filtroCatEl = document.getElementById('filtroCat');
+const quickCatsEl = document.getElementById('quickCats');
 
 let produtos = [];
 let cart = [];
@@ -552,7 +555,7 @@ function renderCatalog(){
                   <div class="itemName">${p.nome || ''}</div>
                   <div class="itemPrice">${moneyBR(p.preco || 0)}</div>
                 </div>
-                ${(p.tag || p.destaque || p.badge) ? `<div class="itemTag">🔥 ${escAttr(p.tag || p.destaque || p.badge)}</div>` : ''}
+                <div class="itemMeta">${(p.tag || p.destaque || p.badge) ? `<div class="itemTag">🔥 ${escAttr(p.tag || p.destaque || p.badge)}</div>` : ''}<div class="itemMini">📦 Pedido rápido</div></div>
                 ${gruposExtras.length ? `<div class="extrasBox">${gruposExtras.map((g,gidx) => `
                   <div class="extraGroup">
                     <div class="extraGroupTitle">${g.nome}</div>
@@ -574,13 +577,29 @@ function renderCatalog(){
   `).join('');
 }
 
+function renderQuickCats(){
+  if(!quickCatsEl) return;
+  const cats = [...new Set(produtos.filter(p => p.ativo !== false).map(p => (p.cat || 'Sem categoria').trim()))].sort((a,b)=>a.localeCompare(b,'pt-BR'));
+  const current = (filtroCatEl.value || '').trim();
+  quickCatsEl.innerHTML = [`<button class="quickCat ${!current ? 'active' : ''}" onclick="pickCat('')">Todas</button>`]
+    .concat(cats.map(c => `<button class="quickCat ${current===c ? 'active' : ''}" onclick="pickCat('${escAttr(c)}')">${c}</button>`))
+    .join('');
+}
+function pickCat(cat){
+  filtroCatEl.value = cat || '';
+  renderQuickCats();
+  renderCatalog();
+}
+window.pickCat = pickCat;
+
 function fillCategorias(){
   const cats = [...new Set(produtos.filter(p => p.ativo !== false).map(p => (p.cat || 'Sem categoria').trim()))].sort((a,b)=>a.localeCompare(b,'pt-BR'));
   filtroCatEl.innerHTML = '<option value="">Todas as categorias</option>' + cats.map(c => `<option value="${c}">${c}</option>`).join('');
+  renderQuickCats();
 }
 
 buscaEl.addEventListener('input', renderCatalog);
-filtroCatEl.addEventListener('change', renderCatalog);
+filtroCatEl.addEventListener('change', ()=>{ renderQuickCats(); renderCatalog(); });
 
 function dadosCliente(){
   return {
