@@ -116,6 +116,7 @@
             <button class="navBtn active" id="navProdutos" onclick="showView('produtos')">🧾 Produtos <span class="muted" id="countProdutos"></span></button>
             <button class="navBtn" id="navPedidos" onclick="showView('pedidos')">🛵 Pedidos <span class="muted" id="countPedidos"></span></button>
             <button class="navBtn" id="navClientes" onclick="showView('clientes')">👥 Clientes <span class="muted" id="countClientes"></span></button>
+            <button class="navBtn" id="navPDV" onclick="showView('pdv')">💰 Venda Presencial</button>
             <div class="navTitle" style="margin-top:16px">Ações</div>
             <button class="navBtn" onclick="exportarCSV()">⬇️ Exportar CSV</button>
             <button class="navBtn" onclick="sair()">🚪 Sair</button>
@@ -168,6 +169,47 @@
                   <thead><tr><th>Nome</th><th>Telefone</th><th>Endereço</th><th>Pedidos</th><th>Ações</th></tr></thead>
                   <tbody id="tbClientes"></tbody>
                 </table>
+              </div>
+            </section>
+
+
+            <section class="section hide" id="viewPDV">
+              <div class="sectionHd" style="margin-top:16px">
+                <b>Venda Presencial (PDV)</b>
+                <div class="muted" style="font-size:12px">Venda no balcão com carrinho e cupom.</div>
+              </div>
+              <div class="card">
+                <div style="display:grid;grid-template-columns:2fr 1fr;gap:14px">
+                  <div>
+                    <b>Menu de venda</b>
+                    <div id="pdvProdutos" class="prodGrid" style="margin-top:10px"></div>
+                  </div>
+                  <div>
+                    <b>Cliente da venda</b>
+                    <div class="card" style="padding:10px;margin-top:10px">
+                      <select id="pdvClienteSelect" class="select" style="margin-bottom:8px">
+                        <option value="">Sem cliente</option>
+                      </select>
+                      <div class="row" style="margin-top:8px">
+                        <input id="pdvCliNome" class="input" placeholder="Nome do cliente">
+                        <input id="pdvCliTel" class="input" placeholder="Telefone / WhatsApp">
+                      </div>
+                      <div style="margin-top:8px">
+                        <input id="pdvCliEnd" class="input" placeholder="Endereço">
+                      </div>
+                    </div>
+
+                    <b style="display:block;margin-top:10px">Carrinho</b>
+                    <div id="pdvCarrinho" style="margin-top:10px;display:grid;gap:8px"></div>
+                    <div style="margin-top:12px;font-weight:1000">Total: R$ <span id="pdvTotal">0.00</span></div>
+                    <div style="display:grid;gap:8px;margin-top:12px">
+                      <button class="btn ghost" onclick="salvarClientePDV()">💾 Salvar cliente</button>
+                      <button class="btn good" onclick="finalizarPDV()">Finalizar Venda</button>
+                      <button class="btn primary" onclick="imprimirCupomPDV()">🖨 Imprimir Cupom</button>
+                      <button class="btn ghost" onclick="limparCarrinhoPDV()">Limpar Carrinho</button>
+                    </div>
+                  </div>
+                </div>
               </div>
             </section>
 
@@ -332,6 +374,7 @@ async function carregarProdutos(){
   });
   window.__toggleAtivo = async (id, atual)=>{ try{ await updateDoc(doc(db,"produtos", String(id)), {ativo: !atual}); await carregarProdutos(); }catch(e){ console.error(e); alert("Erro ao alterar ativo. Verifique Rules."); } };
   window.__del = async (id)=>{ if(!confirm("Excluir produto "+id+"?")) return; await deleteDoc(doc(db,"produtos", String(id))); await carregarProdutos(); };
+  renderPDVProdutos();
   window.__edit = async (id)=>{
     const snap = await getDoc(doc(db,"produtos", String(id)));
     const p = snap.exists() ? snap.data() : {};
@@ -408,9 +451,252 @@ function tocarNovoPedido(){
 }
 
 
+
+
+let pdvCart = [];
+let pdvClienteAtual = null;
+
+function getClientesManuais(){
+  return JSON.parse(localStorage.getItem('SABOR_CLIENTES_MANUAIS') || '[]');
+}
+function setClientesManuais(lista){
+  localStorage.setItem('SABOR_CLIENTES_MANUAIS', JSON.stringify(lista || []));
+}
+
+function getClientesCompletos(){
+  const base = Array.from(clientesMap.values()).map(c=>({
+    id: 'auto_' + (c.tel || c.nome || Math.random()),
+    nome: c.nome || '',
+    tel: c.tel || '',
+    endereco: c.endereco || '',
+    pedidos: c.pedidos || 0,
+    origem: 'auto'
+  }));
+  const manuais = getClientesManuais().map(c=>({
+    id: c.id,
+    nome: c.nome || '',
+    tel: c.tel || '',
+    endereco: c.endereco || '',
+    pedidos: c.pedidos || 0,
+    origem: 'manual'
+  }));
+  const merged = [...manuais];
+  base.forEach(a=>{
+    const idx = merged.findIndex(m => (m.tel && a.tel && m.tel === a.tel) || (!m.tel && !a.tel && m.nome === a.nome));
+    if(idx >= 0){
+      merged[idx] = {
+        ...merged[idx],
+        pedidos: Math.max(Number(merged[idx].pedidos||0), Number(a.pedidos||0)),
+        endereco: merged[idx].endereco || a.endereco
+      };
+    } else {
+      merged.push(a);
+    }
+  });
+  return merged.sort((a,b)=> String(a.nome||'').localeCompare(String(b.nome||''), 'pt-BR'));
+}
+
+function renderPDVClienteSelect(){
+  const sel = document.getElementById('pdvClienteSelect');
+  if(!sel) return;
+  const clientes = getClientesCompletos();
+  sel.innerHTML = '<option value="">Sem cliente</option>' + clientes.map(c => 
+    `<option value="${String(c.id).replace(/"/g,'&quot;')}">${c.nome || 'Sem nome'}${c.tel ? ' • ' + c.tel : ''}</option>`
+  ).join('');
+  if(pdvClienteAtual && pdvClienteAtual.id){
+    sel.value = pdvClienteAtual.id;
+  }
+}
+
+window.escolherClientePDV = function(id){
+  const clientes = getClientesCompletos();
+  const cli = clientes.find(c => String(c.id) === String(id));
+  pdvClienteAtual = cli || null;
+  document.getElementById('pdvCliNome').value = cli?.nome || '';
+  document.getElementById('pdvCliTel').value = cli?.tel || '';
+  document.getElementById('pdvCliEnd').value = cli?.endereco || '';
+};
+
+window.salvarClientePDV = function(){
+  const nome = (document.getElementById('pdvCliNome')?.value || '').trim();
+  const tel = (document.getElementById('pdvCliTel')?.value || '').trim();
+  const endereco = (document.getElementById('pdvCliEnd')?.value || '').trim();
+  if(!nome) return alert('Informe o nome do cliente.');
+  const lista = getClientesManuais();
+  if(pdvClienteAtual && String(pdvClienteAtual.origem) === 'manual'){
+    const idx = lista.findIndex(c => String(c.id) === String(pdvClienteAtual.id));
+    if(idx >= 0){
+      lista[idx] = { ...lista[idx], nome, tel, endereco };
+      pdvClienteAtual = { ...lista[idx], origem:'manual' };
+    }
+  } else {
+    const novo = { id: 'manual_' + Date.now(), nome, tel, endereco, pedidos: 0 };
+    lista.push(novo);
+    pdvClienteAtual = { ...novo, origem:'manual' };
+  }
+  setClientesManuais(lista);
+  renderPDVClienteSelect();
+  if(pdvClienteAtual?.id) document.getElementById('pdvClienteSelect').value = pdvClienteAtual.id;
+  renderClientesFromPedidos(window.__lastPedidoDocs || []);
+  alert('Cliente salvo.');
+};
+
+function clienteAtualPDV(){
+  const nome = (document.getElementById('pdvCliNome')?.value || '').trim();
+  const tel = (document.getElementById('pdvCliTel')?.value || '').trim();
+  const endereco = (document.getElementById('pdvCliEnd')?.value || '').trim();
+  if(!nome && !tel && !endereco) return null;
+  return { nome, tel, endereco };
+}
+
+window.editarClienteManual = function(id){
+  const lista = getClientesManuais();
+  const idx = lista.findIndex(c => String(c.id) === String(id));
+  if(idx < 0) return;
+  const atual = lista[idx];
+  const nome = prompt('Nome:', atual.nome || '');
+  if(nome === null) return;
+  const tel = prompt('Telefone:', atual.tel || '');
+  if(tel === null) return;
+  const endereco = prompt('Endereço:', atual.endereco || '');
+  if(endereco === null) return;
+  lista[idx] = { ...atual, nome: nome.trim(), tel: tel.trim(), endereco: endereco.trim() };
+  setClientesManuais(lista);
+  renderClientesFromPedidos(window.__lastPedidoDocs || []);
+  renderPDVClienteSelect();
+};
+
+window.apagarClienteManual = function(id){
+  const lista = getClientesManuais();
+  const idx = lista.findIndex(c => String(c.id) === String(id));
+  if(idx < 0) return alert('Só é possível apagar clientes salvos manualmente.');
+  if(!confirm('Apagar este cliente?')) return;
+  lista.splice(idx, 1);
+  setClientesManuais(lista);
+  if(pdvClienteAtual && String(pdvClienteAtual.id) === String(id)) pdvClienteAtual = null;
+  renderClientesFromPedidos(window.__lastPedidoDocs || []);
+  renderPDVClienteSelect();
+};
+
+
+function renderPDVProdutos(){
+  const box = document.getElementById('pdvProdutos');
+  const sel = document.getElementById('pdvClienteSelect');
+  if(sel && !sel.dataset.bound){
+    sel.dataset.bound = '1';
+    sel.addEventListener('change', (e)=> escolherClientePDV(e.target.value));
+  }
+  if(!box) return;
+  box.innerHTML = '';
+  (allProdutos || []).forEach(p=>{
+    const card = document.createElement('div');
+    card.className = 'prodCard';
+    card.style.cursor = 'pointer';
+    const foto = p.fotoURL || '';
+    card.innerHTML = `
+      ${foto ? `<img class="prodImg" src="${foto}" alt="foto">` : `<div class="prodImg"></div>`}
+      <div class="prodPad">
+        <div class="prodTop">
+          <div>
+            <div class="prodName">${p.nome || ''}</div>
+            <div class="prodMeta">${p.cat || ''}</div>
+          </div>
+          <div class="prodPrice">R$ ${Number(p.preco||0).toFixed(2)}</div>
+        </div>
+      </div>`;
+    card.onclick = ()=> {
+      pdvCart.push({ id:p.docId, nome:p.nome, preco:Number(p.preco||0) });
+      renderCarrinhoPDV();
+    };
+    box.appendChild(card);
+  });
+}
+
+function renderCarrinhoPDV(){
+  const box = document.getElementById('pdvCarrinho');
+  const totalEl = document.getElementById('pdvTotal');
+  if(!box) return;
+  box.innerHTML = '';
+  let total = 0;
+  pdvCart.forEach((p,i)=>{
+    total += Number(p.preco||0);
+    const row = document.createElement('div');
+    row.className = 'card';
+    row.style.padding = '10px';
+    row.innerHTML = `
+      <div style="display:flex;justify-content:space-between;gap:10px;align-items:center">
+        <div>
+          <div style="font-weight:1000">${p.nome}</div>
+          <div class="muted" style="font-size:12px">R$ ${Number(p.preco||0).toFixed(2)}</div>
+        </div>
+        <button class="btn ghost sm" onclick="window.removerItemPDV(${i})">x</button>
+      </div>`;
+    box.appendChild(row);
+  });
+  if(totalEl) totalEl.textContent = total.toFixed(2);
+}
+
+window.removerItemPDV = function(i){
+  pdvCart.splice(i,1);
+  renderCarrinhoPDV();
+};
+
+window.limparCarrinhoPDV = function(){
+  pdvCart = [];
+  renderCarrinhoPDV();
+};
+
+window.finalizarPDV = function(){
+  if(!pdvCart.length) return alert('Carrinho vazio');
+  const total = pdvCart.reduce((s,i)=> s + Number(i.preco||0), 0);
+  const cli = clienteAtualPDV();
+  if(cli && cli.nome){
+    const lista = getClientesManuais();
+    const idx = lista.findIndex(c => (cli.tel && c.tel === cli.tel) || (!cli.tel && c.nome === cli.nome));
+    if(idx >= 0){
+      lista[idx] = { ...lista[idx], nome: cli.nome, tel: cli.tel, endereco: cli.endereco, pedidos: Number(lista[idx].pedidos||0) + 1 };
+      pdvClienteAtual = { ...lista[idx], origem:'manual' };
+    } else {
+      const novo = { id: 'manual_' + Date.now(), nome: cli.nome, tel: cli.tel, endereco: cli.endereco, pedidos: 1 };
+      lista.push(novo);
+      pdvClienteAtual = { ...novo, origem:'manual' };
+    }
+    setClientesManuais(lista);
+    renderClientesFromPedidos(window.__lastPedidoDocs || []);
+    renderPDVClienteSelect();
+  }
+  alert('Venda finalizada. Total: R$ ' + total.toFixed(2) + (cli?.nome ? (' • Cliente: ' + cli.nome) : ''));
+  pdvCart = [];
+  renderCarrinhoPDV();
+};
+
+window.imprimirCupomPDV = function(){
+  if(!pdvCart.length) return alert('Carrinho vazio');
+  const cli = clienteAtualPDV();
+  let total = 0;
+  let cupom = 'SABOR DA SOPA\n------------------\n';
+  if(cli && (cli.nome || cli.tel || cli.endereco)){
+    cupom += 'CLIENTE: ' + (cli.nome || '-') + '\n';
+    cupom += 'TEL: ' + (cli.tel || '-') + '\n';
+    cupom += 'END: ' + (cli.endereco || '-') + '\n';
+    cupom += '------------------\n';
+  }
+  pdvCart.forEach(i=>{
+    total += Number(i.preco||0);
+    cupom += `${i.nome} - R$ ${Number(i.preco||0).toFixed(2)}\n`;
+  });
+  cupom += '------------------\n';
+  cupom += 'TOTAL: R$ ' + total.toFixed(2);
+  const w = window.open('', '_blank');
+  w.document.write('<pre style="font-family:monospace;font-size:14px">'+cupom+'</pre>');
+  w.print();
+};
+
+
 let clientesMap = new Map();
 
 function renderClientesFromPedidos(docs){
+  window.__lastPedidoDocs = docs;
   const tb = document.getElementById('tbClientes');
   if(!tb) return;
   tb.innerHTML = '';
@@ -437,9 +723,10 @@ function renderClientesFromPedidos(docs){
     if(!c.endereco && endereco) c.endereco = endereco;
   });
 
-  const lista = Array.from(clientesMap.values()).sort((a,b)=> String(a.nome||'').localeCompare(String(b.nome||''), 'pt-BR'));
+  const lista = getClientesCompletos();
   const count = document.getElementById('countClientes');
   if(count) count.textContent = `(${lista.length})`;
+  renderPDVClienteSelect();
 
   if(!lista.length){
     tb.innerHTML = '<tr><td colspan="5"><small>Nenhum cliente encontrado ainda.</small></td></tr>';
@@ -448,13 +735,20 @@ function renderClientesFromPedidos(docs){
 
   lista.forEach(c=>{
     const tr = document.createElement('tr');
+    const editBtn = c.origem === 'manual'
+      ? `<button class="btn ghost sm" onclick="window.editarClienteManual('${String(c.id).replace(/'/g,"\\'")}')">✏️ Editar</button>
+         <button class="btn bad sm" onclick="window.apagarClienteManual('${String(c.id).replace(/'/g,"\\'")}')">🗑 Apagar</button>`
+      : '';
     tr.innerHTML = `
       <td>${c.nome || '-'}</td>
       <td><small>${c.tel || '-'}</small></td>
       <td><small>${c.endereco || '-'}</small></td>
       <td>${c.pedidos}</td>
       <td>
-        <button class="btn ghost sm" onclick="window.__zapCliente('${String(c.tel).replace(/'/g,"\\'")}', '${String(c.nome).replace(/'/g,"\\'")}')">💬 WhatsApp</button>
+        <div style="display:flex;gap:6px;flex-wrap:wrap">
+          <button class="btn ghost sm" onclick="window.__zapCliente('${String(c.tel).replace(/'/g,"\\'")}', '${String(c.nome).replace(/'/g,"\\'")}')">💬 WhatsApp</button>
+          ${editBtn}
+        </div>
       </td>
     `;
     tb.appendChild(tr);
@@ -538,19 +832,24 @@ function showView(v){
   const vp = document.getElementById('viewProdutos');
   const ve = document.getElementById('viewPedidos');
   const vc = document.getElementById('viewClientes');
+  const vd = document.getElementById('viewPDV');
   const np = document.getElementById('navProdutos');
   const ne = document.getElementById('navPedidos');
   const nc = document.getElementById('navClientes');
+  const nd = document.getElementById('navPDV');
 
   vp?.classList.add('hide');
   ve?.classList.add('hide');
   vc?.classList.add('hide');
+  vd?.classList.add('hide');
   np?.classList.remove('active');
   ne?.classList.remove('active');
   nc?.classList.remove('active');
+  nd?.classList.remove('active');
 
   if(v==='pedidos'){ ve?.classList.remove('hide'); ne?.classList.add('active'); }
   else if(v==='clientes'){ vc?.classList.remove('hide'); nc?.classList.add('active'); }
+  else if(v==='pdv'){ vd?.classList.remove('hide'); nd?.classList.add('active'); renderPDVProdutos(); renderCarrinhoPDV(); }
   else { vp?.classList.remove('hide'); np?.classList.add('active'); }
 
   toggleSide(false);
@@ -571,7 +870,8 @@ function showView(v){
   const views = {
     produtos:'viewProdutos',
     pedidos:'viewPedidos',
-    clientes:'viewClientes'
+    clientes:'viewClientes',
+    pdv:'viewPDV'
   };
   const id = views[v] || v;
   document.querySelectorAll('[id^="view"]').forEach(el=>el.style.display='none');
@@ -582,6 +882,7 @@ function showView(v){
   if(v==='produtos') document.getElementById('navProdutos')?.classList.add('active');
   if(v==='pedidos') document.getElementById('navPedidos')?.classList.add('active');
   if(v==='clientes') document.getElementById('navClientes')?.classList.add('active');
+  if(v==='pdv') document.getElementById('navPDV')?.classList.add('active');
 }
 document.addEventListener('DOMContentLoaded',()=>{
   showView('produtos');
