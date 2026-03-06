@@ -406,9 +406,8 @@ let produtos = [];
 let cart = [];
 let entregaTipo = 'ENTREGA';
 
-// COLOQUE AQUI O WHATSAPP DA LOJA COM DDI + DDD + NÚMERO
-// Exemplo: 5581999999999
-const WHATSAPP_LOJA = '5581000000000';
+// WhatsApp da loja
+const WHATSAPP_LOJA = '558197284466';
 
 function moneyBR(v){ return Number(v||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'}); }
 function escAttr(v){ return String(v||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
@@ -527,7 +526,7 @@ if(freteEl) freteEl.textContent = moneyBR(frete);
 if(distEl) distEl.textContent = distanciaCliente.toFixed(1) + " km";
 
   document.getElementById('barQtd').textContent = String(qtd);
-  document.getElementById('barTot').textContent = moneyBR(total);
+  document.getElementById('barTot').textContent = moneyBR(subtotal);
 }
 
 function renderCart(){
@@ -661,8 +660,6 @@ async function finalizar(){
   const troco = document.getElementById('troco').value.trim();
   const obs = document.getElementById('obs').value.trim();
   const subtotal = cart.reduce((s,i)=>s + (lineUnit(i) * i.qtd), 0);
-  const frete = entregaTipo === 'ENTREGA' ? calcularFretePorKm(distanciaCliente) : 0;
-  const totalFinal = subtotal + frete;
 
   const itens = cart.map(i => ({
     id: i.id,
@@ -681,9 +678,7 @@ async function finalizar(){
     obs,
     itens,
     subtotal,
-    frete,
-    distanciaKm: Number(distanciaCliente || 0),
-    total: totalFinal,
+    total: subtotal,
     criadoEm: serverTimestamp()
   };
 
@@ -694,10 +689,9 @@ async function finalizar(){
   }
 
   const linhas = [];
-  linhas.push('*NOVO PEDIDO ONLINE - Sabor da Sopa* 🍲');
+  linhas.push('*Sabor da Sopa* 🍲');
   linhas.push('');
   linhas.push(`*Cliente:* ${c.nome}`);
-  linhas.push(`*Origem:* Cardápio online`);
   linhas.push(`*WhatsApp:* ${c.tel}`);
   linhas.push(`*Tipo:* ${entregaTipo}`);
   if(entregaTipo === 'ENTREGA') linhas.push(`*Endereço:* ${c.endereco}`);
@@ -711,15 +705,9 @@ async function finalizar(){
   linhas.push('');
   linhas.push(`*Pagamento:* ${metodo}`);
   if(metodo === 'DINHEIRO' && troco) linhas.push(`*Troco para:* ${troco}`);
-  if(entregaTipo === 'ENTREGA') linhas.push(`*Distância:* ${distanciaCliente.toFixed(1)} km`);
-  if(entregaTipo === 'ENTREGA') linhas.push(`*Frete:* ${moneyBR(frete)}`);
-  linhas.push(`*Total:* ${moneyBR(totalFinal)}`);
+  linhas.push(`*Total:* ${moneyBR(subtotal)}`);
 
   const msg = encodeURIComponent(linhas.join('\n'));
-  if(!WHATSAPP_LOJA || WHATSAPP_LOJA === '5581000000000'){
-    alert('Configure o número do WhatsApp da loja na constante WHATSAPP_LOJA.');
-    return;
-  }
   window.open(`https://wa.me/${WHATSAPP_LOJA}?text=${msg}`, '_blank');
 
   cart = [];
@@ -806,7 +794,7 @@ function calcularFreteLocalizacao(){
     btn.textContent = "⏳ Calculando frete...";
   }
 
-  navigator.geolocation.getCurrentPosition(function(pos){
+  navigator.geolocation.getCurrentPosition((pos)=>{
 
     const lat = pos.coords.latitude;
     const lon = pos.coords.longitude;
@@ -866,8 +854,6 @@ document.addEventListener('DOMContentLoaded', ()=>{
     });
   }
 });
-
-window.calcularFreteLocalizacao = calcularFreteLocalizacao;
 
 carregar();
 </script>
