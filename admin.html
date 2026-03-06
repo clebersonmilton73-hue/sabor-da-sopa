@@ -4,40 +4,76 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Sabor da Sopa - Admin</title>
+<title>Sabor da Sopa - Sistema</title>
 
 <style>
 body{margin:0;font-family:Arial;background:#0b1220;color:#e5eefc}
 .layout{display:flex;min-height:100vh}
-.sidebar{
-width:240px;background:#020617;border-right:1px solid rgba(148,163,184,.15);
-padding:20px;box-sizing:border-box
-}
-.sidebar h2{margin:0 0 20px;font-size:18px}
-.menu button{
-width:100%;padding:12px;margin-bottom:8px;border:none;border-radius:10px;
-background:#111827;color:#cbd5f5;font-weight:700;cursor:pointer;text-align:left
-}
+.sidebar{width:240px;background:#020617;border-right:1px solid rgba(148,163,184,.15);padding:20px}
+.sidebar h2{margin:0 0 20px}
+.menu button{width:100%;padding:12px;margin-bottom:8px;border:none;border-radius:10px;background:#111827;color:#cbd5f5;font-weight:700;cursor:pointer;text-align:left}
 .menu button:hover{background:#1f2937}
 .content{flex:1;padding:20px}
 .section{display:none}
 .section.active{display:block}
-.card{
-background:#111827;border:1px solid rgba(148,163,184,.15);
-border-radius:12px;padding:16px;margin-bottom:16px
-}
+.card{background:#111827;border:1px solid rgba(148,163,184,.15);border-radius:12px;padding:16px;margin-bottom:16px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px}
+.prod{background:#1f2937;padding:10px;border-radius:10px;cursor:pointer;text-align:center}
+.cart{margin-top:20px}
+button.primary{background:#3b82f6;color:white;border:none;padding:12px;border-radius:8px;font-weight:bold;cursor:pointer}
 </style>
 
 <script>
+let produtos=[
+ {id:1,nome:"Sopa de Carne",preco:15},
+ {id:2,nome:"Canja",preco:12},
+ {id:3,nome:"Caldo de Kenga",preco:14}
+]
+
+let cart=[]
+
 function openView(id){
  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'))
  document.getElementById(id).classList.add('active')
+}
+
+function renderProdutos(){
+ const el=document.getElementById("listaProdutos")
+ el.innerHTML=produtos.map(p=>`
+  <div class="prod" onclick="add(${p.id})">
+  <b>${p.nome}</b><br>
+  R$ ${p.preco}
+  </div>
+ `).join("")
+}
+
+function add(id){
+ const p=produtos.find(x=>x.id==id)
+ cart.push(p)
+ renderCart()
+}
+
+function renderCart(){
+ const el=document.getElementById("cart")
+ let total=0
+ el.innerHTML=cart.map(i=>{
+  total+=i.preco
+  return `<div>${i.nome} - R$ ${i.preco}</div>`
+ }).join("")
+ document.getElementById("total").innerText="R$ "+total
+}
+
+function finalizar(){
+ if(!cart.length){alert("Carrinho vazio");return}
+ alert("Venda finalizada!")
+ cart=[]
+ renderCart()
 }
 </script>
 
 </head>
 
-<body>
+<body onload="renderProdutos()">
 
 <div class="layout">
 
@@ -50,34 +86,54 @@ function openView(id){
 <button onclick="openView('pdv')">💰 Venda Presencial</button>
 <button onclick="openView('produtos')">🍲 Produtos</button>
 <button onclick="openView('clientes')">👥 Clientes</button>
-<button onclick="openView('config')">⚙ Configuração</button>
 </div>
 </div>
 
 <div class="content">
 
 <div id="dashboard" class="section active">
-<div class="card"><b>Dashboard</b><br>Resumo das vendas aparecerá aqui.</div>
+<div class="card">
+<b>Dashboard</b><br>
+Sistema de vendas Sabor da Sopa.
+</div>
 </div>
 
 <div id="pedidos" class="section">
-<div class="card"><b>Pedidos Online</b><br>Aqui aparecem os pedidos feitos pelo cardápio.</div>
+<div class="card">
+<b>Pedidos Online</b><br>
+Aqui aparecerão os pedidos feitos pelo cardápio.
+</div>
 </div>
 
 <div id="pdv" class="section">
-<div class="card"><b>PDV - Venda Presencial</b><br>Tela de caixa para vender direto no balcão.</div>
+<div class="card">
+<b>Venda Presencial (PDV)</b>
+
+<div class="grid" id="listaProdutos"></div>
+
+<div class="cart">
+<h3>Carrinho</h3>
+<div id="cart"></div>
+<b>Total: <span id="total">R$ 0</span></b><br><br>
+
+<button class="primary" onclick="finalizar()">Finalizar Venda</button>
+</div>
+
+</div>
 </div>
 
 <div id="produtos" class="section">
-<div class="card"><b>Produtos</b><br>Cadastrar e editar sopas.</div>
+<div class="card">
+<b>Produtos</b><br>
+Cadastro de sopas.
+</div>
 </div>
 
 <div id="clientes" class="section">
-<div class="card"><b>Clientes</b><br>Lista automática de clientes.</div>
+<div class="card">
+<b>Clientes</b><br>
+Clientes que fizeram pedidos aparecerão aqui.
 </div>
-
-<div id="config" class="section">
-<div class="card"><b>Configuração</b><br>Dados da empresa.</div>
 </div>
 
 </div>
