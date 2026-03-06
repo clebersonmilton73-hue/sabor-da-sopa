@@ -4,7 +4,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Sabor da Sopa - Sistema</title>
+<title>Sabor da Sopa - Admin</title>
 
 <style>
 body{margin:0;font-family:Arial;background:#0b1220;color:#e5eefc}
@@ -17,63 +17,22 @@ body{margin:0;font-family:Arial;background:#0b1220;color:#e5eefc}
 .section{display:none}
 .section.active{display:block}
 .card{background:#111827;border:1px solid rgba(148,163,184,.15);border-radius:12px;padding:16px;margin-bottom:16px}
-.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px}
-.prod{background:#1f2937;padding:10px;border-radius:10px;cursor:pointer;text-align:center}
-.cart{margin-top:20px}
-button.primary{background:#3b82f6;color:white;border:none;padding:12px;border-radius:8px;font-weight:bold;cursor:pointer}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px}
+.prod{background:#1f2937;padding:12px;border-radius:10px}
+input,select{padding:10px;border-radius:8px;border:none;width:100%;margin-bottom:8px}
+button.primary{background:#3b82f6;color:white;border:none;padding:10px 14px;border-radius:8px;font-weight:bold;cursor:pointer}
 </style>
 
 <script>
-let produtos=[
- {id:1,nome:"Sopa de Carne",preco:15},
- {id:2,nome:"Canja",preco:12},
- {id:3,nome:"Caldo de Kenga",preco:14}
-]
-
-let cart=[]
-
 function openView(id){
  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'))
  document.getElementById(id).classList.add('active')
-}
-
-function renderProdutos(){
- const el=document.getElementById("listaProdutos")
- el.innerHTML=produtos.map(p=>`
-  <div class="prod" onclick="add(${p.id})">
-  <b>${p.nome}</b><br>
-  R$ ${p.preco}
-  </div>
- `).join("")
-}
-
-function add(id){
- const p=produtos.find(x=>x.id==id)
- cart.push(p)
- renderCart()
-}
-
-function renderCart(){
- const el=document.getElementById("cart")
- let total=0
- el.innerHTML=cart.map(i=>{
-  total+=i.preco
-  return `<div>${i.nome} - R$ ${i.preco}</div>`
- }).join("")
- document.getElementById("total").innerText="R$ "+total
-}
-
-function finalizar(){
- if(!cart.length){alert("Carrinho vazio");return}
- alert("Venda finalizada!")
- cart=[]
- renderCart()
 }
 </script>
 
 </head>
 
-<body onload="renderProdutos()">
+<body>
 
 <div class="layout">
 
@@ -84,7 +43,7 @@ function finalizar(){
 <button onclick="openView('dashboard')">📊 Dashboard</button>
 <button onclick="openView('pedidos')">🛵 Pedidos Online</button>
 <button onclick="openView('pdv')">💰 Venda Presencial</button>
-<button onclick="openView('produtos')">🍲 Produtos</button>
+<button onclick="openView('produtos')">🍲 Editar Cardápio</button>
 <button onclick="openView('clientes')">👥 Clientes</button>
 </div>
 </div>
@@ -93,51 +52,188 @@ function finalizar(){
 
 <div id="dashboard" class="section active">
 <div class="card">
-<b>Dashboard</b><br>
-Sistema de vendas Sabor da Sopa.
+<b>Painel</b><br>
+Admin do sistema Sabor da Sopa.
 </div>
 </div>
 
 <div id="pedidos" class="section">
 <div class="card">
-<b>Pedidos Online</b><br>
-Aqui aparecerão os pedidos feitos pelo cardápio.
+<b>Pedidos Online</b>
+<div id="listaPedidos">Carregando pedidos...</div>
 </div>
 </div>
 
 <div id="pdv" class="section">
 <div class="card">
-<b>Venda Presencial (PDV)</b>
-
-<div class="grid" id="listaProdutos"></div>
-
-<div class="cart">
+<b>Venda Presencial</b>
+<div id="pdvProdutos" class="grid"></div>
+<div style="margin-top:20px">
 <h3>Carrinho</h3>
-<div id="cart"></div>
-<b>Total: <span id="total">R$ 0</span></b><br><br>
-
-<button class="primary" onclick="finalizar()">Finalizar Venda</button>
+<div id="pdvCart"></div>
+<b>Total: <span id="pdvTotal">0</span></b><br><br>
+<button class="primary" onclick="finalizarVenda()">Finalizar Venda</button>
 </div>
-
 </div>
 </div>
 
 <div id="produtos" class="section">
 <div class="card">
-<b>Produtos</b><br>
-Cadastro de sopas.
+<b>Adicionar Produto</b>
+<input id="nome" placeholder="Nome da sopa">
+<input id="preco" placeholder="Preço">
+<input id="categoria" placeholder="Categoria">
+<button class="primary" onclick="addProduto()">Salvar</button>
+</div>
+
+<div class="card">
+<b>Produtos</b>
+<div id="listaProdutos"></div>
 </div>
 </div>
 
 <div id="clientes" class="section">
 <div class="card">
-<b>Clientes</b><br>
-Clientes que fizeram pedidos aparecerão aqui.
+<b>Clientes</b>
+<div id="listaClientes"></div>
 </div>
 </div>
 
 </div>
 </div>
+
+<script type="module">
+
+import { firebaseConfig } from "./firebase-config.js";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-app.js";
+import { getFirestore, collection, getDocs, addDoc, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-firestore.js";
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+let produtos=[]
+let cart=[]
+
+async function carregarProdutos(){
+
+ const snap = await getDocs(collection(db,'produtos'))
+ produtos = snap.docs.map(d=>({id:d.id,...d.data()}))
+
+ renderProdutos()
+ renderPDV()
+
+}
+
+function renderProdutos(){
+
+ const el=document.getElementById("listaProdutos")
+
+ el.innerHTML=produtos.map(p=>`
+ <div class="prod">
+ <b>${p.nome}</b><br>
+ R$ ${p.preco}<br>
+ <button onclick="removerProduto('${p.id}')">Excluir</button>
+ </div>
+ `).join("")
+
+}
+
+function renderPDV(){
+
+ const el=document.getElementById("pdvProdutos")
+
+ el.innerHTML=produtos.map(p=>`
+ <div class="prod" onclick="addPDV('${p.id}')">
+ ${p.nome}<br>
+ R$ ${p.preco}
+ </div>
+ `).join("")
+
+}
+
+window.addPDV=function(id){
+
+ const p=produtos.find(x=>x.id==id)
+ cart.push(p)
+
+ renderCart()
+
+}
+
+function renderCart(){
+
+ const el=document.getElementById("pdvCart")
+ let total=0
+
+ el.innerHTML=cart.map(i=>{
+
+ total+=Number(i.preco)
+
+ return `<div>${i.nome} - R$ ${i.preco}</div>`
+
+ }).join("")
+
+ document.getElementById("pdvTotal").innerText=total
+
+}
+
+window.finalizarVenda=function(){
+
+ if(!cart.length) return alert("Carrinho vazio")
+
+ alert("Venda realizada")
+
+ cart=[]
+ renderCart()
+
+}
+
+window.addProduto=async function(){
+
+ const nome=document.getElementById("nome").value
+ const preco=document.getElementById("preco").value
+ const categoria=document.getElementById("categoria").value
+
+ await addDoc(collection(db,'produtos'),{
+  nome,
+  preco:Number(preco),
+  cat:categoria,
+  ativo:true
+ })
+
+ alert("Produto salvo")
+
+ carregarProdutos()
+
+}
+
+window.removerProduto=async function(id){
+
+ await deleteDoc(doc(db,'produtos',id))
+
+ carregarProdutos()
+
+}
+
+async function carregarPedidos(){
+
+ const snap = await getDocs(collection(db,'pedidos'))
+
+ const pedidos = snap.docs.map(d=>d.data())
+
+ document.getElementById("listaPedidos").innerHTML = pedidos.map(p=>`
+ <div class="prod">
+ <b>${p.cliente?.nome}</b><br>
+ Total: R$ ${p.total}
+ </div>
+ `).join("")
+
+}
+
+carregarProdutos()
+carregarPedidos()
+
+</script>
 
 </body>
 </html>
