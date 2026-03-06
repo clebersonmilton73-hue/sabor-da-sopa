@@ -389,6 +389,7 @@ header{
           <input id="cliTel" class="input" placeholder="WhatsApp com DDD" inputmode="tel">
         </div>
         <input id="cliEnd" class="input" placeholder="Endereço completo">
+        <button class="btn" type="button" onclick="calcularFreteLocalizacao()">📍 Calcular frete pela minha localização</button>
       </div>
 
       <div>
@@ -414,6 +415,8 @@ header{
 
       <div class="sum">
         <div class="line"><span>Subtotal</span><b id="sub">R$ 0,00</b></div>
+        <div class="line"><span>Distância</span><b id="distancia">0 km</b></div>
+        <div class="line"><span>Frete</span><b id="frete">R$ 0,00</b></div>
         <div class="line"><span>Distância</span><b id="dist">--</b></div>
         <div class="line"><span>Frete</span><b id="frete">R$ 0,00</b></div>
         <div class="line"><span>Total</span><b id="tot">R$ 0,00</b></div>
@@ -620,7 +623,16 @@ function recalc(){
   const subtotal = cart.reduce((s,i)=>s + (lineUnit(i) * Number(i.qtd||0)), 0);
   const km = entregaTipo === 'ENTREGA' ? Number(clienteGeo?.km || 0) : 0;
   const frete = entregaTipo === 'ENTREGA' ? calcularFretePorKm(km) : 0;
-  const total = subtotal + frete;
+  
+let frete = 0;
+if(entregaTipo === "ENTREGA"){
+  frete = calcularFretePorKm(distanciaCliente);
+}
+const total = subtotal + frete;
+
+document.getElementById("distancia").textContent = distanciaCliente.toFixed(1) + " km";
+document.getElementById("frete").textContent = moneyBR(frete);
+
   qtdEl.textContent = String(qtd);
   subEl.textContent = moneyBR(subtotal);
   if(distEl) distEl.textContent = entregaTipo === 'ENTREGA' && km > 0 ? distanciaTexto(km) : '--';
@@ -763,7 +775,16 @@ async function finalizar(){
   const subtotal = cart.reduce((s,i)=>s + (lineUnit(i) * i.qtd), 0);
   const distanciaKm = entregaTipo === 'ENTREGA' ? Number(clienteGeo?.km || 0) : 0;
   const frete = entregaTipo === 'ENTREGA' ? calcularFretePorKm(distanciaKm) : 0;
-  const total = subtotal + frete;
+  
+let frete = 0;
+if(entregaTipo === "ENTREGA"){
+  frete = calcularFretePorKm(distanciaCliente);
+}
+const total = subtotal + frete;
+
+document.getElementById("distancia").textContent = distanciaCliente.toFixed(1) + " km";
+document.getElementById("frete").textContent = moneyBR(frete);
+
 
   if(entregaTipo === 'ENTREGA' && !clienteGeo?.km){
     return alert('Toque em "Usar minha localização" para calcular o frete da entrega.');
@@ -872,6 +893,64 @@ document.getElementById('cartSheet')?.addEventListener('click', (e)=>{
 
 document.getElementById('cliEnd')?.addEventListener('input', ()=>{ if(entregaTipo==='ENTREGA') recalc(); });
 document.getElementById('pay')?.addEventListener('change', recalc);
+
+
+let distanciaCliente = 0;
+
+const LOJA = {
+  lat: -8.1636,
+  lng: -35.0146
+};
+
+function calcularDistancia(lat1, lon1, lat2, lon2){
+  const R = 6371;
+  const dLat = (lat2-lat1) * Math.PI/180;
+  const dLon = (lon2-lon1) * Math.PI/180;
+
+  const a =
+    Math.sin(dLat/2) * Math.sin(dLat/2) +
+    Math.cos(lat1*Math.PI/180) *
+    Math.cos(lat2*Math.PI/180) *
+    Math.sin(dLon/2) *
+    Math.sin(dLon/2);
+
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+  return R * c;
+}
+
+function calcularFretePorKm(dist){
+  if(dist <= 2) return 0;
+  if(dist <= 6) return 5;
+  if(dist <= 10) return 10;
+  return 15;
+}
+
+function calcularFreteLocalizacao(){
+
+  if(!navigator.geolocation){
+    alert("Seu celular não suporta localização.");
+    return;
+  }
+
+  navigator.geolocation.getCurrentPosition((pos)=>{
+
+    const lat = pos.coords.latitude;
+    const lon = pos.coords.longitude;
+
+    distanciaCliente = calcularDistancia(
+      lat,
+      lon,
+      LOJA.lat,
+      LOJA.lng
+    );
+
+    recalc();
+
+  }, ()=>{
+    alert("Permita a localização para calcular o frete.");
+  });
+
+}
 
 carregar();
 </script>
