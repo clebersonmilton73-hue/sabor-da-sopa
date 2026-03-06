@@ -115,7 +115,6 @@
             <div class="navTitle">Navegação</div>
             <button class="navBtn active" id="navProdutos" onclick="showView('produtos')">🧾 Produtos <span class="muted" id="countProdutos"></span></button>
             <button class="navBtn" id="navPedidos" onclick="showView('pedidos')">🛵 Pedidos <span class="muted" id="countPedidos"></span></button>
-            <button class="navBtn" id="navPDV" onclick="showView('pdv')">💰 Venda Presencial</button>
             <div class="navTitle" style="margin-top:16px">Ações</div>
             <button class="navBtn" onclick="exportarCSV()">⬇️ Exportar CSV</button>
             <button class="navBtn" onclick="sair()">🚪 Sair</button>
@@ -146,7 +145,7 @@
                 <div class="stat"><div class="muted">Pedidos listados</div><div class="v" id="statListados">0</div></div>
               </div>
               <div class="sectionHd" style="margin-top:16px">
-                <b>Pedidos</b>
+                <b>Pedidos</b> <button class='btn bad sm' onclick='limparTodosPedidos()'>🧹 Limpar pedidos</button>
                 <div class="muted" style="font-size:12px">Status + WhatsApp automático.</div>
               </div>
               <div class="card" style="overflow:auto">
@@ -157,39 +156,7 @@
               </div>
             </section>
 
-            
-<section class="section hide" id="viewPDV">
-  <div class="sectionHd"><b>Venda Presencial (PDV)</b></div>
-
-  <div class="card">
-    <div style="display:grid;grid-template-columns:2fr 1fr;gap:16px">
-
-      <div>
-        <b>Menu de Venda</b>
-        <div id="pdvProdutos" class="prodGrid" style="margin-top:10px"></div>
-      </div>
-
-      <div>
-        <b>Carrinho</b>
-        <div id="pdvCarrinho" style="margin-top:10px"></div>
-
-        <div style="margin-top:12px;font-weight:1000">
-          Total: R$ <span id="pdvTotal">0.00</span>
-        </div>
-
-        <div style="margin-top:10px;display:grid;gap:8px">
-          <button class="btn good" onclick="finalizarPDV()">Finalizar Venda</button>
-          <button class="btn primary" onclick="imprimirCupom()">🖨 Imprimir Cupom</button>
-          <button class="btn ghost" onclick="limparCarrinho()">Limpar Carrinho</button>
-        </div>
-
-      </div>
-
-    </div>
-  </div>
-</section>
-
-<section class="section" id="viewProdutos">
+            <section class="section" id="viewProdutos">
               <div class="card" style="margin-top:12px">
                 <div class="sectionHd" style="margin:0 0 8px 0">
                   <b>Buscar / Filtrar</b>
@@ -452,7 +419,7 @@ function renderPedidos(docs){
             <button class="btn warn" onclick="window.__status('${d.id}','SAIU', '${String(tel).replace(/'/g,"\\'")}', '${String(nome).replace(/'/g,"\\'")}')">🚚 Saiu</button>
             <button class="btn good" onclick="window.__status('${d.id}','ENTREGUE', '${String(tel).replace(/'/g,"\\'")}', '${String(nome).replace(/'/g,"\\'")}')">✅ Entregue</button>
           </div>
-          <button class="btn ghost" onclick="window.__zap('${String(tel).replace(/'/g,"\\'")}', '${String(nome).replace(/'/g,"\\'")}')">💬 Abrir WhatsApp</button>
+          <button class="btn ghost" onclick="window.__zap('${String(tel).replace(/'/g,"\\'")}', '${String(nome).replace(/'/g,"\\'")}')">💬 Abrir WhatsApp</button><button class="btn bad" onclick="__delPedido('${d.id}')">🗑 Apagar</button>
         </div>
       </td>`;
     tb.appendChild(tr);
@@ -512,97 +479,30 @@ onAuthStateChanged(auth, async (user)=>{
   await carregarProdutos(); hookFiltros(); ouvirPedidos();
 });
 
-let pdvCart = [];
+window.__delPedido = async function(id){
+  if(!confirm("Apagar esse pedido?")) return;
+  try{
+    await deleteDoc(doc(db,"pedidos", String(id)));
+    alert("Pedido apagado");
+  }catch(e){
+    console.error(e);
+    alert("Erro ao apagar pedido");
+  }
+};
 
-function renderPDVProdutos(){
-  const box = document.getElementById("pdvProdutos");
-  if(!box || !window.allProdutos) return;
-  box.innerHTML = "";
-
-  window.allProdutos.forEach(p=>{
-    const card = document.createElement("div");
-    card.className = "prodCard";
-    card.innerHTML = `
-      <div class="prodPad">
-        <div class="prodName">${p.nome}</div>
-        <div class="prodMeta">R$ ${Number(p.preco||0).toFixed(2)}</div>
-      </div>`;
-
-    card.onclick = ()=>{
-      pdvCart.push(p);
-      renderCarrinho();
-    };
-
-    box.appendChild(card);
-  });
-}
-
-function renderCarrinho(){
-  const box = document.getElementById("pdvCarrinho");
-  const totalEl = document.getElementById("pdvTotal");
-  if(!box) return;
-
-  box.innerHTML = "";
-  let total = 0;
-
-  pdvCart.forEach((p,i)=>{
-    total += Number(p.preco||0);
-
-    const row = document.createElement("div");
-    row.style.display="flex";
-    row.style.justifyContent="space-between";
-    row.style.marginBottom="6px";
-
-    row.innerHTML = `
-      <span>${p.nome}</span>
-      <span>R$ ${Number(p.preco).toFixed(2)} 
-      <button onclick="remItem(${i})">x</button></span>
-    `;
-
-    box.appendChild(row);
-  });
-
-  if(totalEl) totalEl.textContent = total.toFixed(2);
-}
-
-window.remItem = function(i){
-  pdvCart.splice(i,1);
-  renderCarrinho();
-}
-
-window.limparCarrinho = function(){
-  pdvCart = [];
-  renderCarrinho();
-}
-
-window.finalizarPDV = function(){
-  if(!pdvCart.length) return alert("Carrinho vazio");
-  alert("Venda realizada com sucesso!");
-  pdvCart=[];
-  renderCarrinho();
-}
-
-window.imprimirCupom = function(){
-
-  if(!pdvCart.length) return alert("Carrinho vazio");
-
-  let total = 0;
-  let cupom = "SABOR DA SOPA\n------------------\n";
-
-  pdvCart.forEach(i=>{
-    total += Number(i.preco||0);
-    cupom += `${i.nome} - R$ ${Number(i.preco).toFixed(2)}\n`;
-  });
-
-  cupom += "------------------\n";
-  cupom += "TOTAL: R$ "+total.toFixed(2);
-
-  const w = window.open("", "_blank");
-  w.document.write("<pre>"+cupom+"</pre>");
-  w.print();
-}
-
-setTimeout(renderPDVProdutos,1500);
+window.limparTodosPedidos = async function(){
+  if(!confirm("Apagar TODOS os pedidos online?")) return;
+  try{
+    const snap = await getDocs(collection(db,"pedidos"));
+    for(const d of snap.docs){
+      await deleteDoc(doc(db,"pedidos", d.id));
+    }
+    alert("Todos os pedidos foram apagados.");
+  }catch(e){
+    console.error(e);
+    alert("Erro ao limpar pedidos.");
+  }
+};
 
 </script>
 
@@ -610,7 +510,6 @@ setTimeout(renderPDVProdutos,1500);
 function showView(v){
   const views = {
     produtos:'viewProdutos',
-    pdv:'viewPDV',
     pedidos:'viewPedidos'
   };
   const id = views[v] || v;
