@@ -291,6 +291,10 @@
                     </div>
                     <input id="cfgLogoURL" class="input" placeholder="Link da logo (https://...)">
                     <div class="row">
+                      <input id="cfgPixChave" class="input" placeholder="Chave PIX (telefone, email, CPF ou aleatória)">
+                      <input id="cfgPixCopiaCola" class="input" placeholder="PIX copia e cola para gerar QR no cupom">
+                    </div>
+                    <div class="row">
                       <label class="btn ghost" style="display:flex;align-items:center;justify-content:center;gap:8px">
                         🖼️ Escolher logo
                         <input id="cfgLogoFile" type="file" accept="image/*" style="display:none">
@@ -608,12 +612,16 @@ function renderPerfilConfig(){
   const telEl = document.getElementById('cfgTelLoja');
   const endEl = document.getElementById('cfgEndLoja');
   const logoUrlEl = document.getElementById('cfgLogoURL');
+  const pixChaveEl = document.getElementById('cfgPixChave');
+  const pixCopiaColaEl = document.getElementById('cfgPixCopiaCola');
   const prev = document.getElementById('cfgLogoPreview');
 
   if(nomeEl) nomeEl.value = perfil.nome || '';
   if(telEl) telEl.value = perfil.tel || '';
   if(endEl) endEl.value = perfil.end || '';
   if(logoUrlEl) logoUrlEl.value = perfil.logo || '';
+  if(pixChaveEl) pixChaveEl.value = perfil.pixChave || '';
+  if(pixCopiaColaEl) pixCopiaColaEl.value = perfil.pixCopiaCola || '';
 
   if(prev){
     if(perfil.logo){
@@ -635,14 +643,16 @@ window.salvarPerfilConfig = function(){
     nome: (document.getElementById('cfgNomeLoja')?.value || '').trim(),
     tel: (document.getElementById('cfgTelLoja')?.value || '').trim(),
     end: (document.getElementById('cfgEndLoja')?.value || '').trim(),
-    logo: (document.getElementById('cfgLogoURL')?.value || '').trim()
+    logo: (document.getElementById('cfgLogoURL')?.value || '').trim(),
+    pixChave: (document.getElementById('cfgPixChave')?.value || '').trim(),
+    pixCopiaCola: (document.getElementById('cfgPixCopiaCola')?.value || '').trim()
   };
   setPerfilLoja(perfil);
   renderPerfilConfig();
   atualizarNomeInterface();
   renderRelatorios();
   renderCaixa();
-  alert('Perfil salvo.');
+  alert('Perfil salvo. Se preencher o PIX copia e cola, o QR vai sair no cupom.');
 };
 window.removerLogoPerfil = function(){
   const perfil = getPerfilLoja();
@@ -961,6 +971,11 @@ function montarCupomPDVHtml(venda){
   .item-preco{ width:19mm; text-align:right; white-space:nowrap; }
   .total{ display:flex; justify-content:space-between; gap:2mm; font-size:20px; line-height:24px; font-weight:700; margin-top:2mm; }
   .rodape{ text-align:center; font-size:18px; line-height:22px; margin-top:3mm; }
+  .pix-box{ text-align:center; margin-top:3mm; }
+  .pix-title{ font-size:18px; font-weight:700; line-height:22px; }
+  .pix-chave{ font-size:16px; line-height:20px; word-break:break-word; margin-top:1.5mm; }
+  .pix-qr{ width:32mm; height:32mm; object-fit:contain; margin-top:2mm; }
+  .pix-copy{ font-size:13px; line-height:16px; word-break:break-all; margin-top:1.5mm; text-align:left; }
 </style>
 </head>
 <body>
@@ -980,6 +995,7 @@ function montarCupomPDVHtml(venda){
     <div class="linha"></div>
     <div class="total"><span>TOTAL</span><span>R$ ${dinheiro(total)}</span></div>
     <div class="linha"></div>
+    ${pixChave || qrPixUrl ? `<div class="pix-box"><div class="pix-title">PAGUE COM PIX</div>${pixChave ? `<div class="pix-chave"><b>Chave:</b> ${escHtml(pixChave)}</div>` : ''}${qrPixUrl ? `<img class="pix-qr" src="${escHtml(qrPixUrl)}" alt="QR Code PIX">` : ''}${pixCopiaCola ? `<div class="pix-copy">${escHtml(pixCopiaCola)}</div>` : ''}</div><div class="linha"></div>` : ''}
     <div class="rodape">Obrigado pela preferência!</div>
   </div>
 </body>
