@@ -86,6 +86,29 @@
 </style>
 </head>
 <body>
+<style>
+.layout{display:flex;min-height:100vh}
+.sidebar{width:230px;background:#020617;border-right:1px solid rgba(148,163,184,.15);padding:18px}
+.sidebar h2{font-size:16px;margin:0 0 20px 0}
+.nav a{display:block;padding:12px 10px;margin-bottom:6px;border-radius:10px;color:#cbd5f5;text-decoration:none;font-weight:700}
+.nav a:hover{background:rgba(59,130,246,.2)}
+.content{flex:1;padding:0}
+</style>
+
+<div class="layout">
+<div class="sidebar">
+<h2>🍲 Sabor da Sopa</h2>
+<div class="nav">
+<a href="#">Dashboard</a>
+<a href="#">Pedidos</a>
+<a href="#">Produtos</a>
+<a href="#">Clientes</a>
+<a href="#">Relatórios</a>
+<a href="#">Configuração</a>
+</div>
+</div>
+<div class="content">
+
 <div class="wrap">
   <div class="panel">
     <div class="hd">
@@ -479,5 +502,5 @@ onAuthStateChanged(auth, async (user)=>{
   await carregarProdutos(); hookFiltros(); ouvirPedidos();
 });
 </script>
-</body>
+</div></div></body>
 </html>
