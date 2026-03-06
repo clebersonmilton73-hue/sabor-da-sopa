@@ -248,7 +248,7 @@
 
                 <div style="margin-top:10px">
                   <input id="pFotoURL" class="input" placeholder="Link direto da imagem (https://... .jpg/.png/.webp)">
-<textarea id="pGrupos" class="input" placeholder="Adicionais (ex: queijo:2,bacon:3,ovo:2)"></textarea>
+<textarea id="pGrupos" class="input" placeholder="Grupos de extras&#10;Exemplo:&#10;Adicionais = queijo:2, bacon:3&#10;Complementos = ovo:2, calabresa:4"></textarea>
                 </div>
 
                 <div style="margin-top:10px" class="row" style="align-items:center">
@@ -260,6 +260,7 @@
                 <div style="margin-top:10px">
 
                   <div class="muted" style="font-size:12px;margin-top:6px">Use link direto da imagem. Ex: termina com .jpg / .png / .webp</div>
+                  <div class="muted" style="font-size:12px;margin-top:6px">Extras por grupo: uma linha por grupo. Exemplo: <b>Adicionais = queijo:2, bacon:3</b></div>
                 </div>
 
                 <div style="margin-top:10px" class="row">
@@ -414,9 +415,48 @@ function moneyBR(v){
 function gruposToText(grupos){
   try{
     if(!Array.isArray(grupos) || !grupos.length) return "";
-    const itens = (grupos[0]?.itens || []);
-    return itens.map(i=>`${i.nome}:${Number(i.preco||0)}`).join(",");
+    return grupos
+      .filter(g=>g && g.nome && Array.isArray(g.itens) && g.itens.length)
+      .map(g=>`${g.nome} = ${g.itens.map(i=>`${i.nome}:${Number(i.preco||0)}`).join(", ")}`)
+      .join("
+");
   }catch(e){ return ""; }
+}
+function parseGrupos(txt){
+  const bruto = String(txt||"").trim();
+  if(!bruto) return [];
+
+  const linhas = bruto.split(/
++/).map(x=>x.trim()).filter(Boolean);
+  const grupos = [];
+
+  for(const linha of linhas){
+    let nomeGrupo = "Adicionais";
+    let parteItens = linha;
+
+    if(linha.includes("=")){
+      const idx = linha.indexOf("=");
+      nomeGrupo = linha.slice(0, idx).trim() || "Adicionais";
+      parteItens = linha.slice(idx + 1).trim();
+    }
+
+    const itens = parteItens
+      .split(",")
+      .map(x=>x.trim())
+      .filter(Boolean)
+      .map(item=>{
+        const idx = item.lastIndexOf(":");
+        if(idx === -1) return {nome:item, preco:0};
+        const nome = item.slice(0, idx).trim();
+        const preco = Number(String(item.slice(idx+1)).replace(",",".").trim() || 0);
+        return {nome, preco: Number.isFinite(preco) ? preco : 0};
+      })
+      .filter(i=>i.nome);
+
+    if(itens.length) grupos.push({nome:nomeGrupo, itens});
+  }
+
+  return grupos;
 }
 function fecharAviso(){
   const box = document.getElementById("flashNotice");
@@ -563,14 +603,7 @@ async function salvarProduto(){
   const ativo = !!document.getElementById("pAtivo").checked;
 
   const gruposTxt = (document.getElementById("pGrupos").value||"").trim();
-  let grupos = [];
-  if(gruposTxt){
-    const itens = gruposTxt.split(",").map(i=>{
-      const p = i.split(":");
-      return {nome:p[0], preco:Number(p[1]||0)};
-    });
-    grupos = [{nome:"Adicionais", itens}];
-  }
+  const grupos = parseGrupos(gruposTxt);
   await setDoc(doc(db,"produtos", id), {cat, nome, preco, ord, fotoURL, ativo, grupos}, {merge:true});
   alert("Salvo!");
   await carregarProdutos();
