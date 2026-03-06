@@ -274,6 +274,70 @@ header{
   .qtyBtn{width:32px;height:32px}
 }
 
+.heroNote{
+  display:flex;align-items:flex-start;justify-content:space-between;gap:12px;
+  padding:14px 16px;margin-bottom:14px;border-radius:18px;
+  background:linear-gradient(180deg,rgba(34,197,94,.14),rgba(59,130,246,.10));
+  border:1px solid rgba(96,165,250,.18);
+  box-shadow:0 12px 26px rgba(0,0,0,.16)
+}
+.heroNote b{display:block;font-size:15px}
+.heroNote span{display:block;font-size:12px;color:var(--soft);font-weight:800;line-height:1.35}
+.quickCats{
+  display:flex;gap:8px;overflow:auto;padding:2px 1px 10px;margin-bottom:10px;
+  scrollbar-width:none
+}
+.quickCats::-webkit-scrollbar{display:none}
+.quickCat{
+  flex:0 0 auto;border:none;border-radius:999px;padding:10px 12px;
+  background:rgba(148,163,184,.10);border:1px solid var(--line);
+  color:var(--txt);font-weight:1000;cursor:pointer
+}
+.quickCat.active{
+  background:rgba(96,165,250,.18);border-color:rgba(96,165,250,.32);color:#dbeafe
+}
+.itemMeta{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:7px}
+.itemMini{
+  display:inline-flex;align-items:center;gap:6px;
+  padding:5px 9px;border-radius:999px;background:rgba(148,163,184,.10);
+  border:1px solid rgba(148,163,184,.16);font-size:11px;font-weight:1000;color:#dbeafe
+}
+.cartGrip{display:none}
+@media(max-width:980px){
+  .heroNote{padding:12px 13px;border-radius:16px}
+  .heroNote b{font-size:14px}
+  .heroNote span{font-size:11px}
+  .quickCats{position:sticky;top:120px;z-index:9;background:linear-gradient(180deg,rgba(8,13,28,.98),rgba(8,13,28,.92));margin:0 -4px 10px;padding:2px 4px 10px}
+  .cart{
+    left:0;right:0;bottom:0;top:auto;border-radius:22px 22px 0 0;
+    transform:translateY(calc(100% - 74px))
+  }
+  .cart.open{transform:translateY(0)}
+  .cartBody{max-height:78vh;padding-top:8px}
+  .cartGrip{
+    display:flex;justify-content:center;align-items:center;padding:4px 0 8px
+  }
+  .cartGrip::before{
+    content:"";width:54px;height:6px;border-radius:999px;background:rgba(148,163,184,.36)
+  }
+}
+@media(max-width:700px){
+  .catalogBody{padding:10px}
+  .item{
+    display:grid;grid-template-columns:54px 1fr;gap:10px;padding:10px
+  }
+  .itemTop{display:grid;grid-template-columns:1fr auto;gap:6px;align-items:start}
+  .itemInfo{gap:0}
+  .extrasBox{margin-top:8px}
+  .extraGroup{padding:8px 9px}
+  .sum{
+    border-top:1px solid rgba(148,163,184,.14);
+    margin-top:2px
+  }
+  .line{font-size:14px}
+  .primary{padding:13px 14px;border-radius:14px}
+}
+
 </style>
 </head>
 <body>
@@ -317,6 +381,7 @@ header{
       <div class="small"><span id="qtd">0</span> itens</div>
     </div>
     <div class="cartBody">
+      <div class="cartGrip" onclick="toggleCart(false)"></div>
       <div class="customer">
         <div class="pill" style="justify-content:center">🧾 Preencha seus dados para concluir o pedido</div>
         <div class="row">
@@ -360,7 +425,7 @@ header{
 </div>
 
 <div class="overlay" id="cartOverlay" onclick="toggleCart(false)"></div>
-<div class="cartBar" id="cartBar"><button onclick="toggleCart(true)"><span>🛒 Carrinho <span class="badge" id="barQtd">0</span></span><span id="barTot">R$ 0,00</span></button></div>
+<div class="cartBar" id="cartBar"><button onclick="toggleCart(true)"><span>🛒 Ver carrinho <span class="badge" id="barQtd">0</span></span><span id="barTot">R$ 0,00</span></button></div>
 <div class="toast" id="toast"></div>
 
 <script type="module">
@@ -797,6 +862,16 @@ async function carregar(){
     catalogo.innerHTML = '<div class="empty">Erro ao carregar o cardápio. Confira o Firebase.</div>';
   }
 }
+
+
+document.getElementById('cartSheet')?.addEventListener('click', (e)=>{
+  if(window.matchMedia('(max-width:980px)').matches && e.target.id === 'cartSheet'){
+    toggleCart(false);
+  }
+});
+
+document.getElementById('cliEnd')?.addEventListener('input', ()=>{ if(entregaTipo==='ENTREGA') recalc(); });
+document.getElementById('pay')?.addEventListener('change', recalc);
 
 carregar();
 </script>
