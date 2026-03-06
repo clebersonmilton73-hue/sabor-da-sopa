@@ -98,20 +98,6 @@
   .pdvSummary{display:grid;gap:8px}
   .pdvLine{display:flex;justify-content:space-between;gap:10px;font-weight:1000}
   .pdvActions{display:grid;gap:8px}
-  .pdvPayQuick,.pdvDiscountQuick,.pdvShortcutGrid{display:grid;gap:8px}
-  .pdvChipRow{display:flex;gap:8px;flex-wrap:wrap}
-  .pdvChip{padding:10px 12px;border-radius:12px;border:1px solid rgba(148,163,184,.16);background:rgba(148,163,184,.08);color:var(--txt);font-weight:1000;cursor:pointer;transition:.16s ease}
-  .pdvChip:hover{transform:translateY(-1px);border-color:rgba(96,165,250,.24)}
-  .pdvChip.active{background:rgba(34,197,94,.18);border-color:rgba(34,197,94,.34);color:#dcfce7}
-  .pdvHint{font-size:12px;color:var(--muted);font-weight:800}
-  .pdvTrocoBox{padding:12px;border-radius:14px;border:1px dashed rgba(34,197,94,.28);background:rgba(34,197,94,.08);display:grid;gap:6px}
-  .pdvTrocoValor{font-size:22px;font-weight:1100;color:#bbf7d0}
-  .pdvShortcutGrid{grid-template-columns:repeat(2,minmax(0,1fr))}
-  .pdvShortcutBtn{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:10px 12px;border-radius:12px;border:1px solid rgba(148,163,184,.16);background:rgba(2,6,23,.45);color:var(--txt);font-weight:1000;cursor:pointer}
-  .pdvShortcutBtn small{color:var(--muted);font-weight:900}
-  .pdvTopActions{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
-  .kbd{display:inline-flex;align-items:center;justify-content:center;min-width:26px;height:26px;padding:0 8px;border-radius:8px;border:1px solid rgba(148,163,184,.2);background:rgba(148,163,184,.08);font-size:12px;font-weight:1100;color:#e2e8f0}
-
   @media(max-width:980px){
     .side{position:fixed;left:0;top:0;height:100vh;z-index:40;transform:translateX(-102%);transition:.18s ease;box-shadow:0 20px 50px rgba(0,0,0,.55)}
     .side.open{transform:translateX(0)}
@@ -129,12 +115,6 @@
     .pdvQuickStats{grid-template-columns:1fr}
     .pdvGrid{grid-template-columns:1fr}
     .pdvSideCol{position:static}
-    .pdvShortcutGrid{grid-template-columns:1fr}
-    .pdvChipRow{display:grid;grid-template-columns:1fr 1fr}
-  }
-  @media(max-width:560px){
-    .pdvChipRow{grid-template-columns:1fr}
-
   }
   @media(max-width:520px){.prodGrid{grid-template-columns:1fr}.prodImg{height:160px}}
   @media(max-width:420px){.prodActions{grid-template-columns:1fr}}
@@ -409,59 +389,14 @@
                     <div class="card pdvSummary">
                       <div class="pdvLine"><span>Itens</span><span id="pdvQtdItens">0</span></div>
                       <div class="pdvLine"><span>Subtotal</span><span id="pdvSubtotal">R$ 0,00</span></div>
-
-                      <div class="pdvPayQuick" style="margin-top:10px">
-                        <b style="font-size:13px">Pagamento rápido</b>
-                        <div class="pdvChipRow">
-                          <button class="pdvChip active" id="pdvPayDinheiro" type="button" onclick="setPDVMetodo('DINHEIRO')">💵 Dinheiro</button>
-                          <button class="pdvChip" id="pdvPayPix" type="button" onclick="setPDVMetodo('PIX')">📲 PIX</button>
-                          <button class="pdvChip" id="pdvPayCartao" type="button" onclick="setPDVMetodo('CARTÃO')">💳 Cartão</button>
-                        </div>
-                        <select id="pdvMetodo" class="select">
-                          <option value="DINHEIRO">Dinheiro</option>
-                          <option value="PIX">PIX</option>
-                          <option value="CARTÃO">Cartão</option>
-                        </select>
-                      </div>
-
-                      <div class="pdvDiscountQuick" style="margin-top:12px">
-                        <b style="font-size:13px">Desconto rápido</b>
-                        <div class="pdvChipRow">
-                          <button class="pdvChip" type="button" onclick="aplicarDescontoPDV('5P')">-5%</button>
-                          <button class="pdvChip" type="button" onclick="aplicarDescontoPDV('10P')">-10%</button>
-                          <button class="pdvChip" type="button" onclick="aplicarDescontoPDV('5R')">-R$ 5</button>
-                          <button class="pdvChip" type="button" onclick="aplicarDescontoPDV('10R')">-R$ 10</button>
-                          <button class="pdvChip" type="button" onclick="aplicarDescontoPDV('0')">Limpar</button>
-                        </div>
-                        <div class="row">
-                          <input id="pdvDesconto" class="input" placeholder="Desconto (R$)" inputmode="decimal">
-                          <input id="pdvTroco" class="input" placeholder="Cliente pagou / troco para" inputmode="decimal">
-                        </div>
-                        <div class="pdvHint">No dinheiro, informe quanto o cliente entregou para calcular o troco automático.</div>
-                      </div>
-
-                      <div id="pdvTrocoBox" class="pdvTrocoBox" style="display:none;margin-top:12px">
-                        <div class="pdvHint">Troco calculado</div>
-                        <div class="pdvTrocoValor" id="pdvTrocoCalc">R$ 0,00</div>
-                        <div class="pdvHint" id="pdvTrocoMsg">Aguardando valor recebido.</div>
-                      </div>
-
-                      <div class="pdvLine" style="margin-top:12px"><span>Desconto</span><span id="pdvDescontoView">R$ 0,00</span></div>
                       <div class="pdvLine" style="font-size:18px"><span>Total</span><span id="pdvTotalWrap">R$ <span id="pdvTotal">0.00</span></span></div>
-                      <div class="muted" style="font-size:12px">Agora o PDV tem pagamento rápido, desconto rápido e troco automático.</div>
-                    </div>
-
-                    <div class="card" style="padding:12px">
-                      <b style="font-size:13px">Atalhos de venda</b>
-                      <div class="pdvHint" style="margin:6px 0 10px">Clique rápido ou use as teclas <span class="kbd">Alt</span> + <span class="kbd">1</span> até <span class="kbd">6</span>.</div>
-                      <div id="pdvShortcuts" class="pdvShortcutGrid"></div>
+                      <div class="muted" style="font-size:12px">Venda presencial mais rápida e organizada.</div>
                     </div>
 
                     <div class="pdvActions">
                       <button class="btn ghost" onclick="salvarClientePDV()">💾 Salvar cliente</button>
                       <button class="btn good" onclick="finalizarPDV()">Finalizar Venda</button>
                       <button class="btn primary" onclick="imprimirCupomPDV()">🖨 Imprimir Cupom</button>
-                      <button class="btn ghost" onclick="toggleFullscreenPDV()">🖥 Tela cheia</button>
                       <button class="btn ghost" onclick="limparCarrinhoPDV()">Limpar Carrinho</button>
                     </div>
                   </div>
@@ -994,7 +929,7 @@ function renderRelatorios(){
       <td><small>${v.data || '-'}</small></td>
       <td>${v.cliente?.nome || '-'}<br><small>${v.cliente?.tel || ''}</small></td>
       <td><small>${itensTxt || '-'}</small></td>
-      <td>R$ ${Number(v.total||0).toFixed(2)}<br><small>${v.pagamento || '-'}${Number(v.desconto||0) > 0 ? ' • Desc. R$ ' + Number(v.desconto||0).toFixed(2) : ''}${Number(v.troco||0) > 0 ? ' • Troco R$ ' + Number(v.troco||0).toFixed(2) : ''}</small></td>
+      <td>R$ ${Number(v.total||0).toFixed(2)}</td>
       <td>
         <div style="display:flex;gap:6px;flex-wrap:wrap">
           <button class="btn primary sm" onclick='window.reimprimirVendaPDV(${JSON.stringify("REPLACE")})'>🖨 Reimprimir</button>
@@ -1034,13 +969,7 @@ function montarCupomPDVHtml(venda){
   const logo = perfil.logo || '';
   const cli = venda?.cliente || null;
   const itens = Array.isArray(venda?.itens) ? venda.itens : [];
-  const subtotalCalc = itens.reduce((s,i)=> s + Number(i?.totalLinha || ((i?.preco || 0) * Number(i?.qtd || 1))), 0);
-  const subtotal = Number(venda?.subtotal ?? subtotalCalc);
-  const desconto = Math.max(0, Number(venda?.desconto || 0));
-  const total = Number(venda?.total ?? Math.max(0, subtotal - desconto));
-  const pagamento = String(venda?.pagamento || '');
-  const troco = Number(venda?.troco || 0);
-  const trocoPara = Number(venda?.trocoPara || 0);
+  const total = Number(venda?.total || itens.reduce((s,i)=> s + Number(i.preco||0), 0));
   const data = venda?.data || new Date().toLocaleString('pt-BR');
 
   const itensHtml = itens.map(i => {
@@ -1116,13 +1045,6 @@ function montarCupomPDVHtml(venda){
     <div class="titulo">CUPOM NÃO FISCAL</div>
     <div class="linha"></div>
     ${itensHtml || '<div class="bloco">Sem itens.</div>'}
-    <div class="linha"></div>
-    <div class="bloco bloco-left">
-      <div><b>Subtotal:</b> R$ ${dinheiro(subtotal)}</div>
-      ${desconto ? `<div><b>Desconto:</b> R$ ${dinheiro(desconto)}</div>` : ''}
-      ${pagamento ? `<div><b>Pagamento:</b> ${escHtml(pagamento)}</div>` : ''}
-      ${pagamento === 'DINHEIRO' && trocoPara ? `<div><b>Recebido:</b> R$ ${dinheiro(trocoPara)}</div>` : ''}${pagamento === 'DINHEIRO' && troco ? `<div><b>Troco:</b> R$ ${dinheiro(troco)}</div>` : ''}
-    </div>
     <div class="linha"></div>
     <div class="total"><span>TOTAL</span><span>R$ ${dinheiro(total)}</span></div>
     <div class="linha"></div>
@@ -1367,7 +1289,6 @@ function renderPDVProdutos(){
     if(!grupos[cat]) grupos[cat] = [];
     grupos[cat].push(p);
   });
-  renderPDVShortcuts();
   Object.entries(grupos).forEach(([cat, itens]) => {
     const section = document.createElement('section');
     section.className = 'pdvCatBlock';
@@ -1395,98 +1316,10 @@ function renderPDVProdutos(){
   });
 }
 
-function setPDVMetodo(metodo){
-  const el = document.getElementById('pdvMetodo');
-  if(!el) return;
-  el.value = metodo;
-  syncPDVMetodoButtons();
-  updatePDVTrocoUI();
-  renderCarrinhoPDV();
-}
-window.setPDVMetodo = setPDVMetodo;
-
-function syncPDVMetodoButtons(){
-  const metodo = document.getElementById('pdvMetodo')?.value || 'DINHEIRO';
-  const mapa = {
-    DINHEIRO:'pdvPayDinheiro',
-    PIX:'pdvPayPix',
-    'CARTÃO':'pdvPayCartao'
-  };
-  ['pdvPayDinheiro','pdvPayPix','pdvPayCartao'].forEach(id=> document.getElementById(id)?.classList.remove('active'));
-  document.getElementById(mapa[metodo] || 'pdvPayDinheiro')?.classList.add('active');
-}
-
-function aplicarDescontoPDV(tipo){
-  const subtotal = pdvCart.reduce((s,i)=> s + Number(i.preco||0), 0);
-  const el = document.getElementById('pdvDesconto');
-  if(!el) return;
-  let valor = 0;
-  if(tipo === '5P') valor = subtotal * 0.05;
-  else if(tipo === '10P') valor = subtotal * 0.10;
-  else if(tipo === '5R') valor = 5;
-  else if(tipo === '10R') valor = 10;
-  else valor = 0;
-  valor = Math.min(Math.max(0, valor), subtotal);
-  el.value = valor ? valor.toFixed(2).replace('.', ',') : '';
-  renderCarrinhoPDV();
-}
-window.aplicarDescontoPDV = aplicarDescontoPDV;
-
-function renderPDVShortcuts(){
-  const box = document.getElementById('pdvShortcuts');
-  if(!box) return;
-  const ativos = (allProdutos || []).filter(p => p.ativo !== false).slice(0,6);
-  if(!ativos.length){
-    box.innerHTML = '<div class="pdvHint">Cadastre produtos para liberar os atalhos.</div>';
-    return;
-  }
-  box.innerHTML = '';
-  ativos.forEach((p,idx)=>{
-    const btn = document.createElement('button');
-    btn.type = 'button';
-    btn.className = 'pdvShortcutBtn';
-    btn.innerHTML = `<span><small>Alt+${idx+1}</small><br>${p.nome || ''}</span><b>${moneyPDV(p.preco || 0)}</b>`;
-    btn.onclick = ()=> addProdutoPDV(p);
-    box.appendChild(btn);
-  });
-}
-
-function toggleFullscreenPDV(){
-  if(!document.fullscreenElement){
-    document.documentElement.requestFullscreen?.();
-  }else{
-    document.exitFullscreen?.();
-  }
-}
-window.toggleFullscreenPDV = toggleFullscreenPDV;
-
-function parseMoneyInputBR(v){
-  const raw = String(v || '').replace(/\./g,'').replace(',', '.').replace(/[^0-9.\-]/g,'');
-  const num = Number(raw);
-  return Number.isFinite(num) ? num : 0;
-}
-function getPDVFinanceiro(){
-  const metodo = document.getElementById('pdvMetodo')?.value || 'DINHEIRO';
-  const desconto = Math.max(0, parseMoneyInputBR(document.getElementById('pdvDesconto')?.value || 0));
-  const troco = Math.max(0, parseMoneyInputBR(document.getElementById('pdvTroco')?.value || 0));
-  return { metodo, desconto, troco };
-}
-function updatePDVTrocoUI(){
-  const metodo = document.getElementById('pdvMetodo')?.value || 'DINHEIRO';
-  const trocoEl = document.getElementById('pdvTroco');
-  const box = document.getElementById('pdvTrocoBox');
-  if(!trocoEl) return;
-  const show = metodo === 'DINHEIRO';
-  trocoEl.style.display = show ? '' : 'none';
-  if(box) box.style.display = show ? '' : 'none';
-  if(!show) trocoEl.value = '';
-  syncPDVMetodoButtons();
-}
 function renderCarrinhoPDV(){
   const box = document.getElementById('pdvCarrinho');
   const totalEl = document.getElementById('pdvTotal');
   const subtotalEl = document.getElementById('pdvSubtotal');
-  const descontoEl = document.getElementById('pdvDescontoView');
   const qtdEl = document.getElementById('pdvQtdItens');
   const itensResumoEl = document.getElementById('pdvItensResumo');
   const prodResumoEl = document.getElementById('pdvProdutosResumo');
@@ -1495,10 +1328,7 @@ function renderCarrinhoPDV(){
   box.innerHTML = '';
   const grouped = getPDVCartGrouped();
   const qtdItens = pdvCart.length;
-  const subtotal = pdvCart.reduce((s,i)=> s + Number(i.preco||0), 0);
-  const financeiro = getPDVFinanceiro();
-  const desconto = Math.min(financeiro.desconto, subtotal);
-  const total = Math.max(0, subtotal - desconto);
+  const total = pdvCart.reduce((s,i)=> s + Number(i.preco||0), 0);
   if(!grouped.length){
     box.innerHTML = '<div class="card"><b>Carrinho vazio.</b><div class="muted" style="font-size:12px;margin-top:6px">Toque em um produto para adicionar.</div></div>';
   }
@@ -1518,24 +1348,12 @@ function renderCarrinhoPDV(){
       </div>`;
     box.appendChild(row);
   });
-  const trocoCalcEl = document.getElementById('pdvTrocoCalc');
-  const trocoMsgEl = document.getElementById('pdvTrocoMsg');
-  const recebido = financeiro.metodo === 'DINHEIRO' ? financeiro.troco : 0;
-  const troco = Math.max(0, recebido - total);
   if(totalEl) totalEl.textContent = total.toFixed(2);
-  if(subtotalEl) subtotalEl.textContent = moneyPDV(subtotal);
-  if(descontoEl) descontoEl.textContent = moneyPDV(desconto);
+  if(subtotalEl) subtotalEl.textContent = moneyPDV(total);
   if(qtdEl) qtdEl.textContent = String(qtdItens);
   if(itensResumoEl) itensResumoEl.textContent = String(qtdItens);
   if(prodResumoEl) prodResumoEl.textContent = String(grouped.length);
   if(totalResumoEl) totalResumoEl.textContent = moneyPDV(total);
-  if(trocoCalcEl) trocoCalcEl.textContent = moneyPDV(troco);
-  if(trocoMsgEl){
-    if(financeiro.metodo !== 'DINHEIRO') trocoMsgEl.textContent = 'Troco desativado para esta forma de pagamento.';
-    else if(!recebido) trocoMsgEl.textContent = 'Informe quanto o cliente entregou.';
-    else if(recebido < total) trocoMsgEl.textContent = 'Faltam ' + moneyPDV(total - recebido) + ' para completar a venda.';
-    else trocoMsgEl.textContent = 'Cliente entregou ' + moneyPDV(recebido) + '.';
-  }
 }
 
 window.removerItemPDV = function(i){
@@ -1568,10 +1386,7 @@ window.limparCarrinhoPDV = function(){
 window.finalizarPDV = function(){
   if(!pdvCart.length) return alert('Carrinho vazio');
   const grouped = getPDVCartGrouped();
-  const subtotal = pdvCart.reduce((s,i)=> s + Number(i.preco||0), 0);
-  const financeiro = getPDVFinanceiro();
-  const desconto = Math.min(financeiro.desconto, subtotal);
-  const total = Math.max(0, subtotal - desconto);
+  const total = pdvCart.reduce((s,i)=> s + Number(i.preco||0), 0);
   const cli = clienteAtualPDV();
   if(cli && cli.nome){
     const lista = getClientesManuais();
@@ -1588,26 +1403,18 @@ window.finalizarPDV = function(){
     renderClientesFromPedidos(window.__lastPedidoDocs || []);
     renderPDVClienteSelect();
   }
-  if(financeiro.metodo === 'DINHEIRO' && financeiro.troco > 0 && financeiro.troco < total){
-    return alert('O valor recebido é menor que o total da venda.');
-  }
   const venda = {
     id: 'venda_' + Date.now(),
     data: new Date().toLocaleString('pt-BR'),
     cliente: cli,
     itens: grouped.map(i=>({nome:i.nome, preco:Number(i.preco||0), qtd:i.qtd, totalLinha:Number(i.preco||0) * i.qtd})),
-    subtotal,
-    desconto,
-    pagamento: financeiro.metodo,
-    trocoPara: financeiro.metodo === 'DINHEIRO' ? financeiro.troco : 0,
-    troco: financeiro.metodo === 'DINHEIRO' ? Math.max(0, financeiro.troco - total) : 0,
     total
   };
   salvarVendaNoRelatorio(venda);
   if(getAutoPrint()){
     setTimeout(()=> window.reimprimirVendaPDV(venda), 80);
   }
-  alert('Venda finalizada. Total: ' + moneyPDV(total) + ' • Pagamento: ' + financeiro.metodo + (desconto ? (' • Desconto: ' + moneyPDV(desconto)) : '') + (cli?.nome ? (' • Cliente: ' + cli.nome) : ''));
+  alert('Venda finalizada. Total: ' + moneyPDV(total) + (cli?.nome ? (' • Cliente: ' + cli.nome) : ''));
   pdvCart = [];
   renderCarrinhoPDV();
 };
@@ -1616,21 +1423,12 @@ window.imprimirCupomPDV = function(){
   if(!pdvCart.length) return alert('Carrinho vazio');
   const cli = clienteAtualPDV();
   const grouped = getPDVCartGrouped();
-  const subtotal = pdvCart.reduce((s,i)=> s + Number(i.preco||0), 0);
-  const financeiro = getPDVFinanceiro();
-  const desconto = Math.min(financeiro.desconto, subtotal);
-  const total = Math.max(0, subtotal - desconto);
   const venda = {
     id: 'preview_' + Date.now(),
     data: new Date().toLocaleString('pt-BR'),
     cliente: cli,
     itens: grouped.map(i=>({nome:i.nome, preco:Number(i.preco||0), qtd:i.qtd, totalLinha:Number(i.preco||0) * i.qtd})),
-    subtotal,
-    desconto,
-    pagamento: financeiro.metodo,
-    trocoPara: financeiro.metodo === 'DINHEIRO' ? financeiro.troco : 0,
-    troco: financeiro.metodo === 'DINHEIRO' ? Math.max(0, financeiro.troco - total) : 0,
-    total
+    total: pdvCart.reduce((s,i)=> s + Number(i.preco||0), 0)
   };
   imprimirVenda58mm(venda);
 };
@@ -1860,40 +1658,6 @@ onAuthStateChanged(auth, async (user)=>{
   if(!user) return;
   await carregarProdutos(); hookFiltros(); ouvirPedidos(); iniciarZoom();
 });
-
-function pdvAtalhoDisponivel(target){
-  const tag = (target?.tagName || '').toLowerCase();
-  return !['input','textarea','select'].includes(tag);
-}
-window.addEventListener('keydown', (e)=>{
-  if(!pdvAtalhoDisponivel(e.target)) return;
-  if(e.altKey && /^[1-6]$/.test(e.key)){
-    const idx = Number(e.key) - 1;
-    const ativos = (allProdutos || []).filter(p => p.ativo !== false).slice(0,6);
-    const prod = ativos[idx];
-    if(prod){
-      e.preventDefault();
-      addProdutoPDV(prod);
-    }
-  }
-});
-
-function pdvAtalhoDisponivel(target){
-  const tag = (target?.tagName || '').toLowerCase();
-  return !['input','textarea','select'].includes(tag);
-}
-window.addEventListener('keydown', (e)=>{
-  if(!pdvAtalhoDisponivel(e.target)) return;
-  if(e.altKey && /^[1-6]$/.test(e.key)){
-    const idx = Number(e.key) - 1;
-    const ativos = (allProdutos || []).filter(p => p.ativo !== false).slice(0,6);
-    const prod = ativos[idx];
-    if(prod){
-      e.preventDefault();
-      addProdutoPDV(prod);
-    }
-  }
-});
 </script>
 
 
@@ -1919,23 +1683,6 @@ function iniciarZoom(){
   }
   aplicarZoom(salvo);
 }
-
-function pdvAtalhoDisponivel(target){
-  const tag = (target?.tagName || '').toLowerCase();
-  return !['input','textarea','select'].includes(tag);
-}
-window.addEventListener('keydown', (e)=>{
-  if(!pdvAtalhoDisponivel(e.target)) return;
-  if(e.altKey && /^[1-6]$/.test(e.key)){
-    const idx = Number(e.key) - 1;
-    const ativos = (allProdutos || []).filter(p => p.ativo !== false).slice(0,6);
-    const prod = ativos[idx];
-    if(prod){
-      e.preventDefault();
-      addProdutoPDV(prod);
-    }
-  }
-});
 </script>
 
 <script>
@@ -1972,14 +1719,6 @@ document.addEventListener('DOMContentLoaded',()=>{
   renderPerfilConfig();
   atualizarNomeInterface();
   renderRelatorios();
-
-const pdvMetodoEl = document.getElementById('pdvMetodo');
-const pdvDescontoEl = document.getElementById('pdvDesconto');
-const pdvTrocoEl = document.getElementById('pdvTroco');
-if(pdvMetodoEl) pdvMetodoEl.addEventListener('change', ()=>{ updatePDVTrocoUI(); renderCarrinhoPDV(); });
-if(pdvDescontoEl) pdvDescontoEl.addEventListener('input', renderCarrinhoPDV);
-if(pdvTrocoEl) pdvTrocoEl.addEventListener('input', renderCarrinhoPDV);
-updatePDVTrocoUI();
   renderCaixa();
   const cfgFile = document.getElementById('cfgLogoFile');
   if(cfgFile){
@@ -1989,23 +1728,6 @@ updatePDVTrocoUI();
   if(autoPrint){
     autoPrint.checked = getAutoPrint();
     autoPrint.addEventListener('change', ()=> setAutoPrint(autoPrint.checked));
-  }
-});
-
-function pdvAtalhoDisponivel(target){
-  const tag = (target?.tagName || '').toLowerCase();
-  return !['input','textarea','select'].includes(tag);
-}
-window.addEventListener('keydown', (e)=>{
-  if(!pdvAtalhoDisponivel(e.target)) return;
-  if(e.altKey && /^[1-6]$/.test(e.key)){
-    const idx = Number(e.key) - 1;
-    const ativos = (allProdutos || []).filter(p => p.ativo !== false).slice(0,6);
-    const prod = ativos[idx];
-    if(prod){
-      e.preventDefault();
-      addProdutoPDV(prod);
-    }
   }
 });
 </script>
