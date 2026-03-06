@@ -116,7 +116,6 @@
             <button class="navBtn active" id="navProdutos" onclick="showView('produtos')">🧾 Produtos <span class="muted" id="countProdutos"></span></button>
             <button class="navBtn" id="navPedidos" onclick="showView('pedidos')">🛵 Pedidos <span class="muted" id="countPedidos"></span></button>
             <button class="navBtn" id="navClientes" onclick="showView('clientes')">👥 Clientes <span class="muted" id="countClientes"></span></button>
-            <button class="navBtn" id="navPDV" onclick="showView('pdv')">💰 Venda Presencial</button>
             <div class="navTitle" style="margin-top:16px">Ações</div>
             <button class="navBtn" onclick="exportarCSV()">⬇️ Exportar CSV</button>
             <button class="navBtn" onclick="sair()">🚪 Sair</button>
@@ -169,32 +168,6 @@
                   <thead><tr><th>Nome</th><th>Telefone</th><th>Endereço</th><th>Pedidos</th><th>Ações</th></tr></thead>
                   <tbody id="tbClientes"></tbody>
                 </table>
-              </div>
-            </section>
-
-
-            <section class="section hide" id="viewPDV">
-              <div class="sectionHd" style="margin-top:16px">
-                <b>Venda Presencial (PDV)</b>
-                <div class="muted" style="font-size:12px">Venda no balcão com carrinho e cupom.</div>
-              </div>
-              <div class="card">
-                <div style="display:grid;grid-template-columns:2fr 1fr;gap:14px">
-                  <div>
-                    <b>Menu de venda</b>
-                    <div id="pdvProdutos" class="prodGrid" style="margin-top:10px"></div>
-                  </div>
-                  <div>
-                    <b>Carrinho</b>
-                    <div id="pdvCarrinho" style="margin-top:10px;display:grid;gap:8px"></div>
-                    <div style="margin-top:12px;font-weight:1000">Total: R$ <span id="pdvTotal">0.00</span></div>
-                    <div style="display:grid;gap:8px;margin-top:12px">
-                      <button class="btn good" onclick="finalizarPDV()">Finalizar Venda</button>
-                      <button class="btn primary" onclick="imprimirCupomPDV()">🖨 Imprimir Cupom</button>
-                      <button class="btn ghost" onclick="limparCarrinhoPDV()">Limpar Carrinho</button>
-                    </div>
-                  </div>
-                </div>
               </div>
             </section>
 
@@ -359,7 +332,6 @@ async function carregarProdutos(){
   });
   window.__toggleAtivo = async (id, atual)=>{ try{ await updateDoc(doc(db,"produtos", String(id)), {ativo: !atual}); await carregarProdutos(); }catch(e){ console.error(e); alert("Erro ao alterar ativo. Verifique Rules."); } };
   window.__del = async (id)=>{ if(!confirm("Excluir produto "+id+"?")) return; await deleteDoc(doc(db,"produtos", String(id))); await carregarProdutos(); };
-  renderPDVProdutos();
   window.__edit = async (id)=>{
     const snap = await getDoc(doc(db,"produtos", String(id)));
     const p = snap.exists() ? snap.data() : {};
@@ -434,95 +406,6 @@ function tocarNovoPedido(){
     o.stop(ctx.currentTime + 0.36);
   }catch(e){ console.warn(e); }
 }
-
-
-
-let pdvCart = [];
-
-function renderPDVProdutos(){
-  const box = document.getElementById('pdvProdutos');
-  if(!box) return;
-  box.innerHTML = '';
-  (allProdutos || []).forEach(p=>{
-    const card = document.createElement('div');
-    card.className = 'prodCard';
-    card.style.cursor = 'pointer';
-    const foto = p.fotoURL || '';
-    card.innerHTML = `
-      ${foto ? `<img class="prodImg" src="${foto}" alt="foto">` : `<div class="prodImg"></div>`}
-      <div class="prodPad">
-        <div class="prodTop">
-          <div>
-            <div class="prodName">${p.nome || ''}</div>
-            <div class="prodMeta">${p.cat || ''}</div>
-          </div>
-          <div class="prodPrice">R$ ${Number(p.preco||0).toFixed(2)}</div>
-        </div>
-      </div>`;
-    card.onclick = ()=> {
-      pdvCart.push({ id:p.docId, nome:p.nome, preco:Number(p.preco||0) });
-      renderCarrinhoPDV();
-    };
-    box.appendChild(card);
-  });
-}
-
-function renderCarrinhoPDV(){
-  const box = document.getElementById('pdvCarrinho');
-  const totalEl = document.getElementById('pdvTotal');
-  if(!box) return;
-  box.innerHTML = '';
-  let total = 0;
-  pdvCart.forEach((p,i)=>{
-    total += Number(p.preco||0);
-    const row = document.createElement('div');
-    row.className = 'card';
-    row.style.padding = '10px';
-    row.innerHTML = `
-      <div style="display:flex;justify-content:space-between;gap:10px;align-items:center">
-        <div>
-          <div style="font-weight:1000">${p.nome}</div>
-          <div class="muted" style="font-size:12px">R$ ${Number(p.preco||0).toFixed(2)}</div>
-        </div>
-        <button class="btn ghost sm" onclick="window.removerItemPDV(${i})">x</button>
-      </div>`;
-    box.appendChild(row);
-  });
-  if(totalEl) totalEl.textContent = total.toFixed(2);
-}
-
-window.removerItemPDV = function(i){
-  pdvCart.splice(i,1);
-  renderCarrinhoPDV();
-};
-
-window.limparCarrinhoPDV = function(){
-  pdvCart = [];
-  renderCarrinhoPDV();
-};
-
-window.finalizarPDV = function(){
-  if(!pdvCart.length) return alert('Carrinho vazio');
-  const total = pdvCart.reduce((s,i)=> s + Number(i.preco||0), 0);
-  alert('Venda finalizada. Total: R$ ' + total.toFixed(2));
-  pdvCart = [];
-  renderCarrinhoPDV();
-};
-
-window.imprimirCupomPDV = function(){
-  if(!pdvCart.length) return alert('Carrinho vazio');
-  let total = 0;
-  let cupom = 'SABOR DA SOPA\n------------------\n';
-  pdvCart.forEach(i=>{
-    total += Number(i.preco||0);
-    cupom += `${i.nome} - R$ ${Number(i.preco||0).toFixed(2)}\n`;
-  });
-  cupom += '------------------\n';
-  cupom += 'TOTAL: R$ ' + total.toFixed(2);
-  const w = window.open('', '_blank');
-  w.document.write('<pre style="font-family:monospace;font-size:14px">'+cupom+'</pre>');
-  w.print();
-};
 
 
 let clientesMap = new Map();
@@ -655,24 +538,19 @@ function showView(v){
   const vp = document.getElementById('viewProdutos');
   const ve = document.getElementById('viewPedidos');
   const vc = document.getElementById('viewClientes');
-  const vd = document.getElementById('viewPDV');
   const np = document.getElementById('navProdutos');
   const ne = document.getElementById('navPedidos');
   const nc = document.getElementById('navClientes');
-  const nd = document.getElementById('navPDV');
 
   vp?.classList.add('hide');
   ve?.classList.add('hide');
   vc?.classList.add('hide');
-  vd?.classList.add('hide');
   np?.classList.remove('active');
   ne?.classList.remove('active');
   nc?.classList.remove('active');
-  nd?.classList.remove('active');
 
   if(v==='pedidos'){ ve?.classList.remove('hide'); ne?.classList.add('active'); }
   else if(v==='clientes'){ vc?.classList.remove('hide'); nc?.classList.add('active'); }
-  else if(v==='pdv'){ vd?.classList.remove('hide'); nd?.classList.add('active'); renderPDVProdutos(); renderCarrinhoPDV(); }
   else { vp?.classList.remove('hide'); np?.classList.add('active'); }
 
   toggleSide(false);
@@ -693,8 +571,7 @@ function showView(v){
   const views = {
     produtos:'viewProdutos',
     pedidos:'viewPedidos',
-    clientes:'viewClientes',
-    pdv:'viewPDV'
+    clientes:'viewClientes'
   };
   const id = views[v] || v;
   document.querySelectorAll('[id^="view"]').forEach(el=>el.style.display='none');
@@ -705,7 +582,6 @@ function showView(v){
   if(v==='produtos') document.getElementById('navProdutos')?.classList.add('active');
   if(v==='pedidos') document.getElementById('navPedidos')?.classList.add('active');
   if(v==='clientes') document.getElementById('navClientes')?.classList.add('active');
-  if(v==='pdv') document.getElementById('navPDV')?.classList.add('active');
 }
 document.addEventListener('DOMContentLoaded',()=>{
   showView('produtos');
