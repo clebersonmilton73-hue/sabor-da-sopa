@@ -371,9 +371,7 @@ header{
         <div class="line"><span>Subtotal</span><b id="sub">R$ 0,00</b></div>
         <div class="line"><span>Distância</span><b id="distancia">0 km</b></div>
         <div class="line"><span>Frete</span><b id="frete">R$ 0,00</b></div>
-        <div class="line"><span>Tempo estimado</span><b id="tempoEntrega">--</b></div>
         <div class="line"><span>Total</span><b id="tot">R$ 0,00</b></div>
-        <a id="rotaMapa" class="small" href="#" target="_blank" style="display:none;text-align:center">🗺️ Ver rota no mapa</a>
         <button class="btn primary" onclick="finalizar()">Finalizar e enviar no WhatsApp</button>
         <div class="small">O pedido é salvo online e abre a conversa no WhatsApp.</div>
       </div>
@@ -407,6 +405,10 @@ const quickCatsEl = document.getElementById('quickCats');
 let produtos = [];
 let cart = [];
 let entregaTipo = 'ENTREGA';
+
+// COLOQUE AQUI O WHATSAPP DA LOJA COM DDI + DDD + NÚMERO
+// Exemplo: 5581999999999
+const WHATSAPP_LOJA = '5581000000000';
 
 function moneyBR(v){ return Number(v||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'}); }
 function escAttr(v){ return String(v||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
@@ -522,10 +524,7 @@ const freteEl = document.getElementById("frete");
 const distEl = document.getElementById("distancia");
 
 if(freteEl) freteEl.textContent = moneyBR(frete);
-if(distEl) distEl.textContent = distanciaCliente > 0 ? distanciaCliente.toFixed(1) + " km" : "0 km";
-
-const tempoEl = document.getElementById("tempoEntrega");
-if(tempoEl) tempoEl.textContent = calcularTempoEntrega(distanciaCliente);
+if(distEl) distEl.textContent = distanciaCliente.toFixed(1) + " km";
 
   document.getElementById('barQtd').textContent = String(qtd);
   document.getElementById('barTot').textContent = moneyBR(total);
@@ -664,11 +663,6 @@ async function finalizar(){
   const subtotal = cart.reduce((s,i)=>s + (lineUnit(i) * i.qtd), 0);
   const frete = entregaTipo === 'ENTREGA' ? calcularFretePorKm(distanciaCliente) : 0;
   const totalFinal = subtotal + frete;
-  const tempoEntrega = entregaTipo === 'ENTREGA' ? calcularTempoEntrega(distanciaCliente) : '--';
-
-  if(entregaTipo === 'ENTREGA' && distanciaCliente > 10){
-    return alert('Sua localização está fora da área de entrega de 10 km.');
-  }
 
   const itens = cart.map(i => ({
     id: i.id,
@@ -689,7 +683,6 @@ async function finalizar(){
     subtotal,
     frete,
     distanciaKm: Number(distanciaCliente || 0),
-    tempoEntrega,
     total: totalFinal,
     criadoEm: serverTimestamp()
   };
@@ -701,9 +694,10 @@ async function finalizar(){
   }
 
   const linhas = [];
-  linhas.push('*Sabor da Sopa* 🍲');
+  linhas.push('*NOVO PEDIDO ONLINE - Sabor da Sopa* 🍲');
   linhas.push('');
   linhas.push(`*Cliente:* ${c.nome}`);
+  linhas.push(`*Origem:* Cardápio online`);
   linhas.push(`*WhatsApp:* ${c.tel}`);
   linhas.push(`*Tipo:* ${entregaTipo}`);
   if(entregaTipo === 'ENTREGA') linhas.push(`*Endereço:* ${c.endereco}`);
@@ -717,13 +711,16 @@ async function finalizar(){
   linhas.push('');
   linhas.push(`*Pagamento:* ${metodo}`);
   if(metodo === 'DINHEIRO' && troco) linhas.push(`*Troco para:* ${troco}`);
-  if(entregaTipo === 'ENTREGA') linhas.push(`*Distância:* ${distanciaCliente > 0 ? distanciaCliente.toFixed(1) + ' km' : 'não calculada'}`);
+  if(entregaTipo === 'ENTREGA') linhas.push(`*Distância:* ${distanciaCliente.toFixed(1)} km`);
   if(entregaTipo === 'ENTREGA') linhas.push(`*Frete:* ${moneyBR(frete)}`);
-  if(entregaTipo === 'ENTREGA') linhas.push(`*Tempo estimado:* ${tempoEntrega}`);
   linhas.push(`*Total:* ${moneyBR(totalFinal)}`);
 
   const msg = encodeURIComponent(linhas.join('\n'));
-  window.open(`https://wa.me/55${c.tel}?text=${msg}`, '_blank');
+  if(!WHATSAPP_LOJA || WHATSAPP_LOJA === '5581000000000'){
+    alert('Configure o número do WhatsApp da loja na constante WHATSAPP_LOJA.');
+    return;
+  }
+  window.open(`https://wa.me/${WHATSAPP_LOJA}?text=${msg}`, '_blank');
 
   cart = [];
   document.getElementById('obs').value = '';
@@ -790,21 +787,6 @@ function calcularFretePorKm(dist){
   return 15;
 }
 
-function calcularTempoEntrega(dist){
-  if(dist <= 0) return '--';
-  if(dist <= 2) return '15-25 min';
-  if(dist <= 6) return '25-40 min';
-  if(dist <= 10) return '40-60 min';
-  return 'Fora da área';
-}
-
-function atualizarMapaCliente(lat, lon){
-  const rota = document.getElementById('rotaMapa');
-  if(!rota) return;
-  rota.href = `https://www.google.com/maps/dir/?api=1&destination=${LOJA.lat},${LOJA.lng}&origin=${lat},${lon}&travelmode=driving`;
-  rota.style.display = 'block';
-}
-
 function calcularFreteLocalizacao(){
 
   const btn = document.querySelector('button[onclick="calcularFreteLocalizacao()"]');
@@ -836,16 +818,10 @@ function calcularFreteLocalizacao(){
       LOJA.lng
     );
 
-    atualizarMapaCliente(lat, lon);
     recalc();
 
-    if(distanciaCliente > 10){
-      alert("Sua localização está fora da área de entrega de 10 km.");
-    }
-
     const frete = calcularFretePorKm(distanciaCliente);
-    const tempo = calcularTempoEntrega(distanciaCliente);
-    toast(`📍 ${distanciaCliente.toFixed(1)} km • Frete ${moneyBR(frete)} • ${tempo}`);
+    toast(`📍 ${distanciaCliente.toFixed(1)} km • Frete ${moneyBR(frete)}`);
 
     if(btn){
       btn.disabled = false;
