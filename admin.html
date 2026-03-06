@@ -390,6 +390,13 @@
                       <div class="pdvLine"><span>Itens</span><span id="pdvQtdItens">0</span></div>
                       <div class="pdvLine"><span>Subtotal</span><span id="pdvSubtotal">R$ 0,00</span></div>
                       <div class="pdvLine" style="font-size:18px"><span>Total</span><span id="pdvTotalWrap">R$ <span id="pdvTotal">0.00</span></span></div>
+                      <div style="display:grid;gap:8px;margin-top:8px">
+                        <select id="pdvPagamento" class="select">
+                          <option value="DINHEIRO">Dinheiro</option>
+                          <option value="PIX">PIX</option>
+                        </select>
+                        <input id="pdvTroco" class="input" placeholder="Troco para (se dinheiro)" inputmode="decimal">
+                      </div>
                       <div class="muted" style="font-size:12px">Venda presencial mais rápida e organizada.</div>
                     </div>
 
@@ -970,6 +977,8 @@ function montarCupomPDVHtml(venda){
   const cli = venda?.cliente || null;
   const itens = Array.isArray(venda?.itens) ? venda.itens : [];
   const total = Number(venda?.total || itens.reduce((s,i)=> s + Number(i.preco||0), 0));
+  const pagamento = String(venda?.pagamento || 'DINHEIRO');
+  const troco = String(venda?.troco || '').trim();
   const data = venda?.data || new Date().toLocaleString('pt-BR');
 
   const itensHtml = itens.map(i => {
@@ -1047,8 +1056,12 @@ function montarCupomPDVHtml(venda){
     ${itensHtml || '<div class="bloco">Sem itens.</div>'}
     <div class="linha"></div>
     <div class="total"><span>TOTAL</span><span>R$ ${dinheiro(total)}</span></div>
+    <div class="bloco bloco-left" style="margin-top:2mm">
+      <div><b>Pagamento:</b> ${escHtml(pagamento)}</div>
+      ${pagamento === 'DINHEIRO' && troco ? `<div><b>Troco para:</b> R$ ${escHtml(troco)}</div>` : ''}
+    </div>
     <div class="linha"></div>
-    ${pixChave || qrPixUrl ? `<div class="pix-box"><div class="pix-title">PAGUE COM PIX</div>${pixChave ? `<div class="pix-chave"><b>Chave:</b> ${escHtml(pixChave)}</div>` : ''}${qrPixUrl ? `<img class="pix-qr" src="${escHtml(qrPixUrl)}" alt="QR Code PIX">` : ''}${pixCopiaCola ? `<div class="pix-copy">${escHtml(pixCopiaCola)}</div>` : ''}</div><div class="linha"></div>` : ''}
+    ${pagamento === 'PIX' && (pixChave || qrPixUrl || pixCopiaCola) ? `<div class="pix-box"><div class="pix-title">PAGUE COM PIX</div>${pixChave ? `<div class="pix-chave"><b>Chave:</b> ${escHtml(pixChave)}</div>` : ''}${qrPixUrl ? `<img class="pix-qr" src="${escHtml(qrPixUrl)}" alt="QR Code PIX">` : ''}${pixCopiaCola ? `<div class="pix-copy">${escHtml(pixCopiaCola)}</div>` : ''}</div><div class="linha"></div>` : ''}
     <div class="rodape">Obrigado pela preferência!</div>
   </div>
 </body>
@@ -1222,6 +1235,20 @@ function moneyPDV(v){
   return Number(v||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
 }
 
+function getPDVPagamento(){
+  return String(document.getElementById('pdvPagamento')?.value || 'DINHEIRO').toUpperCase();
+}
+function getPDVTroco(){
+  return String(document.getElementById('pdvTroco')?.value || '').trim();
+}
+function togglePDVTroco(){
+  const el = document.getElementById('pdvTroco');
+  if(!el) return;
+  const show = getPDVPagamento() === 'DINHEIRO';
+  el.style.display = show ? '' : 'none';
+  if(!show) el.value = '';
+}
+
 function getPDVCartGrouped(){
   const map = new Map();
   (pdvCart || []).forEach(item => {
@@ -1318,6 +1345,12 @@ function renderPDVProdutos(){
 
 function renderCarrinhoPDV(){
   const box = document.getElementById('pdvCarrinho');
+  const pagamentoEl = document.getElementById('pdvPagamento');
+  if(pagamentoEl && !pagamentoEl.dataset.bound){
+    pagamentoEl.dataset.bound = '1';
+    pagamentoEl.addEventListener('change', togglePDVTroco);
+  }
+  togglePDVTroco();
   const totalEl = document.getElementById('pdvTotal');
   const subtotalEl = document.getElementById('pdvSubtotal');
   const qtdEl = document.getElementById('pdvQtdItens');
@@ -1387,6 +1420,8 @@ window.finalizarPDV = function(){
   if(!pdvCart.length) return alert('Carrinho vazio');
   const grouped = getPDVCartGrouped();
   const total = pdvCart.reduce((s,i)=> s + Number(i.preco||0), 0);
+  const pagamento = getPDVPagamento();
+  const troco = getPDVTroco();
   const cli = clienteAtualPDV();
   if(cli && cli.nome){
     const lista = getClientesManuais();
@@ -1407,6 +1442,8 @@ window.finalizarPDV = function(){
     id: 'venda_' + Date.now(),
     data: new Date().toLocaleString('pt-BR'),
     cliente: cli,
+    pagamento,
+    troco: pagamento === 'DINHEIRO' ? troco : '',
     itens: grouped.map(i=>({nome:i.nome, preco:Number(i.preco||0), qtd:i.qtd, totalLinha:Number(i.preco||0) * i.qtd})),
     total
   };
@@ -1414,8 +1451,10 @@ window.finalizarPDV = function(){
   if(getAutoPrint()){
     setTimeout(()=> window.reimprimirVendaPDV(venda), 80);
   }
-  alert('Venda finalizada. Total: ' + moneyPDV(total) + (cli?.nome ? (' • Cliente: ' + cli.nome) : ''));
+  alert('Venda finalizada. Total: ' + moneyPDV(total) + ' • Pagamento: ' + pagamento + (cli?.nome ? (' • Cliente: ' + cli.nome) : ''));
   pdvCart = [];
+  const trocoEl = document.getElementById('pdvTroco');
+  if(trocoEl) trocoEl.value = '';
   renderCarrinhoPDV();
 };
 
@@ -1423,10 +1462,14 @@ window.imprimirCupomPDV = function(){
   if(!pdvCart.length) return alert('Carrinho vazio');
   const cli = clienteAtualPDV();
   const grouped = getPDVCartGrouped();
+  const pagamento = getPDVPagamento();
+  const troco = getPDVTroco();
   const venda = {
     id: 'preview_' + Date.now(),
     data: new Date().toLocaleString('pt-BR'),
     cliente: cli,
+    pagamento,
+    troco: pagamento === 'DINHEIRO' ? troco : '',
     itens: grouped.map(i=>({nome:i.nome, preco:Number(i.preco||0), qtd:i.qtd, totalLinha:Number(i.preco||0) * i.qtd})),
     total: pdvCart.reduce((s,i)=> s + Number(i.preco||0), 0)
   };
