@@ -98,6 +98,15 @@
   .pdvSummary{display:grid;gap:8px}
   .pdvLine{display:flex;justify-content:space-between;gap:10px;font-weight:1000}
   .pdvActions{display:grid;gap:8px}
+  .pdvQuickBtns{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:0 0 12px}
+  .pdvQuickBtn{border:none;border-radius:14px;padding:12px 10px;background:linear-gradient(180deg,#1e293b,#0f172a);border:1px solid rgba(148,163,184,.18);color:var(--txt);font-weight:1000;cursor:pointer;text-align:left;box-shadow:0 8px 18px rgba(0,0,0,.16)}
+  .pdvQuickBtn b{display:block;font-size:13px;line-height:1.2}
+  .pdvQuickBtn span{display:block;font-size:11px;color:var(--muted);margin-top:5px}
+  .pdvQuickBtn:hover{border-color:rgba(96,165,250,.28);transform:translateY(-1px)}
+  .pdvCashInfo{display:grid;gap:6px;padding:10px 12px;border-radius:14px;background:rgba(34,197,94,.10);border:1px solid rgba(34,197,94,.18)}
+  .pdvCashInfo.hide{display:none!important}
+  .pdvCashInfo .k{font-size:12px;color:var(--muted);font-weight:900}
+  .pdvCashInfo .v{font-size:18px;font-weight:1100;color:#bbf7d0}
   @media(max-width:980px){
     .side{position:fixed;left:0;top:0;height:100vh;z-index:40;transform:translateX(-102%);transition:.18s ease;box-shadow:0 20px 50px rgba(0,0,0,.55)}
     .side.open{transform:translateX(0)}
@@ -114,10 +123,11 @@
     .pdvTopTools{grid-template-columns:1fr}
     .pdvQuickStats{grid-template-columns:1fr}
     .pdvGrid{grid-template-columns:1fr}
+    .pdvQuickBtns{grid-template-columns:1fr 1fr}
     .pdvSideCol{position:static}
   }
   @media(max-width:520px){.prodGrid{grid-template-columns:1fr}.prodImg{height:160px}}
-  @media(max-width:420px){.prodActions{grid-template-columns:1fr}}
+  @media(max-width:420px){.prodActions{grid-template-columns:1fr}.pdvQuickBtns{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
@@ -362,6 +372,10 @@
                         <option value="">Todas as categorias</option>
                       </select>
                     </div>
+                    <div>
+                      <div class="muted" style="font-size:12px;margin-bottom:8px">Atalhos rápidos</div>
+                      <div id="pdvQuickBtns" class="pdvQuickBtns"></div>
+                    </div>
                     <div id="pdvProdutos" class="pdvCatalog"></div>
                   </div>
                   <div class="pdvSideCol">
@@ -395,7 +409,14 @@
                           <option value="DINHEIRO">Dinheiro</option>
                           <option value="PIX">PIX</option>
                         </select>
-                        <input id="pdvTroco" class="input" placeholder="Troco para (se dinheiro)" inputmode="decimal">
+                        <input id="pdvTroco" class="input" placeholder="Cliente pagou / troco para" inputmode="decimal">
+                      </div>
+                      <div id="pdvCashInfo" class="pdvCashInfo hide">
+                        <div>
+                          <div class="k">Troco</div>
+                          <div class="v" id="pdvTrocoValor">R$ 0,00</div>
+                        </div>
+                        <div class="muted" id="pdvTrocoMsg" style="font-size:12px">Digite quanto o cliente pagou.</div>
                       </div>
                       <div class="muted" style="font-size:12px">Venda presencial mais rápida e organizada.</div>
                     </div>
@@ -404,6 +425,7 @@
                       <button class="btn ghost" onclick="salvarClientePDV()">💾 Salvar cliente</button>
                       <button class="btn good" onclick="finalizarPDV()">Finalizar Venda</button>
                       <button class="btn primary" onclick="imprimirCupomPDV()">🖨 Imprimir Cupom</button>
+                      <button class="btn ghost" onclick="togglePDVFullscreen()">🖥 Tela cheia</button>
                       <button class="btn ghost" onclick="limparCarrinhoPDV()">Limpar Carrinho</button>
                     </div>
                   </div>
@@ -979,6 +1001,7 @@ function montarCupomPDVHtml(venda){
   const total = Number(venda?.total || itens.reduce((s,i)=> s + Number(i.preco||0), 0));
   const pagamento = String(venda?.pagamento || 'DINHEIRO');
   const troco = String(venda?.troco || '').trim();
+  const trocoCalculado = Number(venda?.trocoCalculado || 0);
   const data = venda?.data || new Date().toLocaleString('pt-BR');
 
   const itensHtml = itens.map(i => {
@@ -1003,41 +1026,41 @@ function montarCupomPDVHtml(venda){
 <meta charset="utf-8">
 <title>Cupom</title>
 <style>
-  @page{ size: 58mm 210mm; margin: 0; }
+  @page{ size: 58mm auto; margin: 0; }
   html,body{ margin:0; padding:0; background:#fff; color:#000; }
   body{
     width:58mm;
-    min-height:210mm;
+    min-height:auto;
     font-family:'Courier New', Courier, monospace;
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
   }
   .cupom{
     width:58mm;
-    min-height:210mm;
+    min-height:auto;
     padding:3mm 2.2mm 10mm;
     box-sizing:border-box;
     color:#000;
   }
   .topo{ text-align:center; }
   .logo-wrap{ text-align:center; margin-bottom:3mm; }
-  .logo{ max-width:42mm; max-height:20mm; object-fit:contain; }
-  .loja{ font-size:18px; font-weight:700; line-height:22px; }
-  .meta{ font-size:18px; line-height:22px; word-break:break-word; }
-  .linha{ border-top:1px dashed #000; margin:3mm 0; }
-  .bloco{ font-size:18px; line-height:22px; }
+  .logo{ max-width:38mm; max-height:16mm; object-fit:contain; }
+  .loja{ font-size:15px; font-weight:700; line-height:18px; }
+  .meta{ font-size:11px; line-height:14px; word-break:break-word; }
+  .linha{ border-top:1px dashed #000; margin:2mm 0; }
+  .bloco{ font-size:11px; line-height:14px; }
   .bloco-left{ text-align:left; }
-  .titulo{ text-align:center; font-size:18px; font-weight:700; line-height:22px; }
-  .item{ display:flex; align-items:flex-start; justify-content:space-between; gap:2mm; font-size:18px; line-height:22px; margin:1.8mm 0; }
+  .titulo{ text-align:center; font-size:12px; font-weight:700; line-height:16px; }
+  .item{ display:flex; align-items:flex-start; justify-content:space-between; gap:2mm; font-size:11px; line-height:14px; margin:1.2mm 0; }
   .item-nome{ flex:1; text-align:left; word-break:break-word; padding-right:2mm; }
-  .item-preco{ width:19mm; text-align:right; white-space:nowrap; }
-  .total{ display:flex; justify-content:space-between; gap:2mm; font-size:20px; line-height:24px; font-weight:700; margin-top:2mm; }
-  .rodape{ text-align:center; font-size:18px; line-height:22px; margin-top:3mm; }
+  .item-preco{ width:16mm; text-align:right; white-space:nowrap; }
+  .total{ display:flex; justify-content:space-between; gap:2mm; font-size:13px; line-height:16px; font-weight:700; margin-top:1.5mm; }
+  .rodape{ text-align:center; font-size:11px; line-height:14px; margin-top:2mm; }
   .pix-box{ text-align:center; margin-top:3mm; }
-  .pix-title{ font-size:18px; font-weight:700; line-height:22px; }
-  .pix-chave{ font-size:16px; line-height:20px; word-break:break-word; margin-top:1.5mm; }
-  .pix-qr{ width:32mm; height:32mm; object-fit:contain; margin-top:2mm; }
-  .pix-copy{ font-size:13px; line-height:16px; word-break:break-all; margin-top:1.5mm; text-align:left; }
+  .pix-title{ font-size:12px; font-weight:700; line-height:16px; }
+  .pix-chave{ font-size:10px; line-height:13px; word-break:break-word; margin-top:1.2mm; }
+  .pix-qr{ width:28mm; height:28mm; object-fit:contain; margin-top:1.5mm; }
+  .pix-copy{ font-size:9px; line-height:11px; word-break:break-all; margin-top:1.2mm; text-align:left; }
 </style>
 </head>
 <body>
@@ -1058,7 +1081,8 @@ function montarCupomPDVHtml(venda){
     <div class="total"><span>TOTAL</span><span>R$ ${dinheiro(total)}</span></div>
     <div class="bloco bloco-left" style="margin-top:2mm">
       <div><b>Pagamento:</b> ${escHtml(pagamento)}</div>
-      ${pagamento === 'DINHEIRO' && troco ? `<div><b>Troco para:</b> R$ ${escHtml(troco)}</div>` : ''}
+      ${pagamento === 'DINHEIRO' && troco ? `<div><b>Recebido:</b> R$ ${escHtml(troco)}</div>` : ''}
+      ${pagamento === 'DINHEIRO' && trocoCalculado > 0 ? `<div><b>Troco:</b> R$ ${dinheiro(trocoCalculado)}</div>` : ''}
     </div>
     <div class="linha"></div>
     ${pagamento === 'PIX' && (pixChave || qrPixUrl || pixCopiaCola) ? `<div class="pix-box"><div class="pix-title">PAGUE COM PIX</div>${pixChave ? `<div class="pix-chave"><b>Chave:</b> ${escHtml(pixChave)}</div>` : ''}${qrPixUrl ? `<img class="pix-qr" src="${escHtml(qrPixUrl)}" alt="QR Code PIX">` : ''}${pixCopiaCola ? `<div class="pix-copy">${escHtml(pixCopiaCola)}</div>` : ''}</div><div class="linha"></div>` : ''}
@@ -1235,6 +1259,47 @@ function moneyPDV(v){
   return Number(v||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
 }
 
+function numBR(v){
+  if(v == null) return 0;
+  const s = String(v).trim();
+  if(!s) return 0;
+  const clean = s.replace(/\s/g,'').replace(/R\$/gi,'').replace(/\.(?=\d{3}(\D|$))/g,'').replace(',', '.').replace(/[^\d.-]/g,'');
+  const n = Number(clean);
+  return Number.isFinite(n) ? n : 0;
+}
+function calcTrocoPDV(total){
+  if(getPDVPagamento() !== 'DINHEIRO') return 0;
+  const recebido = numBR(getPDVTroco());
+  return recebido > total ? (recebido - total) : 0;
+}
+function updatePDVCashInfo(total){
+  const box = document.getElementById('pdvCashInfo');
+  const val = document.getElementById('pdvTrocoValor');
+  const msg = document.getElementById('pdvTrocoMsg');
+  const input = document.getElementById('pdvTroco');
+  if(!box || !val || !msg || !input) return;
+  if(getPDVPagamento() !== 'DINHEIRO'){
+    box.classList.add('hide');
+    return;
+  }
+  box.classList.remove('hide');
+  const recebido = numBR(input.value);
+  const troco = calcTrocoPDV(total);
+  val.textContent = moneyPDV(troco);
+  if(!input.value.trim()) msg.textContent = 'Digite quanto o cliente pagou.';
+  else if(recebido < total) msg.textContent = 'Faltam ' + moneyPDV(total - recebido) + ' para completar.';
+  else if(recebido === total) msg.textContent = 'Pagamento exato.';
+  else msg.textContent = 'Recebido: ' + moneyPDV(recebido);
+}
+function togglePDVFullscreen(){
+  const el = document.getElementById('viewPDV');
+  if(!document.fullscreenElement){
+    (el || document.documentElement).requestFullscreen?.();
+  } else {
+    document.exitFullscreen?.();
+  }
+}
+
 function getPDVPagamento(){
   return String(document.getElementById('pdvPagamento')?.value || 'DINHEIRO').toUpperCase();
 }
@@ -1243,9 +1308,11 @@ function getPDVTroco(){
 }
 function togglePDVTroco(){
   const el = document.getElementById('pdvTroco');
+  const info = document.getElementById('pdvCashInfo');
   if(!el) return;
   const show = getPDVPagamento() === 'DINHEIRO';
   el.style.display = show ? '' : 'none';
+  if(info) info.classList.toggle('hide', !show);
   if(!show) el.value = '';
 }
 
@@ -1285,6 +1352,22 @@ function addProdutoPDV(p){
   renderCarrinhoPDV();
 }
 
+function renderPDVQuickBtns(){
+  const box = document.getElementById('pdvQuickBtns');
+  if(!box) return;
+  const ativos = (allProdutos || []).filter(p => p.ativo !== false).slice(0,6);
+  if(!ativos.length){
+    box.innerHTML = '';
+    return;
+  }
+  box.innerHTML = ativos.map((p,idx)=>`<button class="pdvQuickBtn" type="button" onclick="window.addProdutoRapidoPDV(${idx})"><b>${escHtml(p.nome || 'Produto')}</b><span>${moneyPDV(p.preco || 0)}</span></button>`).join('');
+  window.__pdvQuickProdutos = ativos;
+}
+window.addProdutoRapidoPDV = function(i){
+  const p = (window.__pdvQuickProdutos || [])[i];
+  if(p) addProdutoPDV(p);
+};
+
 function renderPDVProdutos(){
   const box = document.getElementById('pdvProdutos');
   const sel = document.getElementById('pdvClienteSelect');
@@ -1294,6 +1377,7 @@ function renderPDVProdutos(){
   }
   hookPDVFilters();
   fillPDVCategorias();
+  renderPDVQuickBtns();
   if(!box) return;
   const busca = String(document.getElementById('pdvBusca')?.value || '').trim().toLowerCase();
   const catFiltro = String(document.getElementById('pdvFiltroCat')?.value || '').trim().toLowerCase();
@@ -1348,7 +1432,12 @@ function renderCarrinhoPDV(){
   const pagamentoEl = document.getElementById('pdvPagamento');
   if(pagamentoEl && !pagamentoEl.dataset.bound){
     pagamentoEl.dataset.bound = '1';
-    pagamentoEl.addEventListener('change', togglePDVTroco);
+    pagamentoEl.addEventListener('change', ()=> renderCarrinhoPDV());
+  }
+  const trocoInput = document.getElementById('pdvTroco');
+  if(trocoInput && !trocoInput.dataset.bound){
+    trocoInput.dataset.bound = '1';
+    trocoInput.addEventListener('input', ()=> updatePDVCashInfo(pdvCart.reduce((s,i)=> s + Number(i.preco||0), 0)));
   }
   togglePDVTroco();
   const totalEl = document.getElementById('pdvTotal');
@@ -1387,6 +1476,7 @@ function renderCarrinhoPDV(){
   if(itensResumoEl) itensResumoEl.textContent = String(qtdItens);
   if(prodResumoEl) prodResumoEl.textContent = String(grouped.length);
   if(totalResumoEl) totalResumoEl.textContent = moneyPDV(total);
+  updatePDVCashInfo(total);
 }
 
 window.removerItemPDV = function(i){
@@ -1422,6 +1512,7 @@ window.finalizarPDV = function(){
   const total = pdvCart.reduce((s,i)=> s + Number(i.preco||0), 0);
   const pagamento = getPDVPagamento();
   const troco = getPDVTroco();
+  const trocoCalc = calcTrocoPDV(total);
   const cli = clienteAtualPDV();
   if(cli && cli.nome){
     const lista = getClientesManuais();
@@ -1444,6 +1535,7 @@ window.finalizarPDV = function(){
     cliente: cli,
     pagamento,
     troco: pagamento === 'DINHEIRO' ? troco : '',
+    trocoCalculado: pagamento === 'DINHEIRO' ? trocoCalc : 0,
     itens: grouped.map(i=>({nome:i.nome, preco:Number(i.preco||0), qtd:i.qtd, totalLinha:Number(i.preco||0) * i.qtd})),
     total
   };
@@ -1451,7 +1543,7 @@ window.finalizarPDV = function(){
   if(getAutoPrint()){
     setTimeout(()=> window.reimprimirVendaPDV(venda), 80);
   }
-  alert('Venda finalizada. Total: ' + moneyPDV(total) + ' • Pagamento: ' + pagamento + (cli?.nome ? (' • Cliente: ' + cli.nome) : ''));
+  alert('Venda finalizada. Total: ' + moneyPDV(total) + ' • Pagamento: ' + pagamento + (pagamento === 'DINHEIRO' && trocoCalc ? (' • Troco: ' + moneyPDV(trocoCalc)) : '') + (cli?.nome ? (' • Cliente: ' + cli.nome) : ''));
   pdvCart = [];
   const trocoEl = document.getElementById('pdvTroco');
   if(trocoEl) trocoEl.value = '';
@@ -1464,14 +1556,17 @@ window.imprimirCupomPDV = function(){
   const grouped = getPDVCartGrouped();
   const pagamento = getPDVPagamento();
   const troco = getPDVTroco();
+  const total = pdvCart.reduce((s,i)=> s + Number(i.preco||0), 0);
+  const trocoCalc = calcTrocoPDV(total);
   const venda = {
     id: 'preview_' + Date.now(),
     data: new Date().toLocaleString('pt-BR'),
     cliente: cli,
     pagamento,
     troco: pagamento === 'DINHEIRO' ? troco : '',
+    trocoCalculado: pagamento === 'DINHEIRO' ? trocoCalc : 0,
     itens: grouped.map(i=>({nome:i.nome, preco:Number(i.preco||0), qtd:i.qtd, totalLinha:Number(i.preco||0) * i.qtd})),
-    total: pdvCart.reduce((s,i)=> s + Number(i.preco||0), 0)
+    total
   };
   imprimirVenda58mm(venda);
 };
