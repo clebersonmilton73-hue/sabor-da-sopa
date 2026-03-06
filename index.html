@@ -791,7 +791,7 @@ function calcularFreteLocalizacao(){
     btn.textContent = "⏳ Calculando frete...";
   }
 
-  navigator.geolocation.getCurrentPosition((pos)=>{
+  navigator.geolocation.getCurrentPosition(function(pos){
 
     const lat = pos.coords.latitude;
     const lon = pos.coords.longitude;
@@ -851,6 +851,8 @@ document.addEventListener('DOMContentLoaded', ()=>{
     });
   }
 });
+
+window.calcularFreteLocalizacao = calcularFreteLocalizacao;
 
 carregar();
 </script>
