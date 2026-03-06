@@ -343,7 +343,7 @@ header{
         </div>
         <input id="cliEnd" class="input" placeholder="Endereço completo">
         <button class="btn" type="button" onclick="calcularFreteLocalizacao()">📍 Calcular frete pela minha localização</button>
-        <div class="small">Frete calculado pela distância até a loja em Floriano.</div>
+        <div class="small">Frete calculado pela distância até a loja em Floriano. Se não abrir, publique em site HTTPS.</div>
       </div>
 
       <div>
@@ -774,9 +774,21 @@ function calcularFretePorKm(dist){
 
 function calcularFreteLocalizacao(){
 
-  if(!navigator.geolocation){
-    alert("Seu celular não suporta localização.");
+  const btn = document.querySelector('button[onclick="calcularFreteLocalizacao()"]');
+
+  if(!window.isSecureContext){
+    alert("A localização só funciona em site com HTTPS ou no localhost. Em arquivo local / EXE ela pode não abrir.");
     return;
+  }
+
+  if(!navigator.geolocation){
+    alert("Seu celular ou navegador não suporta localização.");
+    return;
+  }
+
+  if(btn){
+    btn.disabled = true;
+    btn.textContent = "⏳ Calculando frete...";
   }
 
   navigator.geolocation.getCurrentPosition((pos)=>{
@@ -793,8 +805,32 @@ function calcularFreteLocalizacao(){
 
     recalc();
 
-  }, ()=>{
-    alert("Permita a localização para calcular o frete.");
+    const frete = calcularFretePorKm(distanciaCliente);
+    toast(`📍 ${distanciaCliente.toFixed(1)} km • Frete ${moneyBR(frete)}`);
+
+    if(btn){
+      btn.disabled = false;
+      btn.textContent = "📍 Calcular frete pela minha localização";
+    }
+
+  }, (err)=>{
+    console.warn("Erro de geolocalização:", err);
+
+    let msg = "Não foi possível obter sua localização.";
+    if(err && err.code === 1) msg = "Você negou a permissão de localização.";
+    if(err && err.code === 2) msg = "Não foi possível detectar sua localização.";
+    if(err && err.code === 3) msg = "A localização demorou demais para responder.";
+
+    alert(msg);
+
+    if(btn){
+      btn.disabled = false;
+      btn.textContent = "📍 Calcular frete pela minha localização";
+    }
+  }, {
+    enableHighAccuracy: true,
+    timeout: 12000,
+    maximumAge: 0
   });
 }
 
