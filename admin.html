@@ -117,6 +117,7 @@
             <button class="navBtn" id="navPedidos" onclick="showView('pedidos')">🛵 Pedidos <span class="muted" id="countPedidos"></span></button>
             <button class="navBtn" id="navClientes" onclick="showView('clientes')">👥 Clientes <span class="muted" id="countClientes"></span></button>
             <button class="navBtn" id="navPDV" onclick="showView('pdv')">💰 Venda Presencial</button>
+            <button class="navBtn" id="navConfig" onclick="showView('config')">⚙️ Configurações</button>
             <div class="navTitle" style="margin-top:16px">Ações</div>
             <button class="navBtn" onclick="exportarCSV()">⬇️ Exportar CSV</button>
             <button class="navBtn" onclick="sair()">🚪 Sair</button>
@@ -172,6 +173,39 @@
               </div>
             </section>
 
+
+
+            <section class="section hide" id="viewConfig">
+              <div class="sectionHd" style="margin-top:16px">
+                <b>Configurações / Editar Perfil</b>
+                <div class="muted" style="font-size:12px">Altere nome da loja, telefone, endereço e logo.</div>
+              </div>
+              <div class="card">
+                <div style="display:grid;grid-template-columns:120px 1fr;gap:14px;align-items:start">
+                  <div>
+                    <div id="cfgLogoPreview" style="width:110px;height:110px;border-radius:16px;border:1px solid rgba(148,163,184,.16);display:flex;align-items:center;justify-content:center;overflow:hidden;background:rgba(2,6,23,.35)">
+                      <span class="muted">Sem logo</span>
+                    </div>
+                  </div>
+                  <div style="display:grid;gap:10px">
+                    <input id="cfgNomeLoja" class="input" placeholder="Nome da loja">
+                    <div class="row">
+                      <input id="cfgTelLoja" class="input" placeholder="Telefone / WhatsApp">
+                      <input id="cfgEndLoja" class="input" placeholder="Endereço da loja">
+                    </div>
+                    <input id="cfgLogoURL" class="input" placeholder="Link da logo (https://...)">
+                    <div class="row">
+                      <label class="btn ghost" style="display:flex;align-items:center;justify-content:center;gap:8px">
+                        🖼️ Escolher logo
+                        <input id="cfgLogoFile" type="file" accept="image/*" style="display:none">
+                      </label>
+                      <button class="btn ghost" onclick="removerLogoPerfil()">Remover logo</button>
+                      <button class="btn good" onclick="salvarPerfilConfig()">Salvar perfil</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </section>
 
             <section class="section hide" id="viewPDV">
               <div class="sectionHd" style="margin-top:16px">
@@ -452,6 +486,77 @@ function tocarNovoPedido(){
 
 
 
+
+
+const PERFIL_KEY = 'SABOR_PERFIL_ADMIN_HTML';
+
+function getPerfilLoja(){
+  try{
+    return JSON.parse(localStorage.getItem(PERFIL_KEY) || '{}') || {};
+  }catch(e){
+    return {};
+  }
+}
+function setPerfilLoja(perfil){
+  localStorage.setItem(PERFIL_KEY, JSON.stringify(perfil || {}));
+}
+function renderPerfilConfig(){
+  const perfil = getPerfilLoja();
+  const nomeEl = document.getElementById('cfgNomeLoja');
+  const telEl = document.getElementById('cfgTelLoja');
+  const endEl = document.getElementById('cfgEndLoja');
+  const logoUrlEl = document.getElementById('cfgLogoURL');
+  const prev = document.getElementById('cfgLogoPreview');
+
+  if(nomeEl) nomeEl.value = perfil.nome || '';
+  if(telEl) telEl.value = perfil.tel || '';
+  if(endEl) endEl.value = perfil.end || '';
+  if(logoUrlEl) logoUrlEl.value = perfil.logo || '';
+
+  if(prev){
+    if(perfil.logo){
+      prev.innerHTML = `<img src="${perfil.logo}" alt="logo" style="width:100%;height:100%;object-fit:cover">`;
+    }else{
+      prev.innerHTML = '<span class="muted">Sem logo</span>';
+    }
+  }
+}
+function atualizarNomeInterface(){
+  const perfil = getPerfilLoja();
+  const pill = document.getElementById('pill');
+  if(pill && perfil.nome){
+    pill.textContent = '✅ ' + perfil.nome;
+  }
+}
+window.salvarPerfilConfig = function(){
+  const perfil = {
+    nome: (document.getElementById('cfgNomeLoja')?.value || '').trim(),
+    tel: (document.getElementById('cfgTelLoja')?.value || '').trim(),
+    end: (document.getElementById('cfgEndLoja')?.value || '').trim(),
+    logo: (document.getElementById('cfgLogoURL')?.value || '').trim()
+  };
+  setPerfilLoja(perfil);
+  renderPerfilConfig();
+  atualizarNomeInterface();
+  alert('Perfil salvo.');
+};
+window.removerLogoPerfil = function(){
+  const perfil = getPerfilLoja();
+  perfil.logo = '';
+  setPerfilLoja(perfil);
+  renderPerfilConfig();
+};
+window.carregarLogoArquivo = function(file){
+  if(!file) return;
+  const fr = new FileReader();
+  fr.onload = ()=>{
+    const perfil = getPerfilLoja();
+    perfil.logo = String(fr.result || '');
+    setPerfilLoja(perfil);
+    renderPerfilConfig();
+  };
+  fr.readAsDataURL(file);
+};
 
 let pdvCart = [];
 let pdvClienteAtual = null;
@@ -833,23 +938,28 @@ function showView(v){
   const ve = document.getElementById('viewPedidos');
   const vc = document.getElementById('viewClientes');
   const vd = document.getElementById('viewPDV');
+  const vcfg = document.getElementById('viewConfig');
   const np = document.getElementById('navProdutos');
   const ne = document.getElementById('navPedidos');
   const nc = document.getElementById('navClientes');
   const nd = document.getElementById('navPDV');
+  const ncfg = document.getElementById('navConfig');
 
   vp?.classList.add('hide');
   ve?.classList.add('hide');
   vc?.classList.add('hide');
   vd?.classList.add('hide');
+  vcfg?.classList.add('hide');
   np?.classList.remove('active');
   ne?.classList.remove('active');
   nc?.classList.remove('active');
   nd?.classList.remove('active');
+  ncfg?.classList.remove('active');
 
   if(v==='pedidos'){ ve?.classList.remove('hide'); ne?.classList.add('active'); }
   else if(v==='clientes'){ vc?.classList.remove('hide'); nc?.classList.add('active'); }
-  else if(v==='pdv'){ vd?.classList.remove('hide'); nd?.classList.add('active'); renderPDVProdutos(); renderCarrinhoPDV(); }
+  else if(v==='pdv'){ vd?.classList.remove('hide'); nd?.classList.add('active'); renderPDVProdutos(); renderCarrinhoPDV(); renderPDVClienteSelect(); }
+  else if(v==='config'){ vcfg?.classList.remove('hide'); ncfg?.classList.add('active'); renderPerfilConfig(); }
   else { vp?.classList.remove('hide'); np?.classList.add('active'); }
 
   toggleSide(false);
@@ -871,7 +981,8 @@ function showView(v){
     produtos:'viewProdutos',
     pedidos:'viewPedidos',
     clientes:'viewClientes',
-    pdv:'viewPDV'
+    pdv:'viewPDV',
+    config:'viewConfig'
   };
   const id = views[v] || v;
   document.querySelectorAll('[id^="view"]').forEach(el=>el.style.display='none');
@@ -883,9 +994,16 @@ function showView(v){
   if(v==='pedidos') document.getElementById('navPedidos')?.classList.add('active');
   if(v==='clientes') document.getElementById('navClientes')?.classList.add('active');
   if(v==='pdv') document.getElementById('navPDV')?.classList.add('active');
+  if(v==='config') document.getElementById('navConfig')?.classList.add('active');
 }
 document.addEventListener('DOMContentLoaded',()=>{
   showView('produtos');
+  renderPerfilConfig();
+  atualizarNomeInterface();
+  const cfgFile = document.getElementById('cfgLogoFile');
+  if(cfgFile){
+    cfgFile.addEventListener('change', (e)=> carregarLogoArquivo(e.target.files && e.target.files[0]));
+  }
 });
 </script>
 
