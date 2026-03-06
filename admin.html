@@ -464,16 +464,14 @@ function gruposToText(grupos){
     return grupos
       .filter(g=>g && g.nome && Array.isArray(g.itens) && g.itens.length)
       .map(g=>`${g.nome} = ${g.itens.map(i=>`${i.nome}:${Number(i.preco||0)}`).join(", ")}`)
-      .join("
-");
+      .join("\n");
   }catch(e){ return ""; }
 }
 function parseGrupos(txt){
   const bruto = String(txt||"").trim();
   if(!bruto) return [];
 
-  const linhas = bruto.split(/
-+/).map(x=>x.trim()).filter(Boolean);
+  const linhas = bruto.split(/\n+/).map(x=>x.trim()).filter(Boolean);
   const grupos = [];
 
   for(const linha of linhas){
