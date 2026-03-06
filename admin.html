@@ -31,12 +31,12 @@
   th{color:var(--muted);font-size:12px}
   td small{color:var(--muted);font-weight:800}
   .danger{color:var(--bad)} .ok{color:var(--good)}
-  .prodGrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px}
+  .prodGrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px}
   .prodCard{background:rgba(2,6,23,.55);border:1px solid var(--line);border-radius:16px;overflow:hidden;display:grid}
-  .prodImg{width:100%;height:150px;object-fit:cover;background:rgba(2,6,23,.35)}
-  .prodPad{padding:12px;display:grid;gap:8px}
+  .prodImg{width:100%;height:100px;object-fit:cover;background:rgba(2,6,23,.35)}
+  .prodPad{padding:10px;display:grid;gap:6px}
   .prodTop{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}
-  .prodName{font-size:14px;font-weight:1000;line-height:1.2}
+  .prodName{font-size:13px;font-weight:1000;line-height:1.2}
   .prodMeta{color:var(--muted);font-weight:800;font-size:12px}
   .prodPrice{font-weight:1100}
   .prodActions{display:flex;gap:8px;flex-wrap:wrap}
@@ -149,7 +149,10 @@
               </div>
               <div class="sectionHd" style="margin-top:16px">
                 <b>Pedidos</b>
-                <div class="muted" style="font-size:12px">Status + WhatsApp automático.</div>
+                <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+                  <div class="muted" style="font-size:12px">Status + WhatsApp automático.</div>
+                  <button class="btn bad sm" onclick="limparTodosPedidos()">🧹 Limpar pedidos</button>
+                </div>
               </div>
               <div class="card" style="overflow:auto">
                 <table>
@@ -234,8 +237,13 @@
                     </div>
 
                     <b style="display:block;margin-top:10px">Carrinho</b>
-                    <div id="pdvCarrinho" style="margin-top:10px;display:grid;gap:8px"></div>
-                    <div style="margin-top:12px;font-weight:1000">Total: R$ <span id="pdvTotal">0.00</span></div>
+                    <div id="pdvCarrinho" style="margin-top:10px;display:grid;gap:8px;max-height:320px;overflow:auto"></div>
+                    <div class="card" style="margin-top:12px;padding:12px">
+                      <div style="display:flex;justify-content:space-between;align-items:center;font-weight:1000">
+                        <span>Total</span><span>R$ <span id="pdvTotal">0.00</span></span>
+                      </div>
+                      <div class="muted" style="font-size:12px;margin-top:6px">Carrinho melhorado para venda presencial.</div>
+                    </div>
                     <div style="display:grid;gap:8px;margin-top:12px">
                       <button class="btn ghost" onclick="salvarClientePDV()">💾 Salvar cliente</button>
                       <button class="btn good" onclick="finalizarPDV()">Finalizar Venda</button>
@@ -730,11 +738,11 @@ function renderCarrinhoPDV(){
     row.style.padding = '10px';
     row.innerHTML = `
       <div style="display:flex;justify-content:space-between;gap:10px;align-items:center">
-        <div>
-          <div style="font-weight:1000">${p.nome}</div>
+        <div style="min-width:0">
+          <div style="font-weight:1000;font-size:13px">${p.nome}</div>
           <div class="muted" style="font-size:12px">R$ ${Number(p.preco||0).toFixed(2)}</div>
         </div>
-        <button class="btn ghost sm" onclick="window.removerItemPDV(${i})">x</button>
+        <button class="btn bad sm" onclick="window.removerItemPDV(${i})">🗑</button>
       </div>`;
     box.appendChild(row);
   });
@@ -890,6 +898,7 @@ function renderPedidos(docs){
             <button class="btn good" onclick="window.__status('${d.id}','ENTREGUE', '${String(tel).replace(/'/g,"\\'")}', '${String(nome).replace(/'/g,"\\'")}')">✅ Entregue</button>
           </div>
           <button class="btn ghost" onclick="window.__zap('${String(tel).replace(/'/g,"\\'")}', '${String(nome).replace(/'/g,"\\'")}')">💬 Abrir WhatsApp</button>
+          <button class="btn bad" onclick="window.__delPedido('${d.id}')">🗑 Apagar</button>
         </div>
       </td>`;
     tb.appendChild(tr);
@@ -932,6 +941,32 @@ async function exportarCSV(){
 window.entrar = entrar; window.sair = sair; window.salvarProduto = salvarProduto; window.exportarCSV = exportarCSV;
 window.__status = atualizarStatusPedido;
 window.__zap = (tel, nome)=> abrirWhats(tel, `Olá ${nome || 'cliente'}! 🍲`);
+
+window.__delPedido = async function(id){
+  if(!confirm('Apagar esse pedido?')) return;
+  try{
+    await deleteDoc(doc(db,'pedidos', String(id)));
+    alert('Pedido apagado');
+  }catch(e){
+    console.error(e);
+    alert('Erro ao apagar pedido');
+  }
+};
+
+window.limparTodosPedidos = async function(){
+  if(!confirm('Apagar TODOS os pedidos online?')) return;
+  try{
+    const snap = await getDocs(collection(db,'pedidos'));
+    for(const d of snap.docs){
+      await deleteDoc(doc(db,'pedidos', d.id));
+    }
+    alert('Todos os pedidos foram apagados.');
+  }catch(e){
+    console.error(e);
+    alert('Erro ao limpar pedidos.');
+  }
+};
+
 
 function showView(v){
   const vp = document.getElementById('viewProdutos');
