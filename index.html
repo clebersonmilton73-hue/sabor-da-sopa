@@ -45,7 +45,10 @@ header{position:sticky;top:0;z-index:20;background:rgba(0,0,0,.14);backdrop-filt
 .itemInfo{min-width:0}
 .itemName{font-size:16px;font-weight:1100;line-height:1.2}
 .itemPrice{margin-top:4px;font-weight:1100;color:#fff7d1}
-.extrasBox{margin-top:8px;display:grid;gap:6px}
+.extrasBox{margin-top:8px;display:grid;gap:8px}
+.extraGroup{padding:10px;border:1px solid rgba(255,255,255,.14);border-radius:14px;background:rgba(255,255,255,.06)}
+.extraGroupTitle{font-size:12px;font-weight:1100;color:#fff7d1;margin-bottom:6px}
+.extraHint{font-size:11px;color:rgba(255,255,255,.70);margin-top:4px}
 .extraOpt{display:flex;align-items:center;gap:8px;font-size:12px;font-weight:800;color:#fff}
 .extraOpt input{transform:scale(1.05)}
 .itemActions{margin-top:10px;display:flex;justify-content:flex-end}
@@ -186,7 +189,18 @@ let cart = [];
 let entregaTipo = 'ENTREGA';
 
 function moneyBR(v){ return Number(v||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'}); }
-function slugExtras(extras){ return (extras||[]).map(x=>`${x.nome}:${x.preco}`).sort().join('|'); }
+function escAttr(v){ return String(v||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function normalizeGroups(prod){
+  if(!Array.isArray(prod?.grupos) || !prod.grupos.length) return [];
+  return prod.grupos.map((g,idx)=>({
+    nome: String(g?.nome || `Grupo ${idx+1}`),
+    itens: Array.isArray(g?.itens) ? g.itens.filter(Boolean).map(it => ({
+      nome: String(it?.nome || ''),
+      preco: Number(it?.preco || 0)
+    })).filter(it => it.nome) : []
+  })).filter(g => g.itens.length);
+}
+function slugExtras(extras){ return (extras||[]).map(x=>`${x.grupo||''}:${x.nome}:${x.preco}`).sort().join('|'); }
 function toast(msg){
   const t = document.getElementById('toast');
   t.textContent = msg;
@@ -213,7 +227,11 @@ window.setEntrega = setEntrega;
 
 function getSelectedExtras(prodId){
   const cbs = Array.from(document.querySelectorAll(`input[data-extra-prod="${prodId}"]:checked`));
-  return cbs.map(cb => ({ nome: cb.dataset.nome, preco: Number(cb.dataset.preco || 0) }));
+  return cbs.map(cb => ({
+    grupo: cb.dataset.grupo || 'Adicionais',
+    nome: cb.dataset.nome,
+    preco: Number(cb.dataset.preco || 0)
+  }));
 }
 
 function addToCart(prodId){
@@ -289,7 +307,7 @@ function renderCart(){
         </div>
         <div style="font-weight:1100">${moneyBR(lineUnit(it) * it.qtd)}</div>
       </div>
-      ${(it.extras||[]).length ? `<div class="cartExtras">${it.extras.map(e => `+ ${e.nome} (${moneyBR(e.preco)})`).join('<br>')}</div>` : ''}
+      ${(it.extras||[]).length ? `<div class="cartExtras">${it.extras.map(e => `+ ${(e.grupo ? `<b>${e.grupo}:</b> ` : '')}${e.nome} (${moneyBR(e.preco)})`).join('<br>')}</div>` : ''}
       <div class="qtyLine">
         <div class="small">Quantidade</div>
         <div class="qtyBox">
@@ -332,18 +350,23 @@ function renderCatalog(){
       <h3 class="catTitle">${cat}</h3>
       <div class="grid">
         ${itens.map(p => {
-          const extras = Array.isArray(p.grupos) ? (p.grupos.flatMap(g => g?.itens || [])) : [];
+          const gruposExtras = normalizeGroups(p);
           return `
             <div class="item">
-              ${p.fotoURL ? `<img src="${p.fotoURL}" alt="${(p.nome||'').replace(/"/g,'&quot;')}">` : `<div class="noimg">🍲</div>`}
+              ${p.fotoURL ? `<img src="${p.fotoURL}" alt="${escAttr(p.nome||'')}">` : `<div class="noimg">🍲</div>`}
               <div class="itemInfo">
                 <div class="itemName">${p.nome || ''}</div>
                 <div class="itemPrice">${moneyBR(p.preco || 0)}</div>
-                ${extras.length ? `<div class="extrasBox">${extras.map((e,idx) => `
-                  <label class="extraOpt">
-                    <input type="checkbox" data-extra-prod="${p.id}" data-nome="${String(e.nome||'').replace(/"/g,'&quot;')}" data-preco="${Number(e.preco||0)}" id="ex_${p.id}_${idx}">
-                    <span>${e.nome} (+${moneyBR(e.preco||0)})</span>
-                  </label>
+                ${gruposExtras.length ? `<div class="extrasBox">${gruposExtras.map((g,gidx) => `
+                  <div class="extraGroup">
+                    <div class="extraGroupTitle">${g.nome}</div>
+                    ${g.itens.map((e,idx) => `
+                      <label class="extraOpt">
+                        <input type="checkbox" data-extra-prod="${p.id}" data-grupo="${escAttr(g.nome)}" data-nome="${escAttr(e.nome)}" data-preco="${Number(e.preco||0)}" id="ex_${p.id}_${gidx}_${idx}">
+                        <span>${e.nome} (+${moneyBR(e.preco||0)})</span>
+                      </label>
+                    `).join('')}
+                  </div>
                 `).join('')}</div>` : `<div class="small" style="margin-top:8px">Sem adicionais</div>`}
                 <div class="itemActions"><button class="btn" onclick="addToCart(${p.id})">Adicionar</button></div>
               </div>
@@ -422,7 +445,7 @@ async function finalizar(){
   linhas.push('*Pedido:*');
   itens.forEach(i => {
     linhas.push(`- ${i.nome} x${i.qtd} (${moneyBR(i.totalLinha)})`);
-    (i.extras || []).forEach(ex => linhas.push(`  + ${ex.nome} (${moneyBR(ex.preco)})`));
+    (i.extras || []).forEach(ex => linhas.push(`  + ${ex.grupo ? ex.grupo + ': ' : ''}${ex.nome} (${moneyBR(ex.preco)})`));
   });
   linhas.push('');
   linhas.push(`*Pagamento:* ${metodo}`);
