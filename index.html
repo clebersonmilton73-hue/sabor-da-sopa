@@ -343,6 +343,7 @@ header{
         </div>
         <input id="cliEnd" class="input" placeholder="Endereço completo">
         <button class="btn" type="button" onclick="calcularFreteLocalizacao()">📍 Calcular frete pela minha localização</button>
+        <div class="small">Frete calculado pela distância até a loja em Floriano.</div>
       </div>
 
       <div>
@@ -744,8 +745,8 @@ async function carregar(){
 let distanciaCliente = 0;
 
 const LOJA = {
-  lat: -8.1636,
-  lng: -35.0146
+  lat: -8.1022646,
+  lng: -34.9901666
 };
 
 function calcularDistancia(lat1, lon1, lat2, lon2){
