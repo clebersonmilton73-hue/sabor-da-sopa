@@ -1,504 +1,87 @@
+
 <!doctype html>
 <html lang="pt-br">
 <head>
-<meta charset="utf-8"/>
-<meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>Admin - Sabor da Sopa</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Sabor da Sopa - Admin</title>
+
 <style>
-  :root{
-    --bg:#050814; --card:#0f172a; --line:rgba(148,163,184,.16); --txt:#e2e8f0; --muted:#94a3b8;
-    --good:#22c55e; --bad:#ef4444; --warn:#f59e0b; --info:#3b82f6; --shadow:0 12px 28px rgba(0,0,0,.35); --radius:18px;
-  }
-  *{box-sizing:border-box}
-  body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;background:linear-gradient(180deg,#07101f,#050814);color:var(--txt)}
-  .wrap{width:100%;max-width:100%;margin:0;padding:0}
-  .panel{background:rgba(15,23,42,.86);border:1px solid var(--line);border-radius:0;box-shadow:var(--shadow);overflow:hidden;min-height:100vh}
-  .hd{padding:14px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;gap:10px}
-  .hd b{font-size:14px}
-  .grid{padding:0;display:grid;grid-template-columns:1fr}
-  .card{background:rgba(2,6,23,.55);border:1px solid var(--line);border-radius:16px;padding:12px}
-  .row{display:flex;gap:10px;flex-wrap:wrap}.row>*{flex:1}
-  .input,.select{width:100%;background:rgba(2,6,23,.55);border:1px solid var(--line);border-radius:16px;padding:14px 16px;color:var(--txt);font-weight:900;font-size:15px}
-  .btn{border:none;border-radius:16px;padding:14px 16px;font-weight:1000;cursor:pointer;font-size:15px}
-  .btn.primary{background:linear-gradient(180deg,#60a5fa,#3b82f6);color:#081426}
-  .btn.good{background:linear-gradient(180deg,#34d399,#22c55e);color:#05210f}
-  .btn.ghost{background:rgba(148,163,184,.10);border:1px solid var(--line);color:var(--txt)}
-  .btn.warn{background:linear-gradient(180deg,#fbbf24,#f59e0b);color:#2c1600}
-  .muted{color:var(--muted);font-weight:800}
-  .pill{display:inline-flex;align-items:center;gap:8px;background:rgba(148,163,184,.10);border:1px solid var(--line);padding:8px 10px;border-radius:999px;font-weight:900}
-  table{width:100%;border-collapse:collapse}
-  th,td{border-bottom:1px solid rgba(148,163,184,.14);padding:14px 10px;text-align:left;font-weight:900;vertical-align:top}
-  th{color:var(--muted);font-size:12px}
-  td small{color:var(--muted);font-weight:800}
-  .danger{color:var(--bad)} .ok{color:var(--good)}
-  .prodGrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px}
-  .prodCard{background:rgba(2,6,23,.55);border:1px solid var(--line);border-radius:16px;overflow:hidden;display:grid}
-  .prodImg{width:100%;height:150px;object-fit:cover;background:rgba(2,6,23,.35)}
-  .prodPad{padding:12px;display:grid;gap:8px}
-  .prodTop{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}
-  .prodName{font-size:14px;font-weight:1000;line-height:1.2}
-  .prodMeta{color:var(--muted);font-weight:800;font-size:12px}
-  .prodPrice{font-weight:1100}
-  .prodActions{display:flex;gap:8px;flex-wrap:wrap}
-  .btn.sm{padding:10px 12px;border-radius:14px;font-size:14px}
-  .mobBar{display:none}
-  .erpShell{display:flex;min-height:calc(100vh - 0px);gap:0}
-  .side{width:320px;flex:0 0 320px;border-right:1px solid rgba(148,163,184,.14);background:rgba(2,6,23,.35);padding:18px 16px;position:sticky;top:0;align-self:flex-start;height:calc(100vh - 0px);overflow:auto}
-  .main{flex:1;min-width:0;padding:18px 18px 26px}
-  .navTitle{font-size:12px;color:var(--muted);font-weight:900;margin:4px 0 10px}
-  .navBtn{width:100%;text-align:left;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px;border-radius:14px;background:rgba(148,163,184,.08);border:1px solid rgba(148,163,184,.12);color:var(--txt);font-weight:1000;cursor:pointer}
-  .navBtn + .navBtn{margin-top:10px}
-  .navBtn.active{background:rgba(96,165,250,.18);border-color:rgba(96,165,250,.32)}
-  .topbar{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px;border:1px solid rgba(148,163,184,.14);background:rgba(2,6,23,.25);border-radius:16px}
-  .topbar .actions{display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end}
-  .section{margin-top:16px}.sectionHd{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;margin-bottom:10px}.sectionHd b{font-size:14px}
-  .hide{display:none !important}
-  .statusP{display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border-radius:999px;border:1px solid rgba(148,163,184,.14);background:rgba(148,163,184,.08);font-weight:1000;font-size:12px}
-  .statusP.on{background:rgba(34,197,94,.16);border-color:rgba(34,197,94,.30)}
-  .statusP.off{background:rgba(239,68,68,.12);border-color:rgba(239,68,68,.28)}
-  .statusPedido{display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border-radius:999px;border:1px solid rgba(148,163,184,.14);font-size:12px;font-weight:1000}
-  .status-novo{background:rgba(59,130,246,.16);border-color:rgba(59,130,246,.32);color:#bfdbfe}
-  .status-preparando{background:rgba(245,158,11,.16);border-color:rgba(245,158,11,.32);color:#fde68a}
-  .status-saiu{background:rgba(34,197,94,.16);border-color:rgba(34,197,94,.30);color:#bbf7d0}
-  .status-entregue{background:rgba(148,163,184,.14);border-color:rgba(148,163,184,.26);color:#e2e8f0}
-  .searchRow{display:flex;gap:10px;flex-wrap:wrap}.searchRow > *{flex:1;min-width:160px}
-  .stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-top:12px}
-  .stat{padding:14px;border-radius:16px;background:rgba(2,6,23,.55);border:1px solid var(--line)}
-  .stat .v{font-size:24px;font-weight:1100;margin-top:6px}
-  .pedActions{display:grid;gap:8px}
-  .pedBtns{display:flex;gap:6px;flex-wrap:wrap}
-  .pedBtns .btn{padding:9px 10px;font-size:12px;border-radius:12px}
-  @media(max-width:980px){
-    .side{position:fixed;left:0;top:0;height:100vh;z-index:40;transform:translateX(-102%);transition:.18s ease;box-shadow:0 20px 50px rgba(0,0,0,.55)}
-    .side.open{transform:translateX(0)}
-    .main{padding:14px}
-    .mobBar{display:flex;gap:10px;align-items:center;margin-bottom:10px}
-    .mobBtn{padding:12px 14px;border-radius:14px;border:1px solid rgba(148,163,184,.14);background:rgba(148,163,184,.10);color:var(--txt);font-weight:1000;cursor:pointer}
-    .overlay{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:35;display:none}
-    .overlay.show{display:block}
-    .topbar{flex-direction:column;align-items:stretch}.topbar .actions{justify-content:stretch}.topbar .actions .btn{width:100%}
-    .card{padding:14px}.row{flex-direction:column}.row>*{flex:unset}.prodGrid{grid-template-columns:1fr;gap:12px}
-    .prodPad{padding:14px}.prodActions{display:grid;grid-template-columns:1fr 1fr;gap:10px}.btn.sm{width:100%}.side{width:86vw;max-width:360px}
-    .stats{grid-template-columns:1fr}
-  }
-  @media(max-width:520px){.prodGrid{grid-template-columns:1fr}.prodImg{height:160px}}
-  @media(max-width:420px){.prodActions{grid-template-columns:1fr}}
+body{margin:0;font-family:Arial;background:#0b1220;color:#e5eefc}
+.layout{display:flex;min-height:100vh}
+.sidebar{
+width:240px;background:#020617;border-right:1px solid rgba(148,163,184,.15);
+padding:20px;box-sizing:border-box
+}
+.sidebar h2{margin:0 0 20px;font-size:18px}
+.menu button{
+width:100%;padding:12px;margin-bottom:8px;border:none;border-radius:10px;
+background:#111827;color:#cbd5f5;font-weight:700;cursor:pointer;text-align:left
+}
+.menu button:hover{background:#1f2937}
+.content{flex:1;padding:20px}
+.section{display:none}
+.section.active{display:block}
+.card{
+background:#111827;border:1px solid rgba(148,163,184,.15);
+border-radius:12px;padding:16px;margin-bottom:16px
+}
 </style>
-</head>
-<body>
-<div class="wrap">
-  <div class="panel">
-    <div class="hd">
-      <div>
-        <b>🛡️ Admin - Sabor da Sopa</b>
-        <div class="muted" style="font-size:12px">Login com Firebase Auth + status de pedido + WhatsApp automático</div>
-      </div>
-      <div class="pill" id="pill">🔒 desconectado</div>
-    </div>
-
-    <div class="grid">
-      <div class="card" id="loginCard">
-        <b>Entrar</b>
-        <div class="muted" style="margin-top:6px;font-size:12px">Use seu email/senha do Firebase Authentication.</div>
-        <div style="margin-top:12px;display:grid;gap:10px">
-          <input id="user" class="input" placeholder="Email" autocomplete="username">
-          <input id="pass" class="input" type="password" placeholder="Senha" autocomplete="current-password">
-          <button class="btn primary" onclick="entrar()">Entrar</button>
-          <div class="muted" id="lockInfo" style="font-size:12px"></div>
-        </div>
-      </div>
-
-      <div class="card" id="panelCard" style="display:none">
-        <div class="erpShell">
-          <div class="overlay" id="ovl" onclick="toggleSide(false)"></div>
-          <aside class="side" id="side">
-            <div class="navTitle">Navegação</div>
-            <button class="navBtn active" id="navProdutos" onclick="showView('produtos')">🧾 Produtos <span class="muted" id="countProdutos"></span></button>
-            <button class="navBtn" id="navPedidos" onclick="showView('pedidos')">🛵 Pedidos <span class="muted" id="countPedidos"></span></button>
-            <div class="navTitle" style="margin-top:16px">Ações</div>
-            <button class="navBtn" onclick="exportarCSV()">⬇️ Exportar CSV</button>
-            <button class="navBtn" onclick="sair()">🚪 Sair</button>
-            <div class="muted" style="font-size:12px;margin-top:14px;line-height:1.35">Dica: no celular, toque em “Menu” para abrir a lateral.</div>
-          </aside>
-
-          <main class="main">
-            <div class="mobBar">
-              <button class="mobBtn" onclick="toggleSide(true)">☰ Menu</button>
-              <div class="muted" style="font-weight:900">Admin</div>
-            </div>
-
-            <div class="topbar">
-              <div>
-                <b>Painel</b>
-                <div class="muted" style="font-size:12px">Gerencie produtos, pedidos e envie avisos automáticos no WhatsApp.</div>
-              </div>
-              <div class="actions">
-                <button class="btn ghost" onclick="exportarCSV()">Exportar CSV (pedidos)</button>
-                <button class="btn ghost" onclick="sair()">Sair</button>
-              </div>
-            </div>
-
-            <section class="section hide" id="viewPedidos">
-              <div class="stats">
-                <div class="stat"><div class="muted">Pedidos hoje</div><div class="v" id="statPedidos">0</div></div>
-                <div class="stat"><div class="muted">Faturamento hoje</div><div class="v" id="statFat">R$ 0,00</div></div>
-                <div class="stat"><div class="muted">Pedidos listados</div><div class="v" id="statListados">0</div></div>
-              </div>
-              <div class="sectionHd" style="margin-top:16px">
-                <b>Pedidos</b>
-                <div class="muted" style="font-size:12px">Status + WhatsApp automático.</div>
-              </div>
-              <div class="card" style="overflow:auto">
-                <table>
-                  <thead><tr><th>Data</th><th>Cliente</th><th>Total</th><th>Status</th><th>Ações</th></tr></thead>
-                  <tbody id="tbPed"></tbody>
-                </table>
-              </div>
-            </section>
-
-            <section class="section" id="viewProdutos">
-              <div class="card" style="margin-top:12px">
-                <div class="sectionHd" style="margin:0 0 8px 0">
-                  <b>Buscar / Filtrar</b>
-                  <div class="muted" style="font-size:12px">Encontra produtos rápido</div>
-                </div>
-                <div class="searchRow">
-                  <input id="qBusca" class="input" placeholder="Buscar por nome...">
-                  <input id="qCat" class="input" placeholder="Filtrar por categoria (opcional)">
-                  <select id="qAtivo" class="select">
-                    <option value="TODOS">Todos</option>
-                    <option value="ATIVOS">Somente ativos</option>
-                    <option value="INATIVOS">Somente inativos</option>
-                  </select>
-                </div>
-              </div>
-
-              <div class="sectionHd">
-                <b>Produtos</b>
-                <div class="muted" style="font-size:12px">Somente admin edita (rules).</div>
-              </div>
-
-              <div class="card" style="margin-bottom:14px">
-                <b>Criar / Editar produto</b>
-                <div style="margin-top:12px" class="row">
-                  <input id="pId" class="input" placeholder="ID numérico (ex: 101)">
-                  <input id="pCat" class="input" placeholder="Categoria">
-                </div>
-                <div style="margin-top:10px" class="row">
-                  <input id="pNome" class="input" placeholder="Nome do produto">
-                  <input id="pPreco" class="input" placeholder="Preço" inputmode="decimal">
-                </div>
-                <div style="margin-top:10px">
-                  <input id="pFotoURL" class="input" placeholder="Link direto da imagem (https://... .jpg/.png/.webp)">
-                  <textarea id="pGrupos" class="input" placeholder="Grupos de extras:&#10;Adicionais = queijo:2, bacon:3&#10;Complementos = ovo:2, calabresa:4"></textarea>
-                </div>
-                <div style="margin-top:10px" class="row">
-                  <label class="muted" style="display:flex;align-items:center;gap:10px;font-size:13px">
-                    <input type="checkbox" id="pAtivo" checked style="transform:scale(1.1)"> Produto ativo (aparece no cardápio)
-                  </label>
-                </div>
-                <div style="margin-top:10px">
-                  <div class="muted" style="font-size:12px;margin-top:6px">Cada linha é um grupo. Ex: Adicionais = queijo:2, bacon:3</div>
-                </div>
-                <div style="margin-top:10px" class="row">
-                  <input id="pOrd" class="input" placeholder="Ordem (opcional)" inputmode="numeric">
-                  <button class="btn good" onclick="salvarProduto()">Salvar/Atualizar</button>
-                </div>
-              </div>
-
-              <div id="prodCards" class="prodGrid"></div>
-            </section>
-          </main>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
-
-<script type="module">
-import { firebaseConfig, ADMIN_EMAILS } from "./firebase-config.js";
-import { initializeApp } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-app.js";
-import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-auth.js";
-import { getFirestore, collection, doc, setDoc, deleteDoc, getDocs, getDoc, query, orderBy, limit, updateDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-firestore.js";
-
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db = getFirestore(app);
-const pill = document.getElementById("pill");
-const loginCard = document.getElementById("loginCard");
-const panelCard = document.getElementById("panelCard");
-const lockInfo = document.getElementById("lockInfo");
-const LOCK_KEY = "SABOR_ADMIN_LOCK_v2";
-let stopPedidos = null;
-let allProdutos = [];
-let lastSeenPedidoIds = new Set();
-let firstPedidosLoad = true;
-
-function now(){ return Date.now(); }
-function getLock(){ try{ return JSON.parse(localStorage.getItem(LOCK_KEY) || "{}"); }catch(e){ return {}; } }
-function setLock(o){ localStorage.setItem(LOCK_KEY, JSON.stringify(o||{})); }
-function isLocked(){ const l = getLock(); return !!l.until && now() < l.until; }
-function lockMsg(){ const l = getLock(); if(!l.until) return ""; const sec = Math.max(0, Math.ceil((l.until - now())/1000)); return sec ? `Bloqueado por ${sec}s (após 3 tentativas).` : ""; }
-function resetAttempts(){ setLock({attempts:0, until:0}); }
-function showLockUI(){ lockInfo.textContent = lockMsg(); lockInfo.className = isLocked() ? "muted danger" : "muted"; }
-setInterval(showLockUI, 500);
-
-async function entrar(){
-  if(isLocked()) return alert(lockMsg());
-  const email = (document.getElementById("user").value||"").trim();
-  const pass  = (document.getElementById("pass").value||"").trim();
-  if(!email || !pass) return alert("Preencha email e senha.");
-  try{ await signInWithEmailAndPassword(auth, email, pass); resetAttempts(); }
-  catch(e){
-    console.warn(e);
-    const l = getLock();
-    const attempts = (l.attempts||0) + 1;
-    if(attempts >= 3){ setLock({attempts, until: now() + 15*60*1000}); alert("Muitas tentativas. Bloqueado por 15 minutos."); }
-    else { setLock({attempts, until: 0}); alert("Login inválido. Tentativas: " + attempts + "/3"); }
-  }
-}
-async function sair(){ if(stopPedidos) stopPedidos(); await signOut(auth); }
-function setUI(user){ if(user){ pill.textContent = "✅ logado: " + user.email; loginCard.style.display="none"; panelCard.style.display=""; } else { pill.textContent = "🔒 desconectado"; loginCard.style.display=""; panelCard.style.display="none"; } }
-
-function parseGrupos(texto){
-  const bruto = String(texto||"").trim();
-  if(!bruto) return [];
-  const linhas = bruto.split(/\n+/).map(x=>x.trim()).filter(Boolean);
-  const grupos = [];
-  for(const linha of linhas){
-    const sep = linha.includes("=") ? "=" : ":";
-    const i = linha.indexOf(sep);
-    if(i < 0) continue;
-    const nomeGrupo = linha.slice(0,i).trim();
-    const resto = linha.slice(i+1).trim();
-    const itens = resto.split(",").map(p=>p.trim()).filter(Boolean).map(par=>{
-      const idx = par.lastIndexOf(":");
-      if(idx < 0) return {nome: par.trim(), preco: 0};
-      return {nome: par.slice(0,idx).trim(), preco: Number(String(par.slice(idx+1)).replace(",",".")) || 0};
-    }).filter(i=>i.nome);
-    if(nomeGrupo && itens.length) grupos.push({nome:nomeGrupo,itens});
-  }
-  if(grupos.length) return grupos;
-  const itens = bruto.split(",").map(i=>i.trim()).filter(Boolean).map(par=>{
-    const idx = par.lastIndexOf(":");
-    if(idx < 0) return {nome: par.trim(), preco: 0};
-    return {nome: par.slice(0,idx).trim(), preco: Number(String(par.slice(idx+1)).replace(",",".")) || 0};
-  }).filter(i=>i.nome);
-  return itens.length ? [{nome:"Adicionais", itens}] : [];
-}
-function gruposToText(grupos){
-  if(!Array.isArray(grupos) || !grupos.length) return "";
-  return grupos.map(g=> `${g.nome || 'Adicionais'} = ${(g.itens||[]).map(i=>`${i.nome}:${Number(i.preco||0)}`).join(', ')}`).join("\n");
-}
-
-async function carregarProdutos(){
-  const box = document.getElementById("prodCards"); if(!box) return; box.innerHTML = "";
-  const snap = await getDocs(query(collection(db,"produtos"), orderBy("ord","asc"), limit(500)));
-  allProdutos = snap.docs.map(d=>({docId:d.id, ...d.data()}));
-  const cp = document.getElementById('countProdutos'); if(cp) cp.textContent = `(${allProdutos.length})`;
-  const q = (document.getElementById("qBusca")?.value || "").trim().toLowerCase();
-  const qCat = (document.getElementById("qCat")?.value || "").trim().toLowerCase();
-  const qAtivo = (document.getElementById("qAtivo")?.value || "TODOS");
-  const filtrado = allProdutos.filter(p=>{
-    const nome = String(p.nome||"").toLowerCase(); const cat = String(p.cat||"").toLowerCase(); const ativo = (p.ativo !== false);
-    if(q && !nome.includes(q)) return false; if(qCat && !cat.includes(qCat)) return false; if(qAtivo==="ATIVOS" && !ativo) return false; if(qAtivo==="INATIVOS" && ativo) return false; return true;
-  });
-  filtrado.forEach(p=>{
-    const foto = p.fotoURL || ""; const nome = p.nome || ""; const cat = p.cat || ""; const preco = Number(p.preco||0); const ativo = (p.ativo !== false);
-    const card = document.createElement("div"); card.className = "prodCard";
-    card.innerHTML = `
-      ${foto ? `<img class="prodImg" src="${foto}" alt="foto">` : `<div class="prodImg"></div>`}
-      <div class="prodPad">
-        <div class="prodTop"><div><div class="prodName">${nome}</div><div class="prodMeta">ID: ${p.docId} • ${cat}</div></div><div class="prodPrice">R$ ${preco.toFixed(2)}</div></div>
-        <div style="display:flex;align-items:center;justify-content:space-between;gap:10px"><span class="statusP ${ativo ? 'on' : 'off'}">${ativo ? '✅ Ativo' : '⛔ Inativo'}</span><button class="btn ghost sm" onclick="window.__toggleAtivo('${p.docId}', ${ativo ? 'true' : 'false'})">${ativo ? 'Desativar' : 'Ativar'}</button></div>
-        <div class="prodActions"><button class="btn ghost sm" onclick="window.__edit('${p.docId}')">Editar</button><button class="btn ghost sm" onclick="window.__del('${p.docId}')">Excluir</button></div>
-      </div>`;
-    box.appendChild(card);
-  });
-  window.__toggleAtivo = async (id, atual)=>{ try{ await updateDoc(doc(db,"produtos", String(id)), {ativo: !atual}); await carregarProdutos(); }catch(e){ console.error(e); alert("Erro ao alterar ativo. Verifique Rules."); } };
-  window.__del = async (id)=>{ if(!confirm("Excluir produto "+id+"?")) return; await deleteDoc(doc(db,"produtos", String(id))); await carregarProdutos(); };
-  window.__edit = async (id)=>{
-    const snap = await getDoc(doc(db,"produtos", String(id)));
-    const p = snap.exists() ? snap.data() : {};
-    document.getElementById("pId").value = id;
-    document.getElementById("pCat").value = p.cat||"";
-    document.getElementById("pNome").value = p.nome||"";
-    document.getElementById("pPreco").value = p.preco||"";
-    document.getElementById("pFotoURL").value = p.fotoURL||"";
-    document.getElementById("pAtivo").checked = (p.ativo !== false);
-    document.getElementById("pOrd").value = p.ord ?? "";
-    document.getElementById("pGrupos").value = gruposToText(p.grupos || []);
-    window.scrollTo({top:0,behavior:"smooth"});
-  };
-}
-
-async function salvarProduto(){
-  const u = auth.currentUser; if(!u) return alert("Faça login.");
-  const email = String(u.email||"").toLowerCase();
-  const ok = (ADMIN_EMAILS||[]).map(x=>String(x||"").toLowerCase()).includes(email);
-  if(!ok) return alert("Este email não é admin. Ajuste ADMIN_EMAILS no firebase-config.js.");
-  const id = String((document.getElementById("pId").value||"").trim());
-  const cat = (document.getElementById("pCat").value||"").trim() || "Sopas";
-  const nome = (document.getElementById("pNome").value||"").trim();
-  const preco = parseFloat(String(document.getElementById("pPreco").value||"").replace(",","."));
-  const fotoURL = (document.getElementById("pFotoURL").value||"").trim();
-  const ord = parseInt(document.getElementById("pOrd").value||"0",10) || 999;
-  if(!id || !/^[0-9]+$/.test(id)) return alert("ID deve ser numérico (ex: 101).");
-  if(!nome) return alert("Informe o nome.");
-  if(!Number.isFinite(preco)) return alert("Preço inválido.");
-  if(fotoURL && !/^https?:\/\//i.test(fotoURL)) return alert("O link da foto deve começar com http:// ou https://");
-  const ativo = !!document.getElementById("pAtivo").checked;
-  const grupos = parseGrupos(document.getElementById("pGrupos").value || "");
-  await setDoc(doc(db,"produtos", id), {cat, nome, preco, ord, fotoURL, ativo, grupos}, {merge:true});
-  alert("Salvo!");
-  await carregarProdutos();
-}
-
-function statusBadge(status){
-  const s = String(status||'NOVO').toUpperCase();
-  if(s==='PREPARANDO') return '<span class="statusPedido status-preparando">👨‍🍳 Preparando</span>';
-  if(s==='SAIU') return '<span class="statusPedido status-saiu">🚚 Saiu</span>';
-  if(s==='ENTREGUE') return '<span class="statusPedido status-entregue">✅ Entregue</span>';
-  return '<span class="statusPedido status-novo">🆕 Novo</span>';
-}
-function normalizeTel(t){ return String(t||'').replace(/\D/g,''); }
-function abrirWhats(tel, msg){
-  const fone = normalizeTel(tel);
-  if(!fone) return alert('Este pedido não tem telefone do cliente.');
-  const numero = fone.startsWith('55') ? fone : '55'+fone;
-  window.open(`https://wa.me/${numero}?text=${encodeURIComponent(msg)}`, '_blank');
-}
-async function atualizarStatusPedido(id, status, tel, nome){
-  try{ await updateDoc(doc(db,'pedidos', String(id)), {status}); }
-  catch(e){ console.warn('Não conseguiu salvar status no Firestore', e); }
-  const baseNome = nome || 'cliente';
-  const mensagens = {
-    PREPARANDO: `Olá ${baseNome}! 🍲\n\nSeu pedido da *Sabor da Sopa* está em preparo 👨‍🍳\n\nAssim que sair, avisamos você.`,
-    SAIU: `Olá ${baseNome}! 🍲\n\nSeu pedido da *Sabor da Sopa* já saiu para entrega 🚚\n\nLogo chega até você. Obrigado pelo pedido!`,
-    ENTREGUE: `Olá ${baseNome}! 🍲\n\nSeu pedido da *Sabor da Sopa* foi marcado como entregue ✅\n\nObrigado pela preferência!`
-  };
-  if(mensagens[status]) abrirWhats(tel, mensagens[status]);
-}
-
-function tocarNovoPedido(){
-  try{
-    const ctx = new (window.AudioContext || window.webkitAudioContext)();
-    const o = ctx.createOscillator(); const g = ctx.createGain();
-    o.type = 'sine'; o.frequency.value = 880; g.gain.value = 0.001;
-    o.connect(g); g.connect(ctx.destination); o.start();
-    g.gain.exponentialRampToValueAtTime(0.12, ctx.currentTime + 0.02);
-    g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.35);
-    o.stop(ctx.currentTime + 0.36);
-  }catch(e){ console.warn(e); }
-}
-
-function renderPedidos(docs){
-  const tb = document.getElementById('tbPed'); tb.innerHTML='';
-  const count = document.getElementById('countPedidos'); if(count) count.textContent = `(${docs.length})`;
-  const statListados = document.getElementById('statListados'); if(statListados) statListados.textContent = String(docs.length);
-  let pedidosHoje = 0; let faturamentoHoje = 0;
-  const hoje = new Date();
-  docs.forEach(d=>{
-    const p = d.data();
-    const dt = p.criadoEm?.toDate ? p.criadoEm.toDate() : null;
-    if(dt && dt.toDateString() === hoje.toDateString()){ pedidosHoje++; faturamentoHoje += Number(p.total||0); }
-    const data = dt ? dt.toLocaleString('pt-BR') : '';
-    const nome = p.cliente?.nome || '';
-    const tel = p.cliente?.tel || '';
-    const total = Number(p.total||0).toFixed(2);
-    const tr = document.createElement('tr');
-    tr.innerHTML = `
-      <td><small>${data}</small><br><small>${p.entregaTipo||''}</small></td>
-      <td>${nome}<br><small>${tel}</small><br><small>${p.cliente?.endereco||''}</small></td>
-      <td>R$ ${total}</td>
-      <td>${statusBadge(p.status)}</td>
-      <td>
-        <div class="pedActions">
-          <div class="pedBtns">
-            <button class="btn ghost" onclick="window.__status('${d.id}','PREPARANDO', '${String(tel).replace(/'/g,"\\'")}', '${String(nome).replace(/'/g,"\\'")}')">👨‍🍳 Preparando</button>
-            <button class="btn warn" onclick="window.__status('${d.id}','SAIU', '${String(tel).replace(/'/g,"\\'")}', '${String(nome).replace(/'/g,"\\'")}')">🚚 Saiu</button>
-            <button class="btn good" onclick="window.__status('${d.id}','ENTREGUE', '${String(tel).replace(/'/g,"\\'")}', '${String(nome).replace(/'/g,"\\'")}')">✅ Entregue</button>
-          </div>
-          <button class="btn ghost" onclick="window.__zap('${String(tel).replace(/'/g,"\\'")}', '${String(nome).replace(/'/g,"\\'")}')">💬 Abrir WhatsApp</button>
-        </div>
-      </td>`;
-    tb.appendChild(tr);
-  });
-  document.getElementById('statPedidos').textContent = String(pedidosHoje);
-  document.getElementById('statFat').textContent = (faturamentoHoje||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
-}
-
-function ouvirPedidos(){
-  if(stopPedidos) stopPedidos();
-  const qy = query(collection(db,'pedidos'), orderBy('criadoEm','desc'), limit(120));
-  stopPedidos = onSnapshot(qy, (snap)=>{
-    const docs = snap.docs;
-    const ids = new Set(docs.map(d=>d.id));
-    if(!firstPedidosLoad){
-      const novos = docs.filter(d=>!lastSeenPedidoIds.has(d.id));
-      if(novos.length){ tocarNovoPedido(); alert(`Novo pedido recebido: ${novos.length}`); }
-    }
-    lastSeenPedidoIds = ids;
-    firstPedidosLoad = false;
-    renderPedidos(docs);
-  }, (e)=>{ console.error(e); });
-}
-
-async function exportarCSV(){
-  const snap = await getDocs(query(collection(db,'pedidos'), orderBy('criadoEm','desc'), limit(500)));
-  const rows = [["id","data","cliente_nome","cliente_tel","cliente_endereco","tipo","metodo","subtotal","total","status","obs","itens"]];
-  snap.forEach(d=>{
-    const p = d.data();
-    const dt = p.criadoEm?.toDate ? p.criadoEm.toDate().toISOString() : '';
-    const itens = (p.itens||[]).map(i=>`${i.nome} x${i.qtd} (${(Number(i.preco||0)*Number(i.qtd||0)).toFixed(2)})`).join(' | ');
-    rows.push([d.id, dt, p.cliente?.nome||'', p.cliente?.tel||'', p.cliente?.endereco||'', p.entregaTipo||'', p.metodo||'', p.subtotal||0, p.total||0, p.status||'NOVO', (p.obs||''), itens]);
-  });
-  const csv = rows.map(r=>r.map(x=>('"'+String(x??'').replace(/"/g,'""')+'"')).join(';')).join('\n');
-  const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
-  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'pedidos_sabor_da_sopa.csv'; a.click(); URL.revokeObjectURL(a.href);
-}
-
-window.entrar = entrar; window.sair = sair; window.salvarProduto = salvarProduto; window.exportarCSV = exportarCSV;
-window.__status = atualizarStatusPedido;
-window.__zap = (tel, nome)=> abrirWhats(tel, `Olá ${nome || 'cliente'}! 🍲`);
-
-function showView(v){
-  const vp = document.getElementById('viewProdutos'); const ve = document.getElementById('viewPedidos');
-  const np = document.getElementById('navProdutos'); const ne = document.getElementById('navPedidos');
-  if(v==='pedidos'){ vp?.classList.add('hide'); ve?.classList.remove('hide'); np?.classList.remove('active'); ne?.classList.add('active'); }
-  else { ve?.classList.add('hide'); vp?.classList.remove('hide'); ne?.classList.remove('active'); np?.classList.add('active'); }
-  toggleSide(false);
-}
-function toggleSide(open){ const side = document.getElementById('side'); const ovl = document.getElementById('ovl'); if(!side || !ovl) return; if(open){ side.classList.add('open'); ovl.classList.add('show'); } else { side.classList.remove('open'); ovl.classList.remove('show'); } }
-window.showView = showView; window.toggleSide = toggleSide;
-function hookFiltros(){ ['qBusca','qCat','qAtivo'].forEach(id=>{ const el = document.getElementById(id); if(!el) return; el.addEventListener('input', ()=>carregarProdutos()); el.addEventListener('change', ()=>carregarProdutos()); }); }
-
-onAuthStateChanged(auth, async (user)=>{
-  setUI(user); showLockUI();
-  if(!user) return;
-  await carregarProdutos(); hookFiltros(); ouvirPedidos();
-});
-</script>
 
 <script>
-function showView(v){
-  const views = {
-    produtos:'viewProdutos',
-    pedidos:'viewPedidos'
-  };
-  const id = views[v] || v;
-  document.querySelectorAll('[id^="view"]').forEach(el=>el.style.display='none');
-  const target = document.getElementById(id);
-  if(target) target.style.display='block';
-
-  document.querySelectorAll('.navBtn').forEach(b=>b.classList.remove('active'));
-  if(v==='produtos') document.getElementById('navProdutos')?.classList.add('active');
-  if(v==='pedidos') document.getElementById('navPedidos')?.classList.add('active');
+function openView(id){
+ document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'))
+ document.getElementById(id).classList.add('active')
 }
-document.addEventListener('DOMContentLoaded',()=>{
-  showView('produtos');
-});
 </script>
+
+</head>
+
+<body>
+
+<div class="layout">
+
+<div class="sidebar">
+<h2>🍲 Sabor da Sopa</h2>
+
+<div class="menu">
+<button onclick="openView('dashboard')">📊 Dashboard</button>
+<button onclick="openView('pedidos')">🛵 Pedidos Online</button>
+<button onclick="openView('pdv')">💰 Venda Presencial</button>
+<button onclick="openView('produtos')">🍲 Produtos</button>
+<button onclick="openView('clientes')">👥 Clientes</button>
+<button onclick="openView('config')">⚙ Configuração</button>
+</div>
+</div>
+
+<div class="content">
+
+<div id="dashboard" class="section active">
+<div class="card"><b>Dashboard</b><br>Resumo das vendas aparecerá aqui.</div>
+</div>
+
+<div id="pedidos" class="section">
+<div class="card"><b>Pedidos Online</b><br>Aqui aparecem os pedidos feitos pelo cardápio.</div>
+</div>
+
+<div id="pdv" class="section">
+<div class="card"><b>PDV - Venda Presencial</b><br>Tela de caixa para vender direto no balcão.</div>
+</div>
+
+<div id="produtos" class="section">
+<div class="card"><b>Produtos</b><br>Cadastrar e editar sopas.</div>
+</div>
+
+<div id="clientes" class="section">
+<div class="card"><b>Clientes</b><br>Lista automática de clientes.</div>
+</div>
+
+<div id="config" class="section">
+<div class="card"><b>Configuração</b><br>Dados da empresa.</div>
+</div>
+
+</div>
+</div>
 
 </body>
 </html>
