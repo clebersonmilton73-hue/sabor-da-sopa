@@ -115,6 +115,8 @@
             <div class="navTitle">Navegação</div>
             <button class="navBtn active" id="navProdutos" onclick="showView('produtos')">🧾 Produtos <span class="muted" id="countProdutos"></span></button>
             <button class="navBtn" id="navPedidos" onclick="showView('pedidos')">🛵 Pedidos <span class="muted" id="countPedidos"></span></button>
+            <button class="navBtn" id="navClientes" onclick="showView('clientes')">👥 Clientes <span class="muted" id="countClientes"></span></button>
+            <button class="navBtn" id="navPDV" onclick="showView('pdv')">💰 Venda Presencial</button>
             <div class="navTitle" style="margin-top:16px">Ações</div>
             <button class="navBtn" onclick="exportarCSV()">⬇️ Exportar CSV</button>
             <button class="navBtn" onclick="sair()">🚪 Sair</button>
@@ -145,7 +147,7 @@
                 <div class="stat"><div class="muted">Pedidos listados</div><div class="v" id="statListados">0</div></div>
               </div>
               <div class="sectionHd" style="margin-top:16px">
-                <b>Pedidos</b> <button class='btn bad sm' onclick='limparTodosPedidos()'>🧹 Limpar pedidos</button>
+                <b>Pedidos</b>
                 <div class="muted" style="font-size:12px">Status + WhatsApp automático.</div>
               </div>
               <div class="card" style="overflow:auto">
@@ -153,6 +155,46 @@
                   <thead><tr><th>Data</th><th>Cliente</th><th>Total</th><th>Status</th><th>Ações</th></tr></thead>
                   <tbody id="tbPed"></tbody>
                 </table>
+              </div>
+            </section>
+
+
+            <section class="section hide" id="viewClientes">
+              <div class="sectionHd" style="margin-top:16px">
+                <b>Clientes</b>
+                <div class="muted" style="font-size:12px">Salvos automaticamente quando fazem pedido online.</div>
+              </div>
+              <div class="card" style="overflow:auto">
+                <table>
+                  <thead><tr><th>Nome</th><th>Telefone</th><th>Endereço</th><th>Pedidos</th><th>Ações</th></tr></thead>
+                  <tbody id="tbClientes"></tbody>
+                </table>
+              </div>
+            </section>
+
+
+            <section class="section hide" id="viewPDV">
+              <div class="sectionHd" style="margin-top:16px">
+                <b>Venda Presencial (PDV)</b>
+                <div class="muted" style="font-size:12px">Venda no balcão com carrinho e cupom.</div>
+              </div>
+              <div class="card">
+                <div style="display:grid;grid-template-columns:2fr 1fr;gap:14px">
+                  <div>
+                    <b>Menu de venda</b>
+                    <div id="pdvProdutos" class="prodGrid" style="margin-top:10px"></div>
+                  </div>
+                  <div>
+                    <b>Carrinho</b>
+                    <div id="pdvCarrinho" style="margin-top:10px;display:grid;gap:8px"></div>
+                    <div style="margin-top:12px;font-weight:1000">Total: R$ <span id="pdvTotal">0.00</span></div>
+                    <div style="display:grid;gap:8px;margin-top:12px">
+                      <button class="btn good" onclick="finalizarPDV()">Finalizar Venda</button>
+                      <button class="btn primary" onclick="imprimirCupomPDV()">🖨 Imprimir Cupom</button>
+                      <button class="btn ghost" onclick="limparCarrinhoPDV()">Limpar Carrinho</button>
+                    </div>
+                  </div>
+                </div>
               </div>
             </section>
 
@@ -317,6 +359,7 @@ async function carregarProdutos(){
   });
   window.__toggleAtivo = async (id, atual)=>{ try{ await updateDoc(doc(db,"produtos", String(id)), {ativo: !atual}); await carregarProdutos(); }catch(e){ console.error(e); alert("Erro ao alterar ativo. Verifique Rules."); } };
   window.__del = async (id)=>{ if(!confirm("Excluir produto "+id+"?")) return; await deleteDoc(doc(db,"produtos", String(id))); await carregarProdutos(); };
+  renderPDVProdutos();
   window.__edit = async (id)=>{
     const snap = await getDoc(doc(db,"produtos", String(id)));
     const p = snap.exists() ? snap.data() : {};
@@ -392,6 +435,151 @@ function tocarNovoPedido(){
   }catch(e){ console.warn(e); }
 }
 
+
+
+let pdvCart = [];
+
+function renderPDVProdutos(){
+  const box = document.getElementById('pdvProdutos');
+  if(!box) return;
+  box.innerHTML = '';
+  (allProdutos || []).forEach(p=>{
+    const card = document.createElement('div');
+    card.className = 'prodCard';
+    card.style.cursor = 'pointer';
+    const foto = p.fotoURL || '';
+    card.innerHTML = `
+      ${foto ? `<img class="prodImg" src="${foto}" alt="foto">` : `<div class="prodImg"></div>`}
+      <div class="prodPad">
+        <div class="prodTop">
+          <div>
+            <div class="prodName">${p.nome || ''}</div>
+            <div class="prodMeta">${p.cat || ''}</div>
+          </div>
+          <div class="prodPrice">R$ ${Number(p.preco||0).toFixed(2)}</div>
+        </div>
+      </div>`;
+    card.onclick = ()=> {
+      pdvCart.push({ id:p.docId, nome:p.nome, preco:Number(p.preco||0) });
+      renderCarrinhoPDV();
+    };
+    box.appendChild(card);
+  });
+}
+
+function renderCarrinhoPDV(){
+  const box = document.getElementById('pdvCarrinho');
+  const totalEl = document.getElementById('pdvTotal');
+  if(!box) return;
+  box.innerHTML = '';
+  let total = 0;
+  pdvCart.forEach((p,i)=>{
+    total += Number(p.preco||0);
+    const row = document.createElement('div');
+    row.className = 'card';
+    row.style.padding = '10px';
+    row.innerHTML = `
+      <div style="display:flex;justify-content:space-between;gap:10px;align-items:center">
+        <div>
+          <div style="font-weight:1000">${p.nome}</div>
+          <div class="muted" style="font-size:12px">R$ ${Number(p.preco||0).toFixed(2)}</div>
+        </div>
+        <button class="btn ghost sm" onclick="window.removerItemPDV(${i})">x</button>
+      </div>`;
+    box.appendChild(row);
+  });
+  if(totalEl) totalEl.textContent = total.toFixed(2);
+}
+
+window.removerItemPDV = function(i){
+  pdvCart.splice(i,1);
+  renderCarrinhoPDV();
+};
+
+window.limparCarrinhoPDV = function(){
+  pdvCart = [];
+  renderCarrinhoPDV();
+};
+
+window.finalizarPDV = function(){
+  if(!pdvCart.length) return alert('Carrinho vazio');
+  const total = pdvCart.reduce((s,i)=> s + Number(i.preco||0), 0);
+  alert('Venda finalizada. Total: R$ ' + total.toFixed(2));
+  pdvCart = [];
+  renderCarrinhoPDV();
+};
+
+window.imprimirCupomPDV = function(){
+  if(!pdvCart.length) return alert('Carrinho vazio');
+  let total = 0;
+  let cupom = 'SABOR DA SOPA\n------------------\n';
+  pdvCart.forEach(i=>{
+    total += Number(i.preco||0);
+    cupom += `${i.nome} - R$ ${Number(i.preco||0).toFixed(2)}\n`;
+  });
+  cupom += '------------------\n';
+  cupom += 'TOTAL: R$ ' + total.toFixed(2);
+  const w = window.open('', '_blank');
+  w.document.write('<pre style="font-family:monospace;font-size:14px">'+cupom+'</pre>');
+  w.print();
+};
+
+
+let clientesMap = new Map();
+
+function renderClientesFromPedidos(docs){
+  const tb = document.getElementById('tbClientes');
+  if(!tb) return;
+  tb.innerHTML = '';
+  clientesMap = new Map();
+
+  docs.forEach(d=>{
+    const p = d.data() || {};
+    const nome = p.cliente?.nome || '';
+    const tel = p.cliente?.tel || '';
+    const endereco = p.cliente?.endereco || '';
+    const key = tel || nome;
+    if(!key) return;
+
+    if(!clientesMap.has(key)){
+      clientesMap.set(key, {
+        nome,
+        tel,
+        endereco,
+        pedidos: 0
+      });
+    }
+    const c = clientesMap.get(key);
+    c.pedidos += 1;
+    if(!c.endereco && endereco) c.endereco = endereco;
+  });
+
+  const lista = Array.from(clientesMap.values()).sort((a,b)=> String(a.nome||'').localeCompare(String(b.nome||''), 'pt-BR'));
+  const count = document.getElementById('countClientes');
+  if(count) count.textContent = `(${lista.length})`;
+
+  if(!lista.length){
+    tb.innerHTML = '<tr><td colspan="5"><small>Nenhum cliente encontrado ainda.</small></td></tr>';
+    return;
+  }
+
+  lista.forEach(c=>{
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${c.nome || '-'}</td>
+      <td><small>${c.tel || '-'}</small></td>
+      <td><small>${c.endereco || '-'}</small></td>
+      <td>${c.pedidos}</td>
+      <td>
+        <button class="btn ghost sm" onclick="window.__zapCliente('${String(c.tel).replace(/'/g,"\\'")}', '${String(c.nome).replace(/'/g,"\\'")}')">💬 WhatsApp</button>
+      </td>
+    `;
+    tb.appendChild(tr);
+  });
+}
+
+window.__zapCliente = (tel, nome)=> abrirWhats(tel, `Olá ${nome || 'cliente'}! 🍲`);
+
 function renderPedidos(docs){
   const tb = document.getElementById('tbPed'); tb.innerHTML='';
   const count = document.getElementById('countPedidos'); if(count) count.textContent = `(${docs.length})`;
@@ -419,7 +607,7 @@ function renderPedidos(docs){
             <button class="btn warn" onclick="window.__status('${d.id}','SAIU', '${String(tel).replace(/'/g,"\\'")}', '${String(nome).replace(/'/g,"\\'")}')">🚚 Saiu</button>
             <button class="btn good" onclick="window.__status('${d.id}','ENTREGUE', '${String(tel).replace(/'/g,"\\'")}', '${String(nome).replace(/'/g,"\\'")}')">✅ Entregue</button>
           </div>
-          <button class="btn ghost" onclick="window.__zap('${String(tel).replace(/'/g,"\\'")}', '${String(nome).replace(/'/g,"\\'")}')">💬 Abrir WhatsApp</button><button class="btn bad" onclick="__delPedido('${d.id}')">🗑 Apagar</button>
+          <button class="btn ghost" onclick="window.__zap('${String(tel).replace(/'/g,"\\'")}', '${String(nome).replace(/'/g,"\\'")}')">💬 Abrir WhatsApp</button>
         </div>
       </td>`;
     tb.appendChild(tr);
@@ -441,6 +629,7 @@ function ouvirPedidos(){
     lastSeenPedidoIds = ids;
     firstPedidosLoad = false;
     renderPedidos(docs);
+    renderClientesFromPedidos(docs);
   }, (e)=>{ console.error(e); });
 }
 
@@ -463,10 +652,29 @@ window.__status = atualizarStatusPedido;
 window.__zap = (tel, nome)=> abrirWhats(tel, `Olá ${nome || 'cliente'}! 🍲`);
 
 function showView(v){
-  const vp = document.getElementById('viewProdutos'); const ve = document.getElementById('viewPedidos');
-  const np = document.getElementById('navProdutos'); const ne = document.getElementById('navPedidos');
-  if(v==='pedidos'){ vp?.classList.add('hide'); ve?.classList.remove('hide'); np?.classList.remove('active'); ne?.classList.add('active'); }
-  else { ve?.classList.add('hide'); vp?.classList.remove('hide'); ne?.classList.remove('active'); np?.classList.add('active'); }
+  const vp = document.getElementById('viewProdutos');
+  const ve = document.getElementById('viewPedidos');
+  const vc = document.getElementById('viewClientes');
+  const vd = document.getElementById('viewPDV');
+  const np = document.getElementById('navProdutos');
+  const ne = document.getElementById('navPedidos');
+  const nc = document.getElementById('navClientes');
+  const nd = document.getElementById('navPDV');
+
+  vp?.classList.add('hide');
+  ve?.classList.add('hide');
+  vc?.classList.add('hide');
+  vd?.classList.add('hide');
+  np?.classList.remove('active');
+  ne?.classList.remove('active');
+  nc?.classList.remove('active');
+  nd?.classList.remove('active');
+
+  if(v==='pedidos'){ ve?.classList.remove('hide'); ne?.classList.add('active'); }
+  else if(v==='clientes'){ vc?.classList.remove('hide'); nc?.classList.add('active'); }
+  else if(v==='pdv'){ vd?.classList.remove('hide'); nd?.classList.add('active'); renderPDVProdutos(); renderCarrinhoPDV(); }
+  else { vp?.classList.remove('hide'); np?.classList.add('active'); }
+
   toggleSide(false);
 }
 function toggleSide(open){ const side = document.getElementById('side'); const ovl = document.getElementById('ovl'); if(!side || !ovl) return; if(open){ side.classList.add('open'); ovl.classList.add('show'); } else { side.classList.remove('open'); ovl.classList.remove('show'); } }
@@ -478,39 +686,15 @@ onAuthStateChanged(auth, async (user)=>{
   if(!user) return;
   await carregarProdutos(); hookFiltros(); ouvirPedidos();
 });
-
-window.__delPedido = async function(id){
-  if(!confirm("Apagar esse pedido?")) return;
-  try{
-    await deleteDoc(doc(db,"pedidos", String(id)));
-    alert("Pedido apagado");
-  }catch(e){
-    console.error(e);
-    alert("Erro ao apagar pedido");
-  }
-};
-
-window.limparTodosPedidos = async function(){
-  if(!confirm("Apagar TODOS os pedidos online?")) return;
-  try{
-    const snap = await getDocs(collection(db,"pedidos"));
-    for(const d of snap.docs){
-      await deleteDoc(doc(db,"pedidos", d.id));
-    }
-    alert("Todos os pedidos foram apagados.");
-  }catch(e){
-    console.error(e);
-    alert("Erro ao limpar pedidos.");
-  }
-};
-
 </script>
 
 <script>
 function showView(v){
   const views = {
     produtos:'viewProdutos',
-    pedidos:'viewPedidos'
+    pedidos:'viewPedidos',
+    clientes:'viewClientes',
+    pdv:'viewPDV'
   };
   const id = views[v] || v;
   document.querySelectorAll('[id^="view"]').forEach(el=>el.style.display='none');
@@ -520,6 +704,8 @@ function showView(v){
   document.querySelectorAll('.navBtn').forEach(b=>b.classList.remove('active'));
   if(v==='produtos') document.getElementById('navProdutos')?.classList.add('active');
   if(v==='pedidos') document.getElementById('navPedidos')?.classList.add('active');
+  if(v==='clientes') document.getElementById('navClientes')?.classList.add('active');
+  if(v==='pdv') document.getElementById('navPDV')?.classList.add('active');
 }
 document.addEventListener('DOMContentLoaded',()=>{
   showView('produtos');
