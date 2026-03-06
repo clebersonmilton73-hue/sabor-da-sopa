@@ -324,8 +324,6 @@ header{
           <input id="cliTel" class="input" placeholder="WhatsApp com DDD" inputmode="tel">
         </div>
         <input id="cliEnd" class="input" placeholder="Endereço completo">
-        <button class="btn" type="button" onclick="usarMinhaLocalizacao()">📍 Usar minha localização</button>
-        <div class="small" id="bairroInfo">Frete calculado pela localização ou endereço informado.</div>
       </div>
 
       <div>
@@ -351,6 +349,7 @@ header{
 
       <div class="sum">
         <div class="line"><span>Subtotal</span><b id="sub">R$ 0,00</b></div>
+        <div class="line"><span>Distância</span><b id="dist">--</b></div>
         <div class="line"><span>Frete</span><b id="frete">R$ 0,00</b></div>
         <div class="line"><span>Total</span><b id="tot">R$ 0,00</b></div>
         <button class="btn primary" onclick="finalizar()">Finalizar e enviar no WhatsApp</button>
@@ -382,27 +381,73 @@ const totEl = document.getElementById('tot');
 const buscaEl = document.getElementById('busca');
 const filtroCatEl = document.getElementById('filtroCat');
 const quickCatsEl = document.getElementById('quickCats');
+const freteEl = document.getElementById('frete');
+const distEl = document.getElementById('dist');
+const geoStatusEl = document.getElementById('geoStatus');
 
 let produtos = [];
 let cart = [];
 let entregaTipo = 'ENTREGA';
-let bairroDetectado = '';
+let clienteGeo = null;
 
-const FRETES = {
-  'floriano': 6,
-  'sucupira': 6,
-  'dois carneiros': 6,
-  'barro': 6,
-  'engenho velho': 6,
-  'jaboatao centro': 6,
-  'jaboatão centro': 6,
-  'cavaleiro': 6,
-  'jardim sao paulo': 6,
-  'jardim são paulo': 6,
-  'coqueiral': 6
+// Ajuste aqui com a localização exata da sua loja para o frete funcionar corretamente.
+const LOJA = {
+  lat: -8.1120,
+  lng: -35.0150
 };
 
 function moneyBR(v){ return Number(v||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'}); }
+function distanciaTexto(km){ return Number.isFinite(km) ? `${km.toFixed(1).replace('.',',')} km` : '--'; }
+function haversineKm(lat1, lon1, lat2, lon2){
+  const R = 6371;
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLon = (lon2 - lon1) * Math.PI / 180;
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+    Math.sin(dLon / 2) * Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c;
+}
+function calcularFretePorKm(km){
+  if(!Number.isFinite(km) || km <= 0) return 0;
+  if(km <= 2) return 0;
+  if(km <= 6) return 5;
+  if(km <= 10) return 10;
+  return 15;
+}
+function atualizarStatusGeo(msg){ if(geoStatusEl) geoStatusEl.textContent = msg; }
+async function usarMinhaLocalizacao(){
+  if(!navigator.geolocation){
+    alert('Seu aparelho não suporta localização.');
+    return;
+  }
+  atualizarStatusGeo('Localizando...');
+  navigator.geolocation.getCurrentPosition(async pos => {
+    const lat = pos.coords.latitude;
+    const lng = pos.coords.longitude;
+    const km = haversineKm(lat, lng, LOJA.lat, LOJA.lng);
+    clienteGeo = { lat, lng, km };
+
+    try{
+      const resp = await fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}`);
+      const data = await resp.json();
+      const a = data?.address || {};
+      const endereco = [a.road, a.house_number, a.suburb || a.neighbourhood || a.quarter || a.city_district, a.city || a.town || a.village].filter(Boolean).join(', ');
+      if(endereco) document.getElementById('cliEnd').value = endereco;
+    }catch(e){
+      console.warn('Não foi possível converter localização em endereço.', e);
+    }
+
+    atualizarStatusGeo(`Localização capturada • distância ${distanciaTexto(km)}`);
+    recalc();
+  }, err => {
+    console.warn(err);
+    atualizarStatusGeo('Não foi possível pegar sua localização.');
+    alert('Você precisa permitir a localização para calcular o frete.');
+  }, { enableHighAccuracy:true, timeout:10000, maximumAge:0 });
+}
+window.usarMinhaLocalizacao = usarMinhaLocalizacao;
 function escAttr(v){ return String(v||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 function normalizeGroups(prod){
   if(!Array.isArray(prod?.grupos) || !prod.grupos.length) return [];
@@ -422,93 +467,6 @@ function toast(msg){
   clearTimeout(window.__tt);
   window.__tt = setTimeout(()=>t.style.display='none', 1800);
 }
-function normalizarTexto(v){
-  return String(v || '')
-    .toLowerCase()
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .trim();
-}
-
-function calcularFretePorBairro(bairro){
-  const b = normalizarTexto(bairro);
-  return FRETES[b] || 0;
-}
-
-function detectarBairroDoEndereco(endereco){
-  const end = normalizarTexto(endereco);
-  for(const bairro in FRETES){
-    if(end.includes(normalizarTexto(bairro))) return bairro;
-  }
-  return '';
-}
-
-function atualizarInfoBairro(bairro, frete){
-  const el = document.getElementById('bairroInfo');
-  if(!el) return;
-  if(entregaTipo !== 'ENTREGA'){
-    el.textContent = 'Retirada selecionada: frete R$ 0,00';
-    return;
-  }
-  if(bairro){
-    el.textContent = `Bairro detectado: ${bairro} • Frete: ${moneyBR(frete)}`;
-  }else{
-    el.textContent = 'Não foi possível identificar o bairro. Frete R$ 0,00 até informar um endereço válido.';
-  }
-}
-
-async function usarMinhaLocalizacao(){
-  if(!navigator.geolocation){
-    alert('Seu celular não suporta localização.');
-    return;
-  }
-
-  statusPill.textContent = '📍 pegando localização...';
-
-  navigator.geolocation.getCurrentPosition(
-    async (pos) => {
-      const lat = pos.coords.latitude;
-      const lon = pos.coords.longitude;
-
-      try{
-        const resp = await fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lon}`);
-        const data = await resp.json();
-
-        const bairro =
-          data?.address?.suburb ||
-          data?.address?.neighbourhood ||
-          data?.address?.quarter ||
-          data?.address?.city_district ||
-          '';
-
-        const rua = data?.address?.road || '';
-        const numero = data?.address?.house_number || '';
-        const cidade = data?.address?.city || data?.address?.town || data?.address?.village || '';
-        const estado = data?.address?.state || '';
-
-        const endereco = [rua, numero, bairro, cidade, estado].filter(Boolean).join(', ');
-        document.getElementById('cliEnd').value = endereco;
-        bairroDetectado = bairro || detectarBairroDoEndereco(endereco);
-
-        recalc();
-        statusPill.textContent = '✅ online';
-        toast('Localização capturada com sucesso');
-      }catch(e){
-        console.error(e);
-        statusPill.textContent = '✅ online';
-        alert('Não consegui identificar o endereço pela localização.');
-      }
-    },
-    (err) => {
-      console.warn(err);
-      statusPill.textContent = '✅ online';
-      alert('Permita a localização no celular para calcular o frete.');
-    },
-    { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
-  );
-}
-window.usarMinhaLocalizacao = usarMinhaLocalizacao;
-
 function maskTel(raw){
   const digits = String(raw||'').replace(/\D/g,'').slice(0,11);
   if(digits.length <= 2) return digits;
@@ -518,15 +476,18 @@ function maskTel(raw){
   return `(${ddd}) ${rest.slice(0,5)}-${rest.slice(5)}`;
 }
 document.getElementById('cliTel').addEventListener('input', e => e.target.value = maskTel(e.target.value));
-document.getElementById('cliEnd').addEventListener('input', () => {
-  bairroDetectado = detectarBairroDoEndereco(document.getElementById('cliEnd').value);
-  recalc();
-});
 
 function setEntrega(tipo){
   entregaTipo = tipo === 'RETIRADA' ? 'RETIRADA' : 'ENTREGA';
   document.getElementById('chipEntrega').classList.toggle('active', entregaTipo === 'ENTREGA');
   document.getElementById('chipRetirada').classList.toggle('active', entregaTipo === 'RETIRADA');
+  if(entregaTipo === 'RETIRADA'){
+    atualizarStatusGeo('Retirada selecionada • frete R$ 0,00');
+  }else if(clienteGeo?.km){
+    atualizarStatusGeo(`Localização capturada • distância ${distanciaTexto(clienteGeo.km)}`);
+  }else{
+    atualizarStatusGeo('Frete por distância: 1–2 km = R$ 0 • 3–6 km = R$ 5 • 7–10 km = R$ 10');
+  }
   recalc();
 }
 window.setEntrega = setEntrega;
@@ -592,25 +553,16 @@ function lineUnit(it){
 function recalc(){
   const qtd = cart.reduce((s,i)=>s+Number(i.qtd||0),0);
   const subtotal = cart.reduce((s,i)=>s + (lineUnit(i) * Number(i.qtd||0)), 0);
-
-  let frete = 0;
-  let bairro = bairroDetectado;
-
-  if(entregaTipo === 'ENTREGA'){
-    const endereco = document.getElementById('cliEnd').value || '';
-    if(!bairro) bairro = detectarBairroDoEndereco(endereco);
-    frete = calcularFretePorBairro(bairro);
-  }
-
+  const km = entregaTipo === 'ENTREGA' ? Number(clienteGeo?.km || 0) : 0;
+  const frete = entregaTipo === 'ENTREGA' ? calcularFretePorKm(km) : 0;
   const total = subtotal + frete;
-
   qtdEl.textContent = String(qtd);
   subEl.textContent = moneyBR(subtotal);
-  document.getElementById('frete').textContent = moneyBR(frete);
+  if(distEl) distEl.textContent = entregaTipo === 'ENTREGA' && km > 0 ? distanciaTexto(km) : '--';
+  if(freteEl) freteEl.textContent = moneyBR(frete);
   totEl.textContent = moneyBR(total);
   document.getElementById('barQtd').textContent = String(qtd);
   document.getElementById('barTot').textContent = moneyBR(total);
-  atualizarInfoBairro(bairro, frete);
 }
 
 function renderCart(){
@@ -744,9 +696,13 @@ async function finalizar(){
   const troco = document.getElementById('troco').value.trim();
   const obs = document.getElementById('obs').value.trim();
   const subtotal = cart.reduce((s,i)=>s + (lineUnit(i) * i.qtd), 0);
-  let bairro = bairroDetectado || detectarBairroDoEndereco(c.endereco);
-  const frete = entregaTipo === 'ENTREGA' ? calcularFretePorBairro(bairro) : 0;
+  const distanciaKm = entregaTipo === 'ENTREGA' ? Number(clienteGeo?.km || 0) : 0;
+  const frete = entregaTipo === 'ENTREGA' ? calcularFretePorKm(distanciaKm) : 0;
   const total = subtotal + frete;
+
+  if(entregaTipo === 'ENTREGA' && !clienteGeo?.km){
+    return alert('Toque em "Usar minha localização" para calcular o frete da entrega.');
+  }
 
   const itens = cart.map(i => ({
     id: i.id,
@@ -766,7 +722,7 @@ async function finalizar(){
     itens,
     subtotal,
     frete,
-    bairro,
+    distanciaKm,
     total,
     criadoEm: serverTimestamp()
   };
@@ -784,7 +740,7 @@ async function finalizar(){
   linhas.push(`*WhatsApp:* ${c.tel}`);
   linhas.push(`*Tipo:* ${entregaTipo}`);
   if(entregaTipo === 'ENTREGA') linhas.push(`*Endereço:* ${c.endereco}`);
-  if(entregaTipo === 'ENTREGA' && bairro) linhas.push(`*Bairro:* ${bairro}`);
+  if(entregaTipo === 'ENTREGA') linhas.push(`*Distância:* ${distanciaTexto(distanciaKm)}`);
   if(obs) linhas.push(`*Observação:* ${obs}`);
   linhas.push('');
   linhas.push('*Pedido:*');
@@ -796,15 +752,21 @@ async function finalizar(){
   linhas.push(`*Pagamento:* ${metodo}`);
   if(metodo === 'DINHEIRO' && troco) linhas.push(`*Troco para:* ${troco}`);
   linhas.push(`*Subtotal:* ${moneyBR(subtotal)}`);
-  linhas.push(`*Frete:* ${moneyBR(frete)}`);
+  if(entregaTipo === 'ENTREGA') linhas.push(`*Frete:* ${moneyBR(frete)}`);
   linhas.push(`*Total:* ${moneyBR(total)}`);
 
   const msg = encodeURIComponent(linhas.join('\n'));
   window.open(`https://wa.me/55${c.tel}?text=${msg}`, '_blank');
 
   cart = [];
+  clienteGeo = entregaTipo === 'RETIRADA' ? clienteGeo : null;
   document.getElementById('obs').value = '';
   document.getElementById('troco').value = '';
+  if(entregaTipo === 'ENTREGA'){
+    if(distEl) distEl.textContent = '--';
+    if(freteEl) freteEl.textContent = moneyBR(0);
+    atualizarStatusGeo('Frete por distância: 1–2 km = R$ 0 • 3–6 km = R$ 5 • 7–10 km = R$ 10');
+  }
   recalc();
   renderCart();
   toggleCart(false);
