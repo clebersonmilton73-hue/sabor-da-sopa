@@ -274,70 +274,6 @@ header{
   .qtyBtn{width:32px;height:32px}
 }
 
-.heroNote{
-  display:flex;align-items:flex-start;justify-content:space-between;gap:12px;
-  padding:14px 16px;margin-bottom:14px;border-radius:18px;
-  background:linear-gradient(180deg,rgba(34,197,94,.14),rgba(59,130,246,.10));
-  border:1px solid rgba(96,165,250,.18);
-  box-shadow:0 12px 26px rgba(0,0,0,.16)
-}
-.heroNote b{display:block;font-size:15px}
-.heroNote span{display:block;font-size:12px;color:var(--soft);font-weight:800;line-height:1.35}
-.quickCats{
-  display:flex;gap:8px;overflow:auto;padding:2px 1px 10px;margin-bottom:10px;
-  scrollbar-width:none
-}
-.quickCats::-webkit-scrollbar{display:none}
-.quickCat{
-  flex:0 0 auto;border:none;border-radius:999px;padding:10px 12px;
-  background:rgba(148,163,184,.10);border:1px solid var(--line);
-  color:var(--txt);font-weight:1000;cursor:pointer
-}
-.quickCat.active{
-  background:rgba(96,165,250,.18);border-color:rgba(96,165,250,.32);color:#dbeafe
-}
-.itemMeta{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:7px}
-.itemMini{
-  display:inline-flex;align-items:center;gap:6px;
-  padding:5px 9px;border-radius:999px;background:rgba(148,163,184,.10);
-  border:1px solid rgba(148,163,184,.16);font-size:11px;font-weight:1000;color:#dbeafe
-}
-.cartGrip{display:none}
-@media(max-width:980px){
-  .heroNote{padding:12px 13px;border-radius:16px}
-  .heroNote b{font-size:14px}
-  .heroNote span{font-size:11px}
-  .quickCats{position:sticky;top:120px;z-index:9;background:linear-gradient(180deg,rgba(8,13,28,.98),rgba(8,13,28,.92));margin:0 -4px 10px;padding:2px 4px 10px}
-  .cart{
-    left:0;right:0;bottom:0;top:auto;border-radius:22px 22px 0 0;
-    transform:translateY(calc(100% - 74px))
-  }
-  .cart.open{transform:translateY(0)}
-  .cartBody{max-height:78vh;padding-top:8px}
-  .cartGrip{
-    display:flex;justify-content:center;align-items:center;padding:4px 0 8px
-  }
-  .cartGrip::before{
-    content:"";width:54px;height:6px;border-radius:999px;background:rgba(148,163,184,.36)
-  }
-}
-@media(max-width:700px){
-  .catalogBody{padding:10px}
-  .item{
-    display:grid;grid-template-columns:54px 1fr;gap:10px;padding:10px
-  }
-  .itemTop{display:grid;grid-template-columns:1fr auto;gap:6px;align-items:start}
-  .itemInfo{gap:0}
-  .extrasBox{margin-top:8px}
-  .extraGroup{padding:8px 9px}
-  .sum{
-    border-top:1px solid rgba(148,163,184,.14);
-    margin-top:2px
-  }
-  .line{font-size:14px}
-  .primary{padding:13px 14px;border-radius:14px}
-}
-
 </style>
 </head>
 <body>
@@ -381,7 +317,6 @@ header{
       <div class="small"><span id="qtd">0</span> itens</div>
     </div>
     <div class="cartBody">
-      <div class="cartGrip" onclick="toggleCart(false)"></div>
       <div class="customer">
         <div class="pill" style="justify-content:center">🧾 Preencha seus dados para concluir o pedido</div>
         <div class="row">
@@ -417,8 +352,6 @@ header{
         <div class="line"><span>Subtotal</span><b id="sub">R$ 0,00</b></div>
         <div class="line"><span>Distância</span><b id="distancia">0 km</b></div>
         <div class="line"><span>Frete</span><b id="frete">R$ 0,00</b></div>
-        <div class="line"><span>Distância</span><b id="dist">--</b></div>
-        <div class="line"><span>Frete</span><b id="frete">R$ 0,00</b></div>
         <div class="line"><span>Total</span><b id="tot">R$ 0,00</b></div>
         <button class="btn primary" onclick="finalizar()">Finalizar e enviar no WhatsApp</button>
         <div class="small">O pedido é salvo online e abre a conversa no WhatsApp.</div>
@@ -428,7 +361,7 @@ header{
 </div>
 
 <div class="overlay" id="cartOverlay" onclick="toggleCart(false)"></div>
-<div class="cartBar" id="cartBar"><button onclick="toggleCart(true)"><span>🛒 Ver carrinho <span class="badge" id="barQtd">0</span></span><span id="barTot">R$ 0,00</span></button></div>
+<div class="cartBar" id="cartBar"><button onclick="toggleCart(true)"><span>🛒 Carrinho <span class="badge" id="barQtd">0</span></span><span id="barTot">R$ 0,00</span></button></div>
 <div class="toast" id="toast"></div>
 
 <script type="module">
@@ -449,73 +382,12 @@ const totEl = document.getElementById('tot');
 const buscaEl = document.getElementById('busca');
 const filtroCatEl = document.getElementById('filtroCat');
 const quickCatsEl = document.getElementById('quickCats');
-const freteEl = document.getElementById('frete');
-const distEl = document.getElementById('dist');
-const geoStatusEl = document.getElementById('geoStatus');
 
 let produtos = [];
 let cart = [];
 let entregaTipo = 'ENTREGA';
-let clienteGeo = null;
-
-// Ajuste aqui com a localização exata da sua loja para o frete funcionar corretamente.
-const LOJA = {
-  lat: -8.1120,
-  lng: -35.0150
-};
 
 function moneyBR(v){ return Number(v||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'}); }
-function distanciaTexto(km){ return Number.isFinite(km) ? `${km.toFixed(1).replace('.',',')} km` : '--'; }
-function haversineKm(lat1, lon1, lat2, lon2){
-  const R = 6371;
-  const dLat = (lat2 - lat1) * Math.PI / 180;
-  const dLon = (lon2 - lon1) * Math.PI / 180;
-  const a =
-    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-    Math.sin(dLon / 2) * Math.sin(dLon / 2);
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-  return R * c;
-}
-function calcularFretePorKm(km){
-  if(!Number.isFinite(km) || km <= 0) return 0;
-  if(km <= 2) return 0;
-  if(km <= 6) return 5;
-  if(km <= 10) return 10;
-  return 15;
-}
-function atualizarStatusGeo(msg){ if(geoStatusEl) geoStatusEl.textContent = msg; }
-async function usarMinhaLocalizacao(){
-  if(!navigator.geolocation){
-    alert('Seu aparelho não suporta localização.');
-    return;
-  }
-  atualizarStatusGeo('Localizando...');
-  navigator.geolocation.getCurrentPosition(async pos => {
-    const lat = pos.coords.latitude;
-    const lng = pos.coords.longitude;
-    const km = haversineKm(lat, lng, LOJA.lat, LOJA.lng);
-    clienteGeo = { lat, lng, km };
-
-    try{
-      const resp = await fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}`);
-      const data = await resp.json();
-      const a = data?.address || {};
-      const endereco = [a.road, a.house_number, a.suburb || a.neighbourhood || a.quarter || a.city_district, a.city || a.town || a.village].filter(Boolean).join(', ');
-      if(endereco) document.getElementById('cliEnd').value = endereco;
-    }catch(e){
-      console.warn('Não foi possível converter localização em endereço.', e);
-    }
-
-    atualizarStatusGeo(`Localização capturada • distância ${distanciaTexto(km)}`);
-    recalc();
-  }, err => {
-    console.warn(err);
-    atualizarStatusGeo('Não foi possível pegar sua localização.');
-    alert('Você precisa permitir a localização para calcular o frete.');
-  }, { enableHighAccuracy:true, timeout:10000, maximumAge:0 });
-}
-window.usarMinhaLocalizacao = usarMinhaLocalizacao;
 function escAttr(v){ return String(v||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 function normalizeGroups(prod){
   if(!Array.isArray(prod?.grupos) || !prod.grupos.length) return [];
@@ -549,14 +421,6 @@ function setEntrega(tipo){
   entregaTipo = tipo === 'RETIRADA' ? 'RETIRADA' : 'ENTREGA';
   document.getElementById('chipEntrega').classList.toggle('active', entregaTipo === 'ENTREGA');
   document.getElementById('chipRetirada').classList.toggle('active', entregaTipo === 'RETIRADA');
-  if(entregaTipo === 'RETIRADA'){
-    atualizarStatusGeo('Retirada selecionada • frete R$ 0,00');
-  }else if(clienteGeo?.km){
-    atualizarStatusGeo(`Localização capturada • distância ${distanciaTexto(clienteGeo.km)}`);
-  }else{
-    atualizarStatusGeo('Frete por distância: 1–2 km = R$ 0 • 3–6 km = R$ 5 • 7–10 km = R$ 10');
-  }
-  recalc();
 }
 window.setEntrega = setEntrega;
 
@@ -621,25 +485,26 @@ function lineUnit(it){
 function recalc(){
   const qtd = cart.reduce((s,i)=>s+Number(i.qtd||0),0);
   const subtotal = cart.reduce((s,i)=>s + (lineUnit(i) * Number(i.qtd||0)), 0);
-  const km = entregaTipo === 'ENTREGA' ? Number(clienteGeo?.km || 0) : 0;
-  const frete = entregaTipo === 'ENTREGA' ? calcularFretePorKm(km) : 0;
+  qtdEl.textContent = String(qtd);
+  subEl.textContent = moneyBR(subtotal);
   
 let frete = 0;
 if(entregaTipo === "ENTREGA"){
   frete = calcularFretePorKm(distanciaCliente);
 }
+
 const total = subtotal + frete;
 
-document.getElementById("distancia").textContent = distanciaCliente.toFixed(1) + " km";
-document.getElementById("frete").textContent = moneyBR(frete);
+totEl.textContent = moneyBR(total);
 
-  qtdEl.textContent = String(qtd);
-  subEl.textContent = moneyBR(subtotal);
-  if(distEl) distEl.textContent = entregaTipo === 'ENTREGA' && km > 0 ? distanciaTexto(km) : '--';
-  if(freteEl) freteEl.textContent = moneyBR(frete);
-  totEl.textContent = moneyBR(total);
+const freteEl = document.getElementById("frete");
+const distEl = document.getElementById("distancia");
+
+if(freteEl) freteEl.textContent = moneyBR(frete);
+if(distEl) distEl.textContent = distanciaCliente.toFixed(1) + " km";
+
   document.getElementById('barQtd').textContent = String(qtd);
-  document.getElementById('barTot').textContent = moneyBR(total);
+  document.getElementById('barTot').textContent = moneyBR(subtotal);
 }
 
 function renderCart(){
@@ -773,22 +638,6 @@ async function finalizar(){
   const troco = document.getElementById('troco').value.trim();
   const obs = document.getElementById('obs').value.trim();
   const subtotal = cart.reduce((s,i)=>s + (lineUnit(i) * i.qtd), 0);
-  const distanciaKm = entregaTipo === 'ENTREGA' ? Number(clienteGeo?.km || 0) : 0;
-  const frete = entregaTipo === 'ENTREGA' ? calcularFretePorKm(distanciaKm) : 0;
-  
-let frete = 0;
-if(entregaTipo === "ENTREGA"){
-  frete = calcularFretePorKm(distanciaCliente);
-}
-const total = subtotal + frete;
-
-document.getElementById("distancia").textContent = distanciaCliente.toFixed(1) + " km";
-document.getElementById("frete").textContent = moneyBR(frete);
-
-
-  if(entregaTipo === 'ENTREGA' && !clienteGeo?.km){
-    return alert('Toque em "Usar minha localização" para calcular o frete da entrega.');
-  }
 
   const itens = cart.map(i => ({
     id: i.id,
@@ -807,9 +656,7 @@ document.getElementById("frete").textContent = moneyBR(frete);
     obs,
     itens,
     subtotal,
-    frete,
-    distanciaKm,
-    total,
+    total: subtotal,
     criadoEm: serverTimestamp()
   };
 
@@ -826,7 +673,6 @@ document.getElementById("frete").textContent = moneyBR(frete);
   linhas.push(`*WhatsApp:* ${c.tel}`);
   linhas.push(`*Tipo:* ${entregaTipo}`);
   if(entregaTipo === 'ENTREGA') linhas.push(`*Endereço:* ${c.endereco}`);
-  if(entregaTipo === 'ENTREGA') linhas.push(`*Distância:* ${distanciaTexto(distanciaKm)}`);
   if(obs) linhas.push(`*Observação:* ${obs}`);
   linhas.push('');
   linhas.push('*Pedido:*');
@@ -837,22 +683,14 @@ document.getElementById("frete").textContent = moneyBR(frete);
   linhas.push('');
   linhas.push(`*Pagamento:* ${metodo}`);
   if(metodo === 'DINHEIRO' && troco) linhas.push(`*Troco para:* ${troco}`);
-  linhas.push(`*Subtotal:* ${moneyBR(subtotal)}`);
-  if(entregaTipo === 'ENTREGA') linhas.push(`*Frete:* ${moneyBR(frete)}`);
-  linhas.push(`*Total:* ${moneyBR(total)}`);
+  linhas.push(`*Total:* ${moneyBR(subtotal)}`);
 
   const msg = encodeURIComponent(linhas.join('\n'));
   window.open(`https://wa.me/55${c.tel}?text=${msg}`, '_blank');
 
   cart = [];
-  clienteGeo = entregaTipo === 'RETIRADA' ? clienteGeo : null;
   document.getElementById('obs').value = '';
   document.getElementById('troco').value = '';
-  if(entregaTipo === 'ENTREGA'){
-    if(distEl) distEl.textContent = '--';
-    if(freteEl) freteEl.textContent = moneyBR(0);
-    atualizarStatusGeo('Frete por distância: 1–2 km = R$ 0 • 3–6 km = R$ 5 • 7–10 km = R$ 10');
-  }
   recalc();
   renderCart();
   toggleCart(false);
@@ -883,16 +721,6 @@ async function carregar(){
     catalogo.innerHTML = '<div class="empty">Erro ao carregar o cardápio. Confira o Firebase.</div>';
   }
 }
-
-
-document.getElementById('cartSheet')?.addEventListener('click', (e)=>{
-  if(window.matchMedia('(max-width:980px)').matches && e.target.id === 'cartSheet'){
-    toggleCart(false);
-  }
-});
-
-document.getElementById('cliEnd')?.addEventListener('input', ()=>{ if(entregaTipo==='ENTREGA') recalc(); });
-document.getElementById('pay')?.addEventListener('change', recalc);
 
 
 let distanciaCliente = 0;
@@ -949,7 +777,6 @@ function calcularFreteLocalizacao(){
   }, ()=>{
     alert("Permita a localização para calcular o frete.");
   });
-
 }
 
 carregar();
