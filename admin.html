@@ -931,24 +931,36 @@ function montarCupomPDVHtml(venda){
 <meta charset="utf-8">
 <title>Cupom</title>
 <style>
-  @page{ size: 58mm auto; margin: 0; }
+  @page{ size: 58mm 210mm; margin: 0; }
   html,body{ margin:0; padding:0; background:#fff; color:#000; }
-  body{ width:58mm; font-family:Arial, Helvetica, sans-serif; }
-  .cupom{ width:58mm; padding:2.5mm 2mm 3mm; box-sizing:border-box; color:#000; }
+  body{
+    width:58mm;
+    min-height:210mm;
+    font-family:'Courier New', Courier, monospace;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  .cupom{
+    width:58mm;
+    min-height:210mm;
+    padding:3mm 2.2mm 10mm;
+    box-sizing:border-box;
+    color:#000;
+  }
   .topo{ text-align:center; }
-  .logo-wrap{ text-align:center; margin-bottom:2mm; }
-  .logo{ max-width:42mm; max-height:18mm; object-fit:contain; }
-  .loja{ font-size:13px; font-weight:700; line-height:1.2; }
-  .meta{ font-size:10px; line-height:1.35; word-break:break-word; }
-  .linha{ border-top:1px dashed #000; margin:2mm 0; }
-  .bloco{ font-size:10px; line-height:1.35; }
+  .logo-wrap{ text-align:center; margin-bottom:3mm; }
+  .logo{ max-width:42mm; max-height:20mm; object-fit:contain; }
+  .loja{ font-size:18px; font-weight:700; line-height:22px; }
+  .meta{ font-size:18px; line-height:22px; word-break:break-word; }
+  .linha{ border-top:1px dashed #000; margin:3mm 0; }
+  .bloco{ font-size:18px; line-height:22px; }
   .bloco-left{ text-align:left; }
-  .titulo{ text-align:center; font-size:11px; font-weight:700; }
-  .item{ display:flex; align-items:flex-start; justify-content:space-between; gap:2mm; font-size:10px; line-height:1.3; margin:1.2mm 0; }
-  .item-nome{ flex:1; text-align:left; word-break:break-word; }
-  .item-preco{ width:17mm; text-align:right; white-space:nowrap; }
-  .total{ display:flex; justify-content:space-between; gap:2mm; font-size:12px; font-weight:700; margin-top:1.2mm; }
-  .rodape{ text-align:center; font-size:10px; margin-top:2mm; line-height:1.35; }
+  .titulo{ text-align:center; font-size:18px; font-weight:700; line-height:22px; }
+  .item{ display:flex; align-items:flex-start; justify-content:space-between; gap:2mm; font-size:18px; line-height:22px; margin:1.8mm 0; }
+  .item-nome{ flex:1; text-align:left; word-break:break-word; padding-right:2mm; }
+  .item-preco{ width:19mm; text-align:right; white-space:nowrap; }
+  .total{ display:flex; justify-content:space-between; gap:2mm; font-size:20px; line-height:24px; font-weight:700; margin-top:2mm; }
+  .rodape{ text-align:center; font-size:18px; line-height:22px; margin-top:3mm; }
 </style>
 </head>
 <body>
