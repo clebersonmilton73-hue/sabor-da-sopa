@@ -115,6 +115,7 @@
             <div class="navTitle">Navegação</div>
             <button class="navBtn active" id="navProdutos" onclick="showView('produtos')">🧾 Produtos <span class="muted" id="countProdutos"></span></button>
             <button class="navBtn" id="navPedidos" onclick="showView('pedidos')">🛵 Pedidos <span class="muted" id="countPedidos"></span></button>
+            <button class="navBtn" id="navPDV" onclick="showView('pdv')">💰 Venda Presencial</button>
             <div class="navTitle" style="margin-top:16px">Ações</div>
             <button class="navBtn" onclick="exportarCSV()">⬇️ Exportar CSV</button>
             <button class="navBtn" onclick="sair()">🚪 Sair</button>
@@ -153,6 +154,25 @@
                   <thead><tr><th>Data</th><th>Cliente</th><th>Total</th><th>Status</th><th>Ações</th></tr></thead>
                   <tbody id="tbPed"></tbody>
                 </table>
+              </div>
+            </section>
+
+            
+            <section class="section hide" id="viewPDV">
+              <div class="sectionHd"><b>Venda Presencial (PDV)</b></div>
+              <div class="card">
+                <div style="display:grid;grid-template-columns:2fr 1fr;gap:14px">
+                  <div>
+                    <b>Produtos</b>
+                    <div id="pdvProdutos" style="margin-top:10px;display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px"></div>
+                  </div>
+                  <div>
+                    <b>Carrinho</b>
+                    <div id="pdvCarrinho" style="margin-top:10px"></div>
+                    <div style="margin-top:10px;font-weight:900">Total: R$ <span id="pdvTotal">0</span></div>
+                    <button class="btn good" style="margin-top:10px" onclick="finalizarPDV()">Finalizar Venda</button>
+                  </div>
+                </div>
               </div>
             </section>
 
@@ -478,13 +498,63 @@ onAuthStateChanged(auth, async (user)=>{
   if(!user) return;
   await carregarProdutos(); hookFiltros(); ouvirPedidos();
 });
+
+let pdvCart = [];
+
+function renderPDVProdutos(){
+  const box = document.getElementById("pdvProdutos");
+  if(!box) return;
+  box.innerHTML = "";
+  allProdutos.forEach(p=>{
+    const el = document.createElement("div");
+    el.className = "card";
+    el.style.cursor = "pointer";
+    el.innerHTML = `<b>${p.nome}</b><div class="muted">R$ ${Number(p.preco||0).toFixed(2)}</div>`;
+    el.onclick = ()=>{
+      pdvCart.push(p);
+      renderPDVCarrinho();
+    };
+    box.appendChild(el);
+  });
+}
+
+function renderPDVCarrinho(){
+  const box = document.getElementById("pdvCarrinho");
+  const totalEl = document.getElementById("pdvTotal");
+  if(!box) return;
+  box.innerHTML = "";
+  let total = 0;
+  pdvCart.forEach((p,i)=>{
+    total += Number(p.preco||0);
+    const row = document.createElement("div");
+    row.innerHTML = `${p.nome} - R$ ${Number(p.preco).toFixed(2)} <button onclick="remPDV(${i})">x</button>`;
+    box.appendChild(row);
+  });
+  if(totalEl) totalEl.textContent = total.toFixed(2);
+}
+
+window.remPDV = function(i){
+  pdvCart.splice(i,1);
+  renderPDVCarrinho();
+}
+
+window.finalizarPDV = function(){
+  if(!pdvCart.length) return alert("Carrinho vazio");
+  alert("Venda finalizada");
+  pdvCart=[];
+  renderPDVCarrinho();
+}
+
+setTimeout(renderPDVProdutos,2000);
+
 </script>
 
 <script>
 function showView(v){
   const views = {
     produtos:'viewProdutos',
-    pedidos:'viewPedidos'
+    pedidos:'viewPedidos',
+    pdv:'viewPDV'
   };
   const id = views[v] || v;
   document.querySelectorAll('[id^="view"]').forEach(el=>el.style.display='none');
