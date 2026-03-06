@@ -136,6 +136,20 @@
   .searchRow{display:flex;gap:10px;flex-wrap:wrap}
   .searchRow > *{flex:1;min-width:160px}
 
+
+  .flashNotice{position:fixed;right:16px;top:16px;z-index:9999;min-width:280px;max-width:420px;background:rgba(15,23,42,.96);border:1px solid rgba(96,165,250,.35);box-shadow:0 20px 50px rgba(0,0,0,.45);border-radius:18px;padding:14px;display:none}
+  .flashNotice.show{display:block;animation:fadePop .25s ease}
+  .flashNotice .tt{font-weight:1000;font-size:14px}
+  .flashNotice .ss{font-size:12px;color:var(--muted);margin-top:4px}
+  .flashNotice .rr{margin-top:8px;display:flex;gap:8px;flex-wrap:wrap}
+  .miniStat{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-top:12px}
+  .statCard{background:rgba(2,6,23,.45);border:1px solid rgba(148,163,184,.14);border-radius:16px;padding:12px}
+  .statCard b{display:block;font-size:18px}
+  .statCard small{color:var(--muted);font-weight:900}
+  .pedActions{display:flex;gap:8px;flex-wrap:wrap}
+  .btn.whats{background:linear-gradient(180deg,#34d399,#10b981);color:#05210f;text-decoration:none}
+  @keyframes fadePop{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:translateY(0)}}
+
 </style>
 </head>
 <body>
@@ -264,9 +278,15 @@
                 <div class="muted" style="font-size:12px">Clientes criam, mas não leem. Admin lê.</div>
               </div>
 
+              <div class="miniStat">
+                <div class="statCard"><small>Pedidos hoje</small><b id="stHoje">0</b></div>
+                <div class="statCard"><small>Faturamento hoje</small><b id="stFat">R$ 0,00</b></div>
+                <div class="statCard"><small>Total listados</small><b id="stListados">0</b></div>
+              </div>
+
               <div class="card" style="overflow:auto">
                 <table>
-                  <thead><tr><th>Data</th><th>Cliente</th><th>Total</th><th>Tipo</th><th>Obs</th></tr></thead>
+                  <thead><tr><th>Data</th><th>Cliente</th><th>Total</th><th>Tipo</th><th>Obs / Ações</th></tr></thead>
                   <tbody id="tbPed"></tbody>
                 </table>
               </div>
@@ -287,11 +307,21 @@
   </div>
 </div>
 
+
+<div class="flashNotice" id="flashNotice">
+  <div class="tt">🔔 Novo pedido</div>
+  <div class="ss" id="flashText">Chegou um novo pedido.</div>
+  <div class="rr">
+    <button class="btn ghost sm" onclick="fecharAviso()">Fechar</button>
+    <button class="btn whats sm" onclick="showView('pedidos');fecharAviso()">Ver pedidos</button>
+  </div>
+</div>
+
 <script type="module">
 import { firebaseConfig, ADMIN_EMAILS } from "./firebase-config.js";
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-app.js";
 import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-auth.js";
-import { getFirestore, collection, doc, setDoc, deleteDoc, getDocs, query, orderBy, limit, updateDoc } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-firestore.js";
+import { getFirestore, collection, doc, setDoc, deleteDoc, getDocs, getDoc, query, orderBy, limit, updateDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-firestore.js";
 
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
@@ -373,6 +403,43 @@ function setUI(user){
   }
 }
 
+
+let produtosCache = [];
+let pedidosUnsub = null;
+let ultimoPedidoAvisado = null;
+
+function moneyBR(v){
+  return Number(v||0).toLocaleString("pt-BR",{style:"currency",currency:"BRL"});
+}
+function gruposToText(grupos){
+  try{
+    if(!Array.isArray(grupos) || !grupos.length) return "";
+    const itens = (grupos[0]?.itens || []);
+    return itens.map(i=>`${i.nome}:${Number(i.preco||0)}`).join(",");
+  }catch(e){ return ""; }
+}
+function fecharAviso(){
+  const box = document.getElementById("flashNotice");
+  if(box) box.classList.remove("show");
+}
+function beepNovoPedido(){
+  try{
+    const Ctx = window.AudioContext || window.webkitAudioContext;
+    if(!Ctx) return;
+    const ctx = new Ctx();
+    const o = ctx.createOscillator();
+    const g = ctx.createGain();
+    o.type = "sine";
+    o.frequency.value = 880;
+    g.gain.value = 0.02;
+    o.connect(g); g.connect(ctx.destination);
+    o.start();
+    setTimeout(()=>{ o.frequency.value = 660; }, 120);
+    setTimeout(()=>{ o.stop(); ctx.close(); }, 240);
+  }catch(e){}
+}
+window.fecharAviso = fecharAviso;
+
 async function carregarProdutos(){
   const box = document.getElementById("prodCards");
   if(!box) return;
@@ -380,6 +447,7 @@ async function carregarProdutos(){
 
   const snap = await getDocs(query(collection(db,"produtos"), orderBy("ord","asc"), limit(500)));
   const all = snap.docs.map(d=>({docId:d.id, ...d.data()}));
+  produtosCache = all;
 
   // contadores
   const cp = document.getElementById('countProdutos');
@@ -452,14 +520,14 @@ async function carregarProdutos(){
   };
 
   window.__edit = async (id)=>{
-    const snap2 = await getDocs(query(collection(db,"produtos"), orderBy("ord","asc"), limit(500)));
-    const docx = snap2.docs.find(x=>x.id===id);
-    const p = docx?.data() || {};
+    const snapOne = await getDoc(doc(db,"produtos", String(id)));
+    const p = snapOne.exists() ? snapOne.data() : {};
     document.getElementById("pId").value = id;
     document.getElementById("pCat").value = p.cat||"";
     document.getElementById("pNome").value = p.nome||"";
     document.getElementById("pPreco").value = p.preco||"";
     document.getElementById("pFotoURL").value = p.fotoURL||"";
+    document.getElementById("pGrupos").value = gruposToText(p.grupos||[]);
     document.getElementById("pAtivo").checked = (p.ativo !== false);
     document.getElementById("pOrd").value = p.ord ?? "";
     window.scrollTo({top:0,behavior:"smooth"});
@@ -510,25 +578,83 @@ async function salvarProduto(){
 
 async function carregarPedidos(){
   const tb = document.getElementById("tbPed");
-  tb.innerHTML="";
-  // últimos 120 pedidos
-  const snap = await getDocs(query(collection(db,"pedidos"), orderBy("criadoEm","desc"), limit(120)));
-  snap.forEach(d=>{
-    const p = d.data();
-    const dt = p.criadoEm?.toDate ? p.criadoEm.toDate() : null;
-    const data = dt ? dt.toLocaleString("pt-BR") : "";
-    const nome = p.cliente?.nome || "";
-    const total = Number(p.total||0).toFixed(2);
-    const tr = document.createElement("tr");
-    tr.innerHTML = `
-      <td><small>${data}</small></td>
-      <td>${nome}<br><small>${p.cliente?.tel||""}</small></td>
-      <td>R$ ${total}</td>
-      <td><small>${p.entregaTipo||""}</small></td>
-      <td><small>${(p.obs||"").slice(0,40)}</small></td>
-    `;
-    tb.appendChild(tr);
-  });
+  const countPedidos = document.getElementById("countPedidos");
+  if(pedidosUnsub) pedidosUnsub();
+
+  pedidosUnsub = onSnapshot(
+    query(collection(db,"pedidos"), orderBy("criadoEm","desc"), limit(120)),
+    (snap)=>{
+      tb.innerHTML = "";
+      const pedidos = snap.docs.map(d=>({id:d.id, ...d.data()}));
+      if(countPedidos) countPedidos.textContent = `(${pedidos.length})`;
+
+      const hoje = new Date();
+      const inicioHoje = new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate()).getTime();
+      let pedidosHoje = 0;
+      let fatHoje = 0;
+
+      pedidos.forEach((p, idx)=>{
+        const dt = p.criadoEm?.toDate ? p.criadoEm.toDate() : null;
+        const data = dt ? dt.toLocaleString("pt-BR") : "";
+        const nome = p.cliente?.nome || "";
+        const tel = String(p.cliente?.tel || "").replace(/\D/g,"");
+        const totalNum = Number(p.total||0);
+        const total = totalNum.toFixed(2);
+        const isHoje = dt ? dt.getTime() >= inicioHoje : false;
+        if(isHoje){
+          pedidosHoje++;
+          fatHoje += totalNum;
+        }
+
+        const itensTxt = (p.itens||[]).map(i=>{
+          const extras = Array.isArray(i.extras) && i.extras.length
+            ? " + " + i.extras.map(e=>`${e.nome} (${moneyBR(e.preco||0)})`).join(", ")
+            : "";
+          return `${i.nome} x${i.qtd}${extras}`;
+        }).join(" | ");
+
+        const wa = tel ? `https://wa.me/55${tel}` : "#";
+
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td><small>${data}</small></td>
+          <td>${nome}<br><small>${p.cliente?.tel||""}</small></td>
+          <td>R$ ${total}</td>
+          <td><small>${p.entregaTipo||""}</small></td>
+          <td>
+            <small>${(p.obs||"").slice(0,40)}</small>
+            <div style="margin-top:6px"><small>${itensTxt.slice(0,140)}</small></div>
+            <div class="pedActions" style="margin-top:8px">
+              ${tel ? `<a class="btn whats sm" href="${wa}" target="_blank" rel="noopener">WhatsApp</a>` : ``}
+            </div>
+          </td>
+        `;
+        tb.appendChild(tr);
+
+        if(idx===0 && p.id !== ultimoPedidoAvisado){
+          if(ultimoPedidoAvisado !== null){
+            const box = document.getElementById("flashNotice");
+            const txt = document.getElementById("flashText");
+            if(txt) txt.textContent = `${nome || "Cliente"} • ${moneyBR(totalNum)} • ${p.entregaTipo||"Pedido novo"}`;
+            if(box) box.classList.add("show");
+            beepNovoPedido();
+          }
+          ultimoPedidoAvisado = p.id;
+        }
+      });
+
+      const stHoje = document.getElementById("stHoje");
+      const stFat = document.getElementById("stFat");
+      const stListados = document.getElementById("stListados");
+      if(stHoje) stHoje.textContent = String(pedidosHoje);
+      if(stFat) stFat.textContent = moneyBR(fatHoje);
+      if(stListados) stListados.textContent = String(pedidos.length);
+    },
+    (err)=>{
+      console.error(err);
+      tb.innerHTML = `<tr><td colspan="5"><small>Erro ao carregar pedidos em tempo real.</small></td></tr>`;
+    }
+  );
 }
 
 async function exportarCSV(){
@@ -537,7 +663,7 @@ async function exportarCSV(){
   snap.forEach(d=>{
     const p = d.data();
     const dt = p.criadoEm?.toDate ? p.criadoEm.toDate().toISOString() : "";
-    const itens = (p.itens||[]).map(i=>`${i.nome} x${i.qtd} (${(Number(i.preco||0)*Number(i.qtd||0)).toFixed(2)})`).join(" | ");
+    const itens = (p.itens||[]).map(i=>{ const extras = Array.isArray(i.extras)&&i.extras.length ? " + "+i.extras.map(e=>`${e.nome} (${Number(e.preco||0).toFixed(2)})`).join(", ") : ""; return `${i.nome} x${i.qtd}${extras} (${(Number(i.preco||0)*Number(i.qtd||0)).toFixed(2)})`; }).join(" | ");
     rows.push([
       d.id, dt, p.cliente?.nome||"", p.cliente?.tel||"", p.cliente?.endereco||"",
       p.entregaTipo||"", p.metodo||"", p.subtotal||0, p.total||0, (p.obs||""), itens
