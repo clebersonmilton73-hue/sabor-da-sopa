@@ -642,6 +642,14 @@ const totEl = document.getElementById("tot");
 const catInfo = document.getElementById("catInfo");
 
 let produtos = [];
+
+let extrasSelecionados = {};
+
+function extrasPreco(id){
+  const arr = extrasSelecionados[id] || [];
+  return arr.reduce((s,a)=>s + (a.preco||0),0);
+}
+
 let cart = []; // {id, qtd}
 let entregaTipo = "ENTREGA";
 
@@ -715,7 +723,7 @@ function recalc(){
     const p = produtos.find(x=>x.id===c.id);
     if(!p) return;
     qtd += c.qtd;
-    sub += (p.preco||0) * c.qtd;
+    sub += ((p.preco||0) + extrasPreco(p.id)) * c.qtd;
   });
   qtdEl.textContent = qtd;
   subEl.textContent = moneyBR(sub);
@@ -727,6 +735,15 @@ function recalc(){
 function cartQty(id){
   const it = cart.find(x=>x.id===id);
   return it ? it.qtd : 0;
+}
+
+
+function toggleExtra(id,nome,preco){
+  if(!extrasSelecionados[id]) extrasSelecionados[id]=[];
+  const arr = extrasSelecionados[id];
+  const idx = arr.findIndex(x=>x.nome===nome);
+  if(idx>=0) arr.splice(idx,1);
+  else arr.push({nome,preco});
 }
 
 function inc(id){
@@ -801,6 +818,13 @@ div.innerHTML = `
     <div class="itemName">${p.nome}</div>
     <div class="itemPrice">${moneyBR(p.preco||0)}</div>
   </div>
+  ${(p.grupos && p.grupos.length) ? `<div class="muted">Extras:</div>
+    ${(p.grupos[0].itens||[]).map(e=>`
+      <label style="display:block;font-size:12px">
+        <input type="checkbox" onchange="toggleExtra(${p.id}, '${e.nome}', ${e.preco})">
+        ${e.nome} (+R$${e.preco})
+      </label>
+    `).join("")}` : ``}
   <div class="qtyBox">
     <button class="qtyBtn" onclick="window.__dec(${p.id})">-</button>
     <div class="qtyNum">${cartQty(p.id)}</div>
