@@ -99,26 +99,34 @@ header{
 .grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
 @media(max-width:760px){.grid{grid-template-columns:1fr}}
 .item{
-  display:grid;grid-template-columns:100px 1fr;gap:14px;padding:14px;
-  border:1px solid var(--line);
-  border-radius:22px;
+  display:flex;gap:12px;padding:12px;
+  border:1px solid rgba(148,163,184,.12);
+  border-radius:18px;
   background:
     linear-gradient(180deg,rgba(255,255,255,.02),rgba(255,255,255,0)),
-    linear-gradient(180deg,rgba(2,6,23,.72),rgba(2,6,23,.58));
-  box-shadow:0 12px 24px rgba(0,0,0,.20);
-  transition:transform .18s ease,border-color .18s ease,box-shadow .18s ease
+    linear-gradient(180deg,rgba(2,6,23,.76),rgba(2,6,23,.60));
+  box-shadow:0 10px 22px rgba(0,0,0,.18);
+  transition:transform .18s ease,border-color .18s ease,box-shadow .18s ease;
+  align-items:flex-start
 }
-.item:hover{transform:translateY(-2px);border-color:rgba(96,165,250,.24);box-shadow:0 18px 34px rgba(0,0,0,.25)}
+.item:hover{transform:translateY(-2px);border-color:rgba(96,165,250,.24);box-shadow:0 16px 30px rgba(0,0,0,.24)}
 .item img,.noimg{
-  width:100px;height:100px;border-radius:16px;border:1px solid rgba(148,163,184,.22);
-  background:rgba(2,6,23,.35)
+  width:65px;height:65px;border-radius:12px;border:1px solid rgba(148,163,184,.22);
+  background:rgba(2,6,23,.35);flex:0 0 65px
 }
 .item img{object-fit:cover}
-.noimg{display:grid;place-items:center;font-size:28px}
-.itemInfo{min-width:0}
+.noimg{display:grid;place-items:center;font-size:22px}
+.itemInfo{min-width:0;flex:1;display:flex;flex-direction:column}
+.itemTop{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
 .itemName{font-size:16px;font-weight:1100;line-height:1.22;color:#f8fbff}
-.itemPrice{margin-top:5px;font-weight:1100;color:#93c5fd;font-size:15px}
-.extrasBox{margin-top:10px;display:grid;gap:9px}
+.itemPrice{font-weight:1100;color:#93c5fd;font-size:15px;white-space:nowrap}
+.itemTag{
+  display:inline-flex;align-items:center;gap:6px;margin-top:7px;
+  width:max-content;padding:5px 9px;border-radius:999px;
+  background:rgba(245,158,11,.14);border:1px solid rgba(245,158,11,.26);
+  color:#fde68a;font-size:11px;font-weight:1100
+}
+.extrasBox{margin-top:10px;display:grid;gap:8px}
 .extraGroup{
   padding:10px 11px;border:1px solid rgba(148,163,184,.12);border-radius:16px;
   background:linear-gradient(180deg,rgba(148,163,184,.08),rgba(148,163,184,.04))
@@ -127,15 +135,15 @@ header{
 .extraHint{font-size:11px;color:var(--muted);margin-top:5px}
 .extraOpt{display:flex;align-items:center;gap:8px;font-size:12px;font-weight:800;color:var(--txt)}
 .extraOpt input{accent-color:#60a5fa;transform:scale(1.05)}
-.itemActions{margin-top:12px;display:flex;justify-content:flex-end}
+.itemActions{margin-top:10px;display:flex;justify-content:flex-end}
 .btn{
-  border:none;border-radius:16px;padding:12px 15px;
-  background:linear-gradient(180deg,var(--blue),var(--blue2));
-  color:#081426;font-weight:1100;cursor:pointer;
-  box-shadow:0 14px 26px rgba(59,130,246,.24);
+  border:none;border-radius:12px;padding:10px 14px;
+  background:linear-gradient(180deg,#22c55e,#16a34a);
+  color:#f8fffb;font-weight:1100;cursor:pointer;
+  box-shadow:0 12px 22px rgba(34,197,94,.22);
   transition:transform .16s ease, filter .16s ease, box-shadow .16s ease
 }
-.btn:hover{filter:brightness(1.05);box-shadow:0 18px 30px rgba(59,130,246,.30)}
+.btn:hover{filter:brightness(1.05);box-shadow:0 16px 26px rgba(34,197,94,.28)}
 .btn:active{transform:translateY(1px)}
 .cart{align-self:start;position:sticky;top:78px}
 @media(max-width:980px){
@@ -202,6 +210,15 @@ header{
 .overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;z-index:25}
 .overlay.show{display:block}
 .rotateTop{display:none}
+
+@media(max-width:560px){
+  .item{padding:10px;gap:10px}
+  .item img,.noimg{width:58px;height:58px;flex-basis:58px}
+  .itemName{font-size:15px}
+  .itemPrice{font-size:14px}
+  .btn{padding:9px 12px;font-size:13px}
+}
+
 @media(max-width:980px) and (orientation:portrait){
   .rotateTop{
     display:block;position:fixed;top:0;left:0;right:0;padding:8px 10px;
@@ -384,7 +401,7 @@ function addToCart(prodId){
   }
   recalc();
   renderCart();
-  toast(`${p.nome} adicionado`);
+  toast(`✅ ${p.nome} adicionado`);
   if(window.matchMedia('(max-width:980px)').matches) toggleCart(true);
 }
 window.addToCart = addToCart;
@@ -484,8 +501,11 @@ function renderCatalog(){
             <div class="item">
               ${p.fotoURL ? `<img src="${p.fotoURL}" alt="${escAttr(p.nome||'')}">` : `<div class="noimg">🍲</div>`}
               <div class="itemInfo">
-                <div class="itemName">${p.nome || ''}</div>
-                <div class="itemPrice">${moneyBR(p.preco || 0)}</div>
+                <div class="itemTop">
+                  <div class="itemName">${p.nome || ''}</div>
+                  <div class="itemPrice">${moneyBR(p.preco || 0)}</div>
+                </div>
+                ${(p.tag || p.destaque || p.badge) ? `<div class="itemTag">🔥 ${escAttr(p.tag || p.destaque || p.badge)}</div>` : ''}
                 ${gruposExtras.length ? `<div class="extrasBox">${gruposExtras.map((g,gidx) => `
                   <div class="extraGroup">
                     <div class="extraGroupTitle">${g.nome}</div>
@@ -497,7 +517,7 @@ function renderCatalog(){
                     `).join('')}
                   </div>
                 `).join('')}</div>` : `<div class="small" style="margin-top:8px">Sem adicionais</div>`}
-                <div class="itemActions"><button class="btn" onclick="addToCart(${p.id})">Adicionar</button></div>
+                <div class="itemActions"><button class="btn" onclick="addToCart(${p.id})">+ Adicionar</button></div>
               </div>
             </div>
           `;
