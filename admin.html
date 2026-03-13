@@ -24,6 +24,7 @@
   .btn.good{background:linear-gradient(180deg,#34d399,#22c55e);color:#05210f}
   .btn.ghost{background:rgba(148,163,184,.10);border:1px solid var(--line);color:var(--txt)}
   .btn.warn{background:linear-gradient(180deg,#fbbf24,#f59e0b);color:#2c1600}
+  .btn.bad{background:linear-gradient(180deg,#f87171,#ef4444);color:#250606}
   .muted{color:var(--muted);font-weight:800}
   .pill{display:inline-flex;align-items:center;gap:8px;background:rgba(148,163,184,.10);border:1px solid var(--line);padding:8px 10px;border-radius:999px;font-weight:900}
   table{width:100%;border-collapse:collapse}
@@ -603,7 +604,7 @@ async function carregarProdutos(){
 }
 
 async function salvarProduto(){
-  const u = auth.currentUser; if(!u) return alert("Faça login.");
+  const u = auth.currentUser || window.__LOCAL_ADMIN_USER__; if(!u) return alert("Faça login.");
   const email = String(u.email||"").toLowerCase();
   const ok = (ADMIN_EMAILS||[]).map(x=>String(x||"").toLowerCase()).includes(email);
   if(!ok) return alert("Este email não é admin. Ajuste ADMIN_EMAILS no firebase-config.js.");
@@ -803,9 +804,9 @@ function renderCozinha(docs){
       <div style="margin-top:12px;font-size:16px">${itens}</div>
       <div style="margin-top:12px;font-weight:1000">Total: R$ ${total}</div>
       <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px">
-        <button class="btn ghost sm" onclick="window.__status('${d.id}','PREPARANDO','${str(tel).replace("'", "\\'")}','${str(nome).replace("'", "\\'")}')">Preparando</button>
-        <button class="btn warn sm" onclick="window.__status('${d.id}','SAIU','${str(tel).replace("'", "\\'")}','${str(nome).replace("'", "\\'")}')">Saiu</button>
-        <button class="btn good sm" onclick="window.__status('${d.id}','ENTREGUE','${str(tel).replace("'", "\\'")}','${str(nome).replace("'", "\\'")}')">Entregue</button>
+        <button class="btn ghost sm" onclick="window.__status('${d.id}','PREPARANDO','${String(tel).replace("'", "\\'")}','${String(nome).replace("'", "\\'")}')">Preparando</button>
+        <button class="btn warn sm" onclick="window.__status('${d.id}','SAIU','${String(tel).replace("'", "\\'")}','${String(nome).replace("'", "\\'")}')">Saiu</button>
+        <button class="btn good sm" onclick="window.__status('${d.id}','ENTREGUE','${String(tel).replace("'", "\\'")}','${String(nome).replace("'", "\\'")}')">Entregue</button>
       </div>
     `;
     grid.appendChild(card);
@@ -987,6 +988,9 @@ function montarCupomPDVHtml(venda){
   const telLoja = perfil.tel || '';
   const endLoja = perfil.end || '';
   const logo = perfil.logo || '';
+  const pixChave = perfil.pixChave || '';
+  const pixCopiaCola = perfil.pixCopiaCola || '';
+  const qrPixUrl = pixCopiaCola ? `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(pixCopiaCola)}` : '';
   const cli = venda?.cliente || null;
   const itens = Array.isArray(venda?.itens) ? venda.itens : [];
   const total = Number(venda?.total || itens.reduce((s,i)=> s + Number(i.preco||0), 0));
@@ -1094,7 +1098,7 @@ function imprimirHtmlCupom58mm(html){
     setTimeout(() => { if(iframe.parentNode) iframe.parentNode.removeChild(iframe); }, 1500);
   };
   if (iframe.onload !== undefined) iframe.onload = () => setTimeout(doPrint, 250);
-  setTimeout(doPrint, 700);
+  setTimeout(doPrint, 1200);
 }
 function imprimirVenda58mm(venda){
   imprimirHtmlCupom58mm(montarCupomPDVHtml(venda));
