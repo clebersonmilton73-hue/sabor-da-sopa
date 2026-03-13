@@ -24,6 +24,7 @@
   .btn.good{background:linear-gradient(180deg,#34d399,#22c55e);color:#05210f}
   .btn.ghost{background:rgba(148,163,184,.10);border:1px solid var(--line);color:var(--txt)}
   .btn.warn{background:linear-gradient(180deg,#fbbf24,#f59e0b);color:#2c1600}
+  .btn.bad{background:linear-gradient(180deg,#f87171,#ef4444);color:#250606}
   .muted{color:var(--muted);font-weight:800}
   .pill{display:inline-flex;align-items:center;gap:8px;background:rgba(148,163,184,.10);border:1px solid var(--line);padding:8px 10px;border-radius:999px;font-weight:900}
   table{width:100%;border-collapse:collapse}
@@ -337,6 +338,16 @@
                       <button class="btn ghost" onclick="removerLogoPerfil()">Remover logo</button>
                       <button class="btn good" onclick="salvarPerfilConfig()">Salvar perfil</button>
                     </div>
+                    <div class="row">
+                      <button class="btn primary" onclick="backupManualSistema()">⬇️ Backup manual</button>
+                      <label class="btn ghost" style="display:flex;align-items:center;justify-content:center;gap:8px">
+                        ♻️ Restaurar backup
+                        <input id="cfgRestoreBackupFile" type="file" accept=".json,application/json" style="display:none">
+                      </label>
+                    </div>
+                    <div class="muted" style="font-size:12px">
+                      O backup salva perfil, produtos, clientes, relatórios, caixa e configurações locais em um arquivo JSON.
+                    </div>
                   </div>
                 </div>
               </div>
@@ -366,22 +377,6 @@
                   </div>
                   <div class="pdvSideCol">
                     <div>
-                      <b>Cliente da venda</b>
-                      <div class="card" style="padding:10px;margin-top:10px">
-                        <select id="pdvClienteSelect" class="select" style="margin-bottom:8px">
-                          <option value="">Sem cliente</option>
-                        </select>
-                        <div class="row" style="margin-top:8px">
-                          <input id="pdvCliNome" class="input" placeholder="Nome do cliente">
-                          <input id="pdvCliTel" class="input" placeholder="Telefone / WhatsApp">
-                        </div>
-                        <div style="margin-top:8px">
-                          <input id="pdvCliEnd" class="input" placeholder="Endereço">
-                        </div>
-                      </div>
-                    </div>
-
-                    <div>
                       <b style="display:block">Carrinho</b>
                       <div id="pdvCarrinho" class="pdvCartList" style="margin-top:10px"></div>
                     </div>
@@ -397,6 +392,7 @@
                       <button class="btn ghost" onclick="salvarClientePDV()">💾 Salvar cliente</button>
                       <button class="btn good" onclick="finalizarPDV()">Finalizar Venda</button>
                       <button class="btn primary" onclick="imprimirCupomPDV()">🖨 Imprimir Cupom</button>
+                      <button class="btn ghost" onclick="toggleFullscreenPDV()">🖥 Tela cheia</button>
                       <button class="btn ghost" onclick="limparCarrinhoPDV()">Limpar Carrinho</button>
                     </div>
                   </div>
@@ -602,7 +598,7 @@ async function carregarProdutos(){
 }
 
 async function salvarProduto(){
-  const u = auth.currentUser; if(!u) return alert("Faça login.");
+  const u = auth.currentUser || window.__LOCAL_ADMIN_USER__; if(!u) return alert("Faça login.");
   const email = String(u.email||"").toLowerCase();
   const ok = (ADMIN_EMAILS||[]).map(x=>String(x||"").toLowerCase()).includes(email);
   if(!ok) return alert("Este email não é admin. Ajuste ADMIN_EMAILS no firebase-config.js.");
@@ -802,9 +798,9 @@ function renderCozinha(docs){
       <div style="margin-top:12px;font-size:16px">${itens}</div>
       <div style="margin-top:12px;font-weight:1000">Total: R$ ${total}</div>
       <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px">
-        <button class="btn ghost sm" onclick="window.__status('${d.id}','PREPARANDO','${str(tel).replace("'", "\\'")}','${str(nome).replace("'", "\\'")}')">Preparando</button>
-        <button class="btn warn sm" onclick="window.__status('${d.id}','SAIU','${str(tel).replace("'", "\\'")}','${str(nome).replace("'", "\\'")}')">Saiu</button>
-        <button class="btn good sm" onclick="window.__status('${d.id}','ENTREGUE','${str(tel).replace("'", "\\'")}','${str(nome).replace("'", "\\'")}')">Entregue</button>
+        <button class="btn ghost sm" onclick="window.__status('${d.id}','PREPARANDO','${String(tel).replace("'", "\\'")}','${String(nome).replace("'", "\\'")}')">Preparando</button>
+        <button class="btn warn sm" onclick="window.__status('${d.id}','SAIU','${String(tel).replace("'", "\\'")}','${String(nome).replace("'", "\\'")}')">Saiu</button>
+        <button class="btn good sm" onclick="window.__status('${d.id}','ENTREGUE','${String(tel).replace("'", "\\'")}','${String(nome).replace("'", "\\'")}')">Entregue</button>
       </div>
     `;
     grid.appendChild(card);
@@ -986,6 +982,9 @@ function montarCupomPDVHtml(venda){
   const telLoja = perfil.tel || '';
   const endLoja = perfil.end || '';
   const logo = perfil.logo || '';
+  const pixChave = perfil.pixChave || '';
+  const pixCopiaCola = perfil.pixCopiaCola || '';
+  const qrPixUrl = pixCopiaCola ? `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(pixCopiaCola)}` : '';
   const cli = venda?.cliente || null;
   const itens = Array.isArray(venda?.itens) ? venda.itens : [];
   const total = Number(venda?.total || itens.reduce((s,i)=> s + Number(i.preco||0), 0));
@@ -1093,7 +1092,7 @@ function imprimirHtmlCupom58mm(html){
     setTimeout(() => { if(iframe.parentNode) iframe.parentNode.removeChild(iframe); }, 1500);
   };
   if (iframe.onload !== undefined) iframe.onload = () => setTimeout(doPrint, 250);
-  setTimeout(doPrint, 700);
+  setTimeout(doPrint, 1200);
 }
 function imprimirVenda58mm(venda){
   imprimirHtmlCupom58mm(montarCupomPDVHtml(venda));
@@ -1738,6 +1737,113 @@ function showView(v){
   if(v==='relatorios') document.getElementById('navRelatorios')?.classList.add('active');
   if(v==='caixa') document.getElementById('navCaixa')?.classList.add('active');
 }
+
+async function gerarBackupSistema(){
+  const perfil = getPerfilLoja();
+  const clientesManuais = getClientesManuais();
+  const relatorios = getRelatorioVendas();
+  const caixa = getMovCaixa();
+  let produtos = [];
+  try{
+    const snap = await getDocs(query(collection(db,'produtos'), orderBy('ord','asc'), limit(1000)));
+    produtos = snap.docs.map(d=>({ id:d.id, ...d.data() }));
+  }catch(e){
+    console.warn('Não foi possível ler produtos para backup.', e);
+    produtos = Array.isArray(allProdutos) ? allProdutos.map(p=>({
+      id: p.docId || p.id || '',
+      cat: p.cat || '',
+      nome: p.nome || '',
+      preco: Number(p.preco || 0),
+      ord: Number(p.ord ?? 999),
+      fotoURL: p.fotoURL || '',
+      ativo: p.ativo !== false,
+      grupos: Array.isArray(p.grupos) ? p.grupos : []
+    })) : [];
+  }
+  return {
+    app: 'Sabor da Sopa Admin',
+    backupVersion: 1,
+    exportedAt: new Date().toISOString(),
+    data: {
+      perfil,
+      produtos,
+      clientesManuais,
+      relatorios,
+      caixa,
+      autoPrint: getAutoPrint(),
+      zoom: Number(localStorage.getItem(ZOOM_KEY) || 90)
+    }
+  };
+}
+
+window.backupManualSistema = async function(){
+  try{
+    const payload = await gerarBackupSistema();
+    const nomeLoja = String(payload?.data?.perfil?.nome || 'sabor-da-sopa').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'') || 'sabor-da-sopa';
+    const data = new Date();
+    const stamp = `${data.getFullYear()}-${String(data.getMonth()+1).padStart(2,'0')}-${String(data.getDate()).padStart(2,'0')}_${String(data.getHours()).padStart(2,'0')}-${String(data.getMinutes()).padStart(2,'0')}`;
+    const blob = new Blob([JSON.stringify(payload, null, 2)], {type:'application/json;charset=utf-8'});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `backup-${nomeLoja}-${stamp}.json`;
+    a.click();
+    setTimeout(()=>URL.revokeObjectURL(a.href), 1500);
+    alert('Backup gerado com sucesso.');
+  }catch(e){
+    console.error(e);
+    alert('Erro ao gerar backup.');
+  }
+};
+
+window.restaurarBackupSistema = async function(file){
+  if(!file) return;
+  try{
+    const texto = await file.text();
+    const backup = JSON.parse(texto || '{}');
+    const data = backup?.data || backup || {};
+    if(!confirm('Restaurar esse backup agora? Isso vai sobrescrever os dados locais e atualizar os produtos salvos.')) return;
+
+    if(data.perfil) setPerfilLoja(data.perfil);
+    if(Array.isArray(data.clientesManuais)) setClientesManuais(data.clientesManuais);
+    if(Array.isArray(data.relatorios)) setRelatorioVendas(data.relatorios);
+    if(Array.isArray(data.caixa)) setMovCaixa(data.caixa);
+    if(typeof data.autoPrint === 'boolean') setAutoPrint(data.autoPrint);
+    if(data.zoom != null) localStorage.setItem(ZOOM_KEY, String(Number(data.zoom) || 90));
+
+    if(Array.isArray(data.produtos) && data.produtos.length){
+      for(const p of data.produtos){
+        const id = String(p.id || p.docId || '').trim();
+        if(!id) continue;
+        const payload = {
+          cat: p.cat || 'Sopas',
+          nome: p.nome || '',
+          preco: Number(p.preco || 0),
+          ord: Number(p.ord ?? 999),
+          fotoURL: p.fotoURL || '',
+          ativo: p.ativo !== false,
+          grupos: Array.isArray(p.grupos) ? p.grupos : []
+        };
+        await setDoc(doc(db,'produtos', id), payload, {merge:true});
+      }
+    }
+
+    renderPerfilConfig();
+    atualizarNomeInterface();
+    renderRelatorios();
+    renderCaixa();
+    try{ await carregarProdutos(); }catch(e){ console.warn(e); }
+    const autoPrint = document.getElementById('autoPrintToggle');
+    if(autoPrint) autoPrint.checked = getAutoPrint();
+    iniciarZoom();
+
+    alert('Backup restaurado com sucesso.');
+  }catch(e){
+    console.error(e);
+    alert('Erro ao restaurar backup. Verifique se o arquivo JSON está correto.');
+  }
+};
+
+
 document.addEventListener('DOMContentLoaded',()=>{
   showView('pdv');
   renderPerfilConfig();
@@ -1747,6 +1853,14 @@ document.addEventListener('DOMContentLoaded',()=>{
   const cfgFile = document.getElementById('cfgLogoFile');
   if(cfgFile){
     cfgFile.addEventListener('change', (e)=> carregarLogoArquivo(e.target.files && e.target.files[0]));
+  }
+  const restoreFile = document.getElementById('cfgRestoreBackupFile');
+  if(restoreFile){
+    restoreFile.addEventListener('change', async (e)=>{
+      const arq = e.target.files && e.target.files[0];
+      await restaurarBackupSistema(arq);
+      e.target.value = '';
+    });
   }
   const autoPrint = document.getElementById('autoPrintToggle');
   if(autoPrint){
