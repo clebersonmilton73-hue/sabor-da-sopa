@@ -238,6 +238,24 @@
             </section>
 
             <section class="section hide" id="viewClientes">
+
+<div class="card" style="margin-bottom:14px">
+<b>Cadastrar Cliente</b>
+
+<div class="row" style="margin-top:10px">
+<input id="cliNome" class="input" placeholder="Nome do cliente">
+<input id="cliTel" class="input" placeholder="Telefone / WhatsApp">
+</div>
+
+<div style="margin-top:10px">
+<input id="cliEnd" class="input" placeholder="Endereço">
+</div>
+
+<div style="margin-top:10px">
+<button class="btn good" onclick="salvarClienteManual()">Salvar Cliente</button>
+</div>
+</div>
+
               <div class="sectionHd" style="margin-top:16px">
                 <b>Clientes</b>
                 <div class="muted" style="font-size:12px">Salvos automaticamente quando fazem pedido online.</div>
@@ -1681,6 +1699,37 @@ onAuthStateChanged(auth, async (user)=>{
   if(!user) return;
   await carregarProdutos(); hookFiltros(); ouvirPedidos(); iniciarZoom();
 });
+
+window.salvarClienteManual = async function(){
+  const nome = document.getElementById("cliNome").value.trim();
+  const tel = document.getElementById("cliTel").value.trim();
+  const end = document.getElementById("cliEnd").value.trim();
+
+  if(!nome){
+    alert("Digite o nome do cliente");
+    return;
+  }
+
+  const id = "cli_" + Date.now();
+
+  try{
+    await setDoc(doc(db,"clientes",id),{
+      nome:nome,
+      tel:tel,
+      endereco:end,
+      criadoEm:new Date()
+    });
+    alert("Cliente salvo!");
+  }catch(e){
+    console.warn(e);
+    alert("Erro ao salvar cliente");
+  }
+
+  document.getElementById("cliNome").value="";
+  document.getElementById("cliTel").value="";
+  document.getElementById("cliEnd").value="";
+}
+
 </script>
 
 
@@ -1706,6 +1755,37 @@ function iniciarZoom(){
   }
   aplicarZoom(salvo);
 }
+
+window.salvarClienteManual = async function(){
+  const nome = document.getElementById("cliNome").value.trim();
+  const tel = document.getElementById("cliTel").value.trim();
+  const end = document.getElementById("cliEnd").value.trim();
+
+  if(!nome){
+    alert("Digite o nome do cliente");
+    return;
+  }
+
+  const id = "cli_" + Date.now();
+
+  try{
+    await setDoc(doc(db,"clientes",id),{
+      nome:nome,
+      tel:tel,
+      endereco:end,
+      criadoEm:new Date()
+    });
+    alert("Cliente salvo!");
+  }catch(e){
+    console.warn(e);
+    alert("Erro ao salvar cliente");
+  }
+
+  document.getElementById("cliNome").value="";
+  document.getElementById("cliTel").value="";
+  document.getElementById("cliEnd").value="";
+}
+
 </script>
 
 <script>
@@ -1868,6 +1948,37 @@ document.addEventListener('DOMContentLoaded',()=>{
     autoPrint.addEventListener('change', ()=> setAutoPrint(autoPrint.checked));
   }
 });
+
+window.salvarClienteManual = async function(){
+  const nome = document.getElementById("cliNome").value.trim();
+  const tel = document.getElementById("cliTel").value.trim();
+  const end = document.getElementById("cliEnd").value.trim();
+
+  if(!nome){
+    alert("Digite o nome do cliente");
+    return;
+  }
+
+  const id = "cli_" + Date.now();
+
+  try{
+    await setDoc(doc(db,"clientes",id),{
+      nome:nome,
+      tel:tel,
+      endereco:end,
+      criadoEm:new Date()
+    });
+    alert("Cliente salvo!");
+  }catch(e){
+    console.warn(e);
+    alert("Erro ao salvar cliente");
+  }
+
+  document.getElementById("cliNome").value="";
+  document.getElementById("cliTel").value="";
+  document.getElementById("cliEnd").value="";
+}
+
 </script>
 
 </body>
