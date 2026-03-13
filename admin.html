@@ -338,6 +338,16 @@
                       <button class="btn ghost" onclick="removerLogoPerfil()">Remover logo</button>
                       <button class="btn good" onclick="salvarPerfilConfig()">Salvar perfil</button>
                     </div>
+                    <div class="row">
+                      <button class="btn primary" onclick="backupManualSistema()">⬇️ Backup manual</button>
+                      <label class="btn ghost" style="display:flex;align-items:center;justify-content:center;gap:8px">
+                        ♻️ Restaurar backup
+                        <input id="cfgRestoreBackupFile" type="file" accept=".json,application/json" style="display:none">
+                      </label>
+                    </div>
+                    <div class="muted" style="font-size:12px">
+                      O backup salva perfil, produtos, clientes, relatórios, caixa e configurações locais em um arquivo JSON.
+                    </div>
                   </div>
                 </div>
               </div>
@@ -1743,6 +1753,113 @@ function showView(v){
   if(v==='relatorios') document.getElementById('navRelatorios')?.classList.add('active');
   if(v==='caixa') document.getElementById('navCaixa')?.classList.add('active');
 }
+
+async function gerarBackupSistema(){
+  const perfil = getPerfilLoja();
+  const clientesManuais = getClientesManuais();
+  const relatorios = getRelatorioVendas();
+  const caixa = getMovCaixa();
+  let produtos = [];
+  try{
+    const snap = await getDocs(query(collection(db,'produtos'), orderBy('ord','asc'), limit(1000)));
+    produtos = snap.docs.map(d=>({ id:d.id, ...d.data() }));
+  }catch(e){
+    console.warn('Não foi possível ler produtos para backup.', e);
+    produtos = Array.isArray(allProdutos) ? allProdutos.map(p=>({
+      id: p.docId || p.id || '',
+      cat: p.cat || '',
+      nome: p.nome || '',
+      preco: Number(p.preco || 0),
+      ord: Number(p.ord ?? 999),
+      fotoURL: p.fotoURL || '',
+      ativo: p.ativo !== false,
+      grupos: Array.isArray(p.grupos) ? p.grupos : []
+    })) : [];
+  }
+  return {
+    app: 'Sabor da Sopa Admin',
+    backupVersion: 1,
+    exportedAt: new Date().toISOString(),
+    data: {
+      perfil,
+      produtos,
+      clientesManuais,
+      relatorios,
+      caixa,
+      autoPrint: getAutoPrint(),
+      zoom: Number(localStorage.getItem(ZOOM_KEY) || 90)
+    }
+  };
+}
+
+window.backupManualSistema = async function(){
+  try{
+    const payload = await gerarBackupSistema();
+    const nomeLoja = String(payload?.data?.perfil?.nome || 'sabor-da-sopa').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'') || 'sabor-da-sopa';
+    const data = new Date();
+    const stamp = `${data.getFullYear()}-${String(data.getMonth()+1).padStart(2,'0')}-${String(data.getDate()).padStart(2,'0')}_${String(data.getHours()).padStart(2,'0')}-${String(data.getMinutes()).padStart(2,'0')}`;
+    const blob = new Blob([JSON.stringify(payload, null, 2)], {type:'application/json;charset=utf-8'});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `backup-${nomeLoja}-${stamp}.json`;
+    a.click();
+    setTimeout(()=>URL.revokeObjectURL(a.href), 1500);
+    alert('Backup gerado com sucesso.');
+  }catch(e){
+    console.error(e);
+    alert('Erro ao gerar backup.');
+  }
+};
+
+window.restaurarBackupSistema = async function(file){
+  if(!file) return;
+  try{
+    const texto = await file.text();
+    const backup = JSON.parse(texto || '{}');
+    const data = backup?.data || backup || {};
+    if(!confirm('Restaurar esse backup agora? Isso vai sobrescrever os dados locais e atualizar os produtos salvos.')) return;
+
+    if(data.perfil) setPerfilLoja(data.perfil);
+    if(Array.isArray(data.clientesManuais)) setClientesManuais(data.clientesManuais);
+    if(Array.isArray(data.relatorios)) setRelatorioVendas(data.relatorios);
+    if(Array.isArray(data.caixa)) setMovCaixa(data.caixa);
+    if(typeof data.autoPrint === 'boolean') setAutoPrint(data.autoPrint);
+    if(data.zoom != null) localStorage.setItem(ZOOM_KEY, String(Number(data.zoom) || 90));
+
+    if(Array.isArray(data.produtos) && data.produtos.length){
+      for(const p of data.produtos){
+        const id = String(p.id || p.docId || '').trim();
+        if(!id) continue;
+        const payload = {
+          cat: p.cat || 'Sopas',
+          nome: p.nome || '',
+          preco: Number(p.preco || 0),
+          ord: Number(p.ord ?? 999),
+          fotoURL: p.fotoURL || '',
+          ativo: p.ativo !== false,
+          grupos: Array.isArray(p.grupos) ? p.grupos : []
+        };
+        await setDoc(doc(db,'produtos', id), payload, {merge:true});
+      }
+    }
+
+    renderPerfilConfig();
+    atualizarNomeInterface();
+    renderRelatorios();
+    renderCaixa();
+    try{ await carregarProdutos(); }catch(e){ console.warn(e); }
+    const autoPrint = document.getElementById('autoPrintToggle');
+    if(autoPrint) autoPrint.checked = getAutoPrint();
+    iniciarZoom();
+
+    alert('Backup restaurado com sucesso.');
+  }catch(e){
+    console.error(e);
+    alert('Erro ao restaurar backup. Verifique se o arquivo JSON está correto.');
+  }
+};
+
+
 document.addEventListener('DOMContentLoaded',()=>{
   showView('pdv');
   renderPerfilConfig();
@@ -1752,6 +1869,14 @@ document.addEventListener('DOMContentLoaded',()=>{
   const cfgFile = document.getElementById('cfgLogoFile');
   if(cfgFile){
     cfgFile.addEventListener('change', (e)=> carregarLogoArquivo(e.target.files && e.target.files[0]));
+  }
+  const restoreFile = document.getElementById('cfgRestoreBackupFile');
+  if(restoreFile){
+    restoreFile.addEventListener('change', async (e)=>{
+      const arq = e.target.files && e.target.files[0];
+      await restaurarBackupSistema(arq);
+      e.target.value = '';
+    });
   }
   const autoPrint = document.getElementById('autoPrintToggle');
   if(autoPrint){
