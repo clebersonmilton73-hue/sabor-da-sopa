@@ -1710,34 +1710,39 @@ onAuthStateChanged(auth, async (user)=>{
   await carregarProdutos(); hookFiltros(); ouvirPedidos(); iniciarZoom();
 });
 
-window.salvarClienteManual = async function(){
+window.salvarClienteManual = function(){
+
   const nome = document.getElementById("cliNome").value.trim();
-  const tel = document.getElementById("cliTel").value.trim();
-  const end = document.getElementById("cliEnd").value.trim();
+  const tel  = document.getElementById("cliTel").value.trim();
+  const end  = document.getElementById("cliEnd").value.trim();
 
   if(!nome){
     alert("Digite o nome do cliente");
     return;
   }
 
-  const id = "cli_" + Date.now();
+  const lista = getClientesManuais();
 
-  try{
-    await setDoc(doc(db,"clientes",id),{
-      nome:nome,
-      tel:tel,
-      endereco:end,
-      criadoEm:new Date()
-    });
-    alert("Cliente salvo!");
-  }catch(e){
-    console.warn(e);
-    alert("Erro ao salvar cliente");
-  }
+  const novo = {
+    id: "cli_" + Date.now(),
+    nome: nome,
+    tel: tel,
+    endereco: end,
+    pedidos: 0
+  };
 
-  document.getElementById("cliNome").value="";
-  document.getElementById("cliTel").value="";
-  document.getElementById("cliEnd").value="";
+  lista.unshift(novo);
+
+  setClientesManuais(lista);
+
+  alert("Cliente salvo!");
+
+  document.getElementById("cliNome").value = "";
+  document.getElementById("cliTel").value = "";
+  document.getElementById("cliEnd").value = "";
+
+  renderClientesFromPedidos(window.__lastPedidoDocs || []);
+  renderPDVClienteSelect();
 }
 
 
