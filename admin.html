@@ -394,8 +394,18 @@
                     <div id="pdvProdutos" class="pdvCatalog"></div>
                   </div>
                   <div class="pdvSideCol">
-                    <div>
-                      <b style="display:block">Carrinho</b>
+                    
+<div>
+  <b>Cliente da venda</b>
+  <div class="card" style="padding:10px;margin-top:10px">
+    <select id="pdvClienteSelect" class="select">
+      <option value="">Sem cliente</option>
+    </select>
+  </div>
+</div>
+
+<div>
+  <b style="display:block">Carrinho</b>
                       <div id="pdvCarrinho" class="pdvCartList" style="margin-top:10px"></div>
                     </div>
 
@@ -410,7 +420,7 @@
                       <button class="btn ghost" onclick="salvarClientePDV()">💾 Salvar cliente</button>
                       <button class="btn good" onclick="finalizarPDV()">Finalizar Venda</button>
                       <button class="btn primary" onclick="imprimirCupomPDV()">🖨 Imprimir Cupom</button>
-                      <button class="btn ghost" onclick="toggleFullscreenPDV()">🖥 Tela cheia</button>
+                      <button class="btn ghost" onclick="toggleFullscreenPDV()">🖥</button>
                       <button class="btn ghost" onclick="limparCarrinhoPDV()">Limpar Carrinho</button>
                     </div>
                   </div>
@@ -524,6 +534,7 @@ async function entrar(){
     window.__LOCAL_ADMIN_USER__ = fakeUser;
     setUI(fakeUser);
     await carregarTudo();
+  await carregarClientesPDV();
     return;
   }
 
@@ -1003,7 +1014,7 @@ function montarCupomPDVHtml(venda){
   const pixChave = perfil.pixChave || '';
   const pixCopiaCola = perfil.pixCopiaCola || '';
   const qrPixUrl = pixCopiaCola ? `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(pixCopiaCola)}` : '';
-  const cli = venda?.cliente || null;
+  const cli = venda?.cliente || window.__pdvClienteCupomAtual || null;
   const itens = Array.isArray(venda?.itens) ? venda.itens : [];
   const total = Number(venda?.total || itens.reduce((s,i)=> s + Number(i.preco||0), 0));
   const data = venda?.data || new Date().toLocaleString('pt-BR');
@@ -1187,41 +1198,35 @@ window.escolherClientePDV = function(id){
   const clientes = getClientesCompletos();
   const cli = clientes.find(c => String(c.id) === String(id));
   pdvClienteAtual = cli || null;
-  document.getElementById('pdvCliNome').value = cli?.nome || '';
-  document.getElementById('pdvCliTel').value = cli?.tel || '';
-  document.getElementById('pdvCliEnd').value = cli?.endereco || '';
+  const sel = document.getElementById('pdvClienteSelect');
+  if(sel) sel.value = cli?.id || '';
 };
 
 window.salvarClientePDV = function(){
-  const nome = (document.getElementById('pdvCliNome')?.value || '').trim();
-  const tel = (document.getElementById('pdvCliTel')?.value || '').trim();
-  const endereco = (document.getElementById('pdvCliEnd')?.value || '').trim();
-  if(!nome) return alert('Informe o nome do cliente.');
-  const lista = getClientesManuais();
-  if(pdvClienteAtual && String(pdvClienteAtual.origem) === 'manual'){
-    const idx = lista.findIndex(c => String(c.id) === String(pdvClienteAtual.id));
-    if(idx >= 0){
-      lista[idx] = { ...lista[idx], nome, tel, endereco };
-      pdvClienteAtual = { ...lista[idx], origem:'manual' };
-    }
-  } else {
-    const novo = { id: 'manual_' + Date.now(), nome, tel, endereco, pedidos: 0 };
-    lista.push(novo);
-    pdvClienteAtual = { ...novo, origem:'manual' };
-  }
-  setClientesManuais(lista);
-  renderPDVClienteSelect();
-  if(pdvClienteAtual?.id) document.getElementById('pdvClienteSelect').value = pdvClienteAtual.id;
-  renderClientesFromPedidos(window.__lastPedidoDocs || []);
-  alert('Cliente salvo.');
+  alert('Agora o cadastro do cliente fica apenas na área "Clientes".');
 };
 
 function clienteAtualPDV(){
-  const nome = (document.getElementById('pdvCliNome')?.value || '').trim();
-  const tel = (document.getElementById('pdvCliTel')?.value || '').trim();
-  const endereco = (document.getElementById('pdvCliEnd')?.value || '').trim();
-  if(!nome && !tel && !endereco) return null;
-  return { nome, tel, endereco };
+  if(pdvClienteAtual){
+    return {
+      nome: pdvClienteAtual.nome || '',
+      tel: pdvClienteAtual.tel || '',
+      endereco: pdvClienteAtual.endereco || ''
+    };
+  }
+  const sel = document.getElementById('pdvClienteSelect');
+  if(sel && sel.value){
+    const cli = getClientesCompletos().find(c => String(c.id) === String(sel.value));
+    if(cli){
+      pdvClienteAtual = cli;
+      return {
+        nome: cli.nome || '',
+        tel: cli.tel || '',
+        endereco: cli.endereco || ''
+      };
+    }
+  }
+  return null;
 }
 
 window.editarClienteManual = function(id){
@@ -1278,6 +1283,11 @@ function fillPDVCategorias(){
   el.innerHTML = '<option value="">Todas as categorias</option>' + cats.map(c => `<option value="${c}">${c}</option>`).join('');
   el.value = cats.includes(atual) ? atual : '';
 }
+
+
+document.getElementById('pdvClienteSelect')?.addEventListener('change', (e)=>{
+  window.escolherClientePDV(e.target.value);
+});
 
 function hookPDVFilters(){
   ['pdvBusca','pdvFiltroCat'].forEach(id => {
@@ -1728,6 +1738,47 @@ window.salvarClienteManual = async function(){
   document.getElementById("cliNome").value="";
   document.getElementById("cliTel").value="";
   document.getElementById("cliEnd").value="";
+}
+
+
+async function carregarClientesPDV(){
+  const sel = document.getElementById("pdvClienteSelect");
+  if(!sel) return;
+
+  const valorAtual = sel.value || "";
+  sel.innerHTML = '<option value="">Sem cliente</option>';
+
+  try{
+    const snap = await getDocs(collection(db,"clientes"));
+    snap.forEach(d=>{
+      const c = d.data() || {};
+      const opt = document.createElement("option");
+      opt.value = d.id;
+      opt.textContent = `${c.nome || 'Cliente'}${c.tel ? ' - ' + c.tel : ''}`;
+      sel.appendChild(opt);
+    });
+    if(valorAtual) sel.value = valorAtual;
+  }catch(e){
+    console.warn("Erro ao carregar clientes no PDV", e);
+  }
+}
+
+async function obterClienteSelecionadoPDV(){
+  const sel = document.getElementById("pdvClienteSelect");
+  if(!sel || !sel.value) return null;
+  try{
+    const snap = await getDoc(doc(db,"clientes", sel.value));
+    if(!snap.exists()) return null;
+    const c = snap.data() || {};
+    return {
+      nome: c.nome || "",
+      tel: c.tel || "",
+      endereco: c.endereco || c.end || ""
+    };
+  }catch(e){
+    console.warn("Erro ao obter cliente do PDV", e);
+    return null;
+  }
 }
 
 </script>
