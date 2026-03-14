@@ -420,7 +420,7 @@
                       <button class="btn ghost" onclick="salvarClientePDV()">💾 Salvar cliente</button>
                       <button class="btn good" onclick="finalizarPDV()">Finalizar Venda</button>
                       <button class="btn primary" onclick="imprimirCupomPDV()">🖨 Imprimir Cupom</button>
-                      <button class="btn ghost" onclick="toggleFullscreenPDV()">🖥</button>
+                      
                       <button class="btn ghost" onclick="limparCarrinhoPDV()">Limpar Carrinho</button>
                     </div>
                   </div>
@@ -534,7 +534,6 @@ async function entrar(){
     window.__LOCAL_ADMIN_USER__ = fakeUser;
     setUI(fakeUser);
     await carregarTudo();
-  await carregarClientesPDV();
     return;
   }
 
@@ -1143,7 +1142,11 @@ let pdvCart = [];
 let pdvClienteAtual = null;
 
 function getClientesManuais(){
-  return JSON.parse(localStorage.getItem('SABOR_CLIENTES_MANUAIS') || '[]');
+  try{
+    return JSON.parse(localStorage.getItem('SABOR_CLIENTES_MANUAIS') || '[]');
+  }catch(e){
+    return [];
+  }
 }
 function setClientesManuais(lista){
   localStorage.setItem('SABOR_CLIENTES_MANUAIS', JSON.stringify(lista || []));
@@ -1614,6 +1617,21 @@ async function exportarCSV(){
   const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'pedidos_sabor_da_sopa.csv'; a.click(); URL.revokeObjectURL(a.href);
 }
 
+async function carregarTudo(){
+  await carregarProdutos();
+  hookFiltros();
+  ouvirPedidos();
+  iniciarZoom();
+  renderPerfilConfig();
+  atualizarNomeInterface();
+  renderRelatorios();
+  renderCaixa();
+  renderClientesFromPedidos(window.__lastPedidoDocs || []);
+  renderPDVClienteSelect();
+  const autoPrint = document.getElementById('autoPrintToggle');
+  if(autoPrint) autoPrint.checked = getAutoPrint();
+}
+
 window.entrar = entrar; window.sair = sair; window.salvarProduto = salvarProduto; window.exportarCSV = exportarCSV;
 window.__status = atualizarStatusPedido;
 window.__zap = (tel, nome)=> abrirWhats(tel, `Olá ${nome || 'cliente'}! 🍲`);
@@ -1702,12 +1720,14 @@ function hookFiltros(){ ['qBusca','qCat','qAtivo'].forEach(id=>{ const el = docu
 onAuthStateChanged(auth, async (user)=>{
   if(!user && window.__LOCAL_ADMIN_USER__){
     setUI(window.__LOCAL_ADMIN_USER__);
+    showLockUI();
     try{ await carregarTudo(); }catch(e){ console.warn(e); }
     return;
   }
-  setUI(user); showLockUI();
+  setUI(user);
+  showLockUI();
   if(!user) return;
-  await carregarProdutos(); hookFiltros(); ouvirPedidos(); iniciarZoom();
+  try{ await carregarTudo(); }catch(e){ console.warn(e); }
 });
 
 window.salvarClienteManual = function(){
@@ -1722,16 +1742,21 @@ window.salvarClienteManual = function(){
   }
 
   const lista = getClientesManuais();
+  const existente = lista.findIndex(c =>
+    (tel && String(c.tel || "").trim() === tel) ||
+    (!tel && String(c.nome || "").trim().toLowerCase() === nome.toLowerCase())
+  );
 
   const novo = {
-    id: "cli_" + Date.now(),
+    id: existente >= 0 ? lista[existente].id : ("cli_" + Date.now()),
     nome: nome,
     tel: tel,
     endereco: end,
-    pedidos: 0
+    pedidos: existente >= 0 ? Number(lista[existente].pedidos || 0) : 0
   };
 
-  lista.unshift(novo);
+  if(existente >= 0) lista[existente] = novo;
+  else lista.unshift(novo);
 
   setClientesManuais(lista);
 
@@ -1747,45 +1772,16 @@ window.salvarClienteManual = function(){
 
 
 async function carregarClientesPDV(){
-  const sel = document.getElementById("pdvClienteSelect");
-  if(!sel) return;
-
-  const valorAtual = sel.value || "";
-  sel.innerHTML = '<option value="">Sem cliente</option>';
-
-  try{
-    const snap = await getDocs(collection(db,"clientes"));
-    snap.forEach(d=>{
-      const c = d.data() || {};
-      const opt = document.createElement("option");
-      opt.value = d.id;
-      opt.textContent = `${c.nome || 'Cliente'}${c.tel ? ' - ' + c.tel : ''}`;
-      sel.appendChild(opt);
-    });
-    if(valorAtual) sel.value = valorAtual;
-  }catch(e){
-    console.warn("Erro ao carregar clientes no PDV", e);
-  }
+  renderPDVClienteSelect();
 }
 
 async function obterClienteSelecionadoPDV(){
-  const sel = document.getElementById("pdvClienteSelect");
-  if(!sel || !sel.value) return null;
-  try{
-    const snap = await getDoc(doc(db,"clientes", sel.value));
-    if(!snap.exists()) return null;
-    const c = snap.data() || {};
-    return {
-      nome: c.nome || "",
-      tel: c.tel || "",
-      endereco: c.endereco || c.end || ""
-    };
-  }catch(e){
-    console.warn("Erro ao obter cliente do PDV", e);
-    return null;
-  }
+  const cli = clienteAtualPDV();
+  return cli || null;
 }
 
+
+function toggleFullscreenPDV(){}
 </script>
 
 
@@ -1812,34 +1808,44 @@ function iniciarZoom(){
   aplicarZoom(salvo);
 }
 
-window.salvarClienteManual = async function(){
+window.salvarClienteManual = function(){
+
   const nome = document.getElementById("cliNome").value.trim();
-  const tel = document.getElementById("cliTel").value.trim();
-  const end = document.getElementById("cliEnd").value.trim();
+  const tel  = document.getElementById("cliTel").value.trim();
+  const end  = document.getElementById("cliEnd").value.trim();
 
   if(!nome){
     alert("Digite o nome do cliente");
     return;
   }
 
-  const id = "cli_" + Date.now();
+  const lista = getClientesManuais();
+  const existente = lista.findIndex(c =>
+    (tel && String(c.tel || "").trim() === tel) ||
+    (!tel && String(c.nome || "").trim().toLowerCase() === nome.toLowerCase())
+  );
 
-  try{
-    await setDoc(doc(db,"clientes",id),{
-      nome:nome,
-      tel:tel,
-      endereco:end,
-      criadoEm:new Date()
-    });
-    alert("Cliente salvo!");
-  }catch(e){
-    console.warn(e);
-    alert("Erro ao salvar cliente");
-  }
+  const novo = {
+    id: existente >= 0 ? lista[existente].id : ("cli_" + Date.now()),
+    nome: nome,
+    tel: tel,
+    endereco: end,
+    pedidos: existente >= 0 ? Number(lista[existente].pedidos || 0) : 0
+  };
 
-  document.getElementById("cliNome").value="";
-  document.getElementById("cliTel").value="";
-  document.getElementById("cliEnd").value="";
+  if(existente >= 0) lista[existente] = novo;
+  else lista.unshift(novo);
+
+  setClientesManuais(lista);
+
+  alert("Cliente salvo!");
+
+  document.getElementById("cliNome").value = "";
+  document.getElementById("cliTel").value = "";
+  document.getElementById("cliEnd").value = "";
+
+  renderClientesFromPedidos(window.__lastPedidoDocs || []);
+  renderPDVClienteSelect();
 }
 
 </script>
@@ -1981,7 +1987,7 @@ window.restaurarBackupSistema = async function(file){
 
 
 document.addEventListener('DOMContentLoaded',()=>{
-  showView('pdv');
+  showView('produtos');
   renderPerfilConfig();
   atualizarNomeInterface();
   renderRelatorios();
@@ -2005,34 +2011,44 @@ document.addEventListener('DOMContentLoaded',()=>{
   }
 });
 
-window.salvarClienteManual = async function(){
+window.salvarClienteManual = function(){
+
   const nome = document.getElementById("cliNome").value.trim();
-  const tel = document.getElementById("cliTel").value.trim();
-  const end = document.getElementById("cliEnd").value.trim();
+  const tel  = document.getElementById("cliTel").value.trim();
+  const end  = document.getElementById("cliEnd").value.trim();
 
   if(!nome){
     alert("Digite o nome do cliente");
     return;
   }
 
-  const id = "cli_" + Date.now();
+  const lista = getClientesManuais();
+  const existente = lista.findIndex(c =>
+    (tel && String(c.tel || "").trim() === tel) ||
+    (!tel && String(c.nome || "").trim().toLowerCase() === nome.toLowerCase())
+  );
 
-  try{
-    await setDoc(doc(db,"clientes",id),{
-      nome:nome,
-      tel:tel,
-      endereco:end,
-      criadoEm:new Date()
-    });
-    alert("Cliente salvo!");
-  }catch(e){
-    console.warn(e);
-    alert("Erro ao salvar cliente");
-  }
+  const novo = {
+    id: existente >= 0 ? lista[existente].id : ("cli_" + Date.now()),
+    nome: nome,
+    tel: tel,
+    endereco: end,
+    pedidos: existente >= 0 ? Number(lista[existente].pedidos || 0) : 0
+  };
 
-  document.getElementById("cliNome").value="";
-  document.getElementById("cliTel").value="";
-  document.getElementById("cliEnd").value="";
+  if(existente >= 0) lista[existente] = novo;
+  else lista.unshift(novo);
+
+  setClientesManuais(lista);
+
+  alert("Cliente salvo!");
+
+  document.getElementById("cliNome").value = "";
+  document.getElementById("cliTel").value = "";
+  document.getElementById("cliEnd").value = "";
+
+  renderClientesFromPedidos(window.__lastPedidoDocs || []);
+  renderPDVClienteSelect();
 }
 
 </script>
