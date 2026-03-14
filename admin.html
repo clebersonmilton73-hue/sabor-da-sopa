@@ -420,7 +420,7 @@
                       <button class="btn ghost" onclick="salvarClientePDV()">💾 Salvar cliente</button>
                       <button class="btn good" onclick="finalizarPDV()">Finalizar Venda</button>
                       <button class="btn primary" onclick="imprimirCupomPDV()">🖨 Imprimir Cupom</button>
-                      <button class="btn ghost" onclick="toggleFullscreenPDV()">🖥</button>
+                      
                       <button class="btn ghost" onclick="limparCarrinhoPDV()">Limpar Carrinho</button>
                     </div>
                   </div>
@@ -1710,39 +1710,34 @@ onAuthStateChanged(auth, async (user)=>{
   await carregarProdutos(); hookFiltros(); ouvirPedidos(); iniciarZoom();
 });
 
-window.salvarClienteManual = function(){
-
+window.salvarClienteManual = async function(){
   const nome = document.getElementById("cliNome").value.trim();
-  const tel  = document.getElementById("cliTel").value.trim();
-  const end  = document.getElementById("cliEnd").value.trim();
+  const tel = document.getElementById("cliTel").value.trim();
+  const end = document.getElementById("cliEnd").value.trim();
 
   if(!nome){
     alert("Digite o nome do cliente");
     return;
   }
 
-  const lista = getClientesManuais();
+  const id = "cli_" + Date.now();
 
-  const novo = {
-    id: "cli_" + Date.now(),
-    nome: nome,
-    tel: tel,
-    endereco: end,
-    pedidos: 0
-  };
+  try{
+    await setDoc(doc(db,"clientes",id),{
+      nome:nome,
+      tel:tel,
+      endereco:end,
+      criadoEm:new Date()
+    });
+    alert("Cliente salvo!");
+  }catch(e){
+    console.warn(e);
+    alert("Erro ao salvar cliente");
+  }
 
-  lista.unshift(novo);
-
-  setClientesManuais(lista);
-
-  alert("Cliente salvo!");
-
-  document.getElementById("cliNome").value = "";
-  document.getElementById("cliTel").value = "";
-  document.getElementById("cliEnd").value = "";
-
-  renderClientesFromPedidos(window.__lastPedidoDocs || []);
-  renderPDVClienteSelect();
+  document.getElementById("cliNome").value="";
+  document.getElementById("cliTel").value="";
+  document.getElementById("cliEnd").value="";
 }
 
 
