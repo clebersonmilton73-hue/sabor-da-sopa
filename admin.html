@@ -416,6 +416,14 @@
                       <div class="muted" style="font-size:12px">Venda presencial mais rápida e organizada.</div>
                     </div>
 
+                    <div class="card" style="padding:12px">
+                      <div class="muted" style="font-size:12px;margin-bottom:8px">Forma de pagamento</div>
+                      <select id="pdvPagamento" class="select">
+                        <option value="PIX">📲 PIX</option>
+                        <option value="DINHEIRO">💵 Dinheiro</option>
+                      </select>
+                    </div>
+
                     <div class="pdvActions">
                       <button class="btn ghost" onclick="salvarClientePDV()">💾 Salvar cliente</button>
                       <button class="btn good" onclick="finalizarPDV()">Finalizar Venda</button>
@@ -1094,6 +1102,7 @@ function montarCupomPDVHtml(venda){
     ${itensHtml || '<div class="bloco">Sem itens.</div>'}
     <div class="linha"></div>
     <div class="total"><span>TOTAL</span><span>R$ ${dinheiro(total)}</span></div>
+    <div class="bloco bloco-left"><b>Pagamento:</b> ${escHtml(venda?.pagamento || "PIX")}</div>
     <div class="linha"></div>
     ${pixChave || qrPixUrl ? `<div class="pix-box"><div class="pix-title">PAGUE COM PIX</div>${pixChave ? `<div class="pix-chave"><b>Chave:</b> ${escHtml(pixChave)}</div>` : ''}${qrPixUrl ? `<img class="pix-qr" src="${escHtml(qrPixUrl)}" alt="QR Code PIX">` : ''}<div class="pix-chave">Escaneie o QR Code para pagar</div>${pixCopiaCola ? `<div class="pix-copy">${escHtml(pixCopiaCola)}</div>` : ''}</div><div class="linha"></div>` : ''}
     <div class="rodape">Obrigado pela preferência!</div>
@@ -1458,11 +1467,13 @@ window.finalizarPDV = function(){
     data: new Date().toLocaleString('pt-BR'),
     cliente: cli,
     itens: grouped.map(i=>({nome:i.nome, preco:Number(i.preco||0), qtd:i.qtd, totalLinha:Number(i.preco||0) * i.qtd})),
-    total
+    total,
+    pagamento: (document.getElementById('pdvPagamento')?.value || 'PIX')
   };
   salvarVendaNoRelatorio(venda);
   setTimeout(()=> window.reimprimirVendaPDV(venda), 80);
-  alert('Venda finalizada. Total: ' + moneyPDV(total) + (cli?.nome ? (' • Cliente: ' + cli.nome) : ''));
+  const pagamento = document.getElementById('pdvPagamento')?.value || 'PIX';
+  alert('Venda finalizada. Total: ' + moneyPDV(total) + ' • Pagamento: ' + pagamento + (cli?.nome ? (' • Cliente: ' + cli.nome) : ''));
   pdvCart = [];
   renderCarrinhoPDV();
 };
