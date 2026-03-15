@@ -682,11 +682,17 @@ async function finalizar(){
     frete,
     distanciaKm: Number(distanciaCliente || 0),
     total: totalFinal,
+    status: 'NOVO',
+    origem: 'CARDAPIO_ONLINE',
+    canalAtendimento: 'WHATSAPP',
+    whatsappLoja: WHATSAPP_LOJA,
     criadoEm: serverTimestamp()
   };
 
+  let pedidoId = '';
   try{
-    await addDoc(collection(db,'pedidos'), pedido);
+    const ref = await addDoc(collection(db,'pedidos'), pedido);
+    pedidoId = ref?.id || '';
   }catch(e){
     console.warn('Falha ao salvar pedido', e);
   }
@@ -696,6 +702,7 @@ async function finalizar(){
   linhas.push('');
   linhas.push(`*Cliente:* ${c.nome}`);
   linhas.push(`*Origem:* Cardápio online`);
+  if(pedidoId) linhas.push(`*Pedido ID:* #${pedidoId}`);
   linhas.push(`*WhatsApp:* ${c.tel}`);
   linhas.push(`*Tipo:* ${entregaTipo}`);
   if(entregaTipo === 'ENTREGA') linhas.push(`*Endereço:* ${c.endereco}`);
