@@ -1930,15 +1930,28 @@ function renderPedidos(docs){
   document.getElementById('statFat').textContent = (faturamentoHoje||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
 }
 
+function montarRespostaNovoPedidoBot(pedidoId, nomeCliente){
+  const nome = String(nomeCliente || 'cliente').trim() || 'cliente';
+  return `Olá ${nome}! 🍲
+
+Recebemos seu pedido${pedidoId ? ` *#${pedidoId}*` : ''} com sucesso. Já vamos preparar por aqui. Se precisar de algo, pode me chamar.`;
+}
+
 function ouvirPedidos(){
   if(stopPedidos) stopPedidos();
   const qy = query(collection(db,'pedidos'), orderBy('criadoEm','desc'), limit(120));
   stopPedidos = onSnapshot(qy, (snap)=>{
     const docs = snap.docs;
     const ids = new Set(docs.map(d=>d.id));
+    let primeiroNovo = null;
     if(!firstPedidosLoad){
       const novos = docs.filter(d=>!lastSeenPedidoIds.has(d.id));
-      if(novos.length){ tocarNovoPedido(); tocarSomNovoPedidoForte(); alert(`Novo pedido recebido: ${novos.length}`); }
+      if(novos.length){
+        primeiroNovo = novos[0];
+        tocarNovoPedido();
+        tocarSomNovoPedidoForte();
+        alert(`Novo pedido recebido: ${novos.length}`);
+      }
     }
     lastSeenPedidoIds = ids;
     firstPedidosLoad = false;
@@ -1948,6 +1961,20 @@ function ouvirPedidos(){
     renderBotResumo();
     renderCozinha(docs);
     renderDashboardHoje(docs);
+
+    if(primeiroNovo){
+      const p = primeiroNovo.data() || {};
+      const tel = p.cliente?.tel || '';
+      const nome = p.cliente?.nome || 'Cliente';
+      const endereco = p.cliente?.endereco || '';
+      window.abrirBotCliente(tel, nome, endereco);
+      const resposta = document.getElementById('botResposta');
+      if(resposta) resposta.value = montarRespostaNovoPedidoBot(primeiroNovo.id, nome);
+      const msgCliente = document.getElementById('botMensagemCliente');
+      if(msgCliente && !String(msgCliente.value || '').trim()){
+        msgCliente.value = `Novo pedido recebido no sistema ${primeiroNovo.id ? `#${primeiroNovo.id}` : ''}.`;
+      }
+    }
   }, (e)=>{ console.error(e); });
 }
 
@@ -2057,6 +2084,7 @@ function showView(v){
   else if(v==='pedidos'){ ve?.classList.remove('hide'); ne?.classList.add('active'); }
   else if(v==='cozinha'){ vcoz?.classList.remove('hide'); ncoz?.classList.add('active'); }
   else if(v==='clientes'){ vc?.classList.remove('hide'); nc?.classList.add('active'); }
+  else if(v==='atendimento'){ va?.classList.remove('hide'); na?.classList.add('active'); renderBotClienteSelect(document.getElementById('botClienteSelect')?.value || ''); renderBotResumo(); renderBotHistorico(); }
   else if(v==='pdv'){ vd?.classList.remove('hide'); nd?.classList.add('active'); renderPDVProdutos(); renderCarrinhoPDV(); renderPDVClienteSelect(); }
   else if(v==='config'){ vcfg?.classList.remove('hide'); ncfg?.classList.add('active'); renderPerfilConfig(); }
   else if(v==='relatorios'){ vr?.classList.remove('hide'); nr?.classList.add('active'); renderRelatorios(); }
