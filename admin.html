@@ -1027,85 +1027,24 @@ function adicionarHistoricoBot(tipo, texto){
   selecionarBotClienteByKey(key);
   return true;
 }
-function moneyBRBot(v){
-  return Number(v || 0).toLocaleString('pt-BR', { style:'currency', currency:'BRL' });
-}
-function getProdutosAtivosBot(){
-  return (allProdutos || [])
-    .filter(p => p && p.ativo !== false && String(p.nome || '').trim())
-    .slice()
-    .sort((a,b)=>{
-      const catA = String(a.cat || 'Sem categoria').localeCompare(String(b.cat || 'Sem categoria'), 'pt-BR');
-      if(catA !== 0) return catA;
-      const ordA = Number(a.ord || 0); const ordB = Number(b.ord || 0);
-      if(ordA !== ordB) return ordA - ordB;
-      return String(a.nome || '').localeCompare(String(b.nome || ''), 'pt-BR');
-    });
-}
-function montarCardapioBotTexto(){
-  const ativos = getProdutosAtivosBot();
-  if(!ativos.length){
-    return 'Nosso cardápio está sendo atualizado agora. Se quiser, me diga o que você procura que eu monto seu pedido por aqui.';
-  }
-  const grupos = new Map();
-  ativos.forEach(p=>{
-    const cat = String(p.cat || 'Sem categoria').trim() || 'Sem categoria';
-    if(!grupos.has(cat)) grupos.set(cat, []);
-    grupos.get(cat).push(p);
-  });
-  const linhas = ['Aqui está nosso cardápio atual:'];
-  Array.from(grupos.entries()).forEach(([cat, itens])=>{
-    linhas.push('');
-    linhas.push(`*${cat}*`);
-    itens.slice(0, 8).forEach(item=>{
-      linhas.push(`- ${item.nome} — ${moneyBRBot(item.preco)}`);
-    });
-    if(itens.length > 8) linhas.push(`- ... e mais ${itens.length - 8} item(ns)`);
-  });
-  linhas.push('');
-  linhas.push('Se quiser, me diga os itens e quantidades que eu organizo seu pedido.');
-  return linhas.join('\n');
-}
-function montarStatusBotTexto(ultimo){
-  if(!ultimo?.id){
-    return 'Ainda não encontrei um pedido recente por aqui. Se quiser, me passe seu nome e telefone que eu confirmo para você.';
-  }
-  const extras = [];
-  if(ultimo.total) extras.push(`total de ${moneyBRBot(ultimo.total)}`);
-  if(ultimo.entregaTipo) extras.push(ultimo.entregaTipo === 'RETIRADA' ? 'retirada' : ultimo.entregaTipo.toLowerCase());
-  const complemento = extras.length ? `, com ${extras.join(' • ')}` : '';
-  return `Seu último pedido é o *#${ultimo.id}* e está com status *${ultimo.status || 'NOVO'}*${complemento}.`;
-}
 function montarRespostaBot(chave){
   const perfil = getPerfilLoja();
   const nome = (document.getElementById('botNome')?.value || '').trim() || 'cliente';
   const tel = (document.getElementById('botTel')?.value || '').trim();
   const ultimo = getResumoUltimoPedidoCliente(tel, nome);
   const saudacao = `Olá ${nome}! 🍲`;
-  const statusTxt = montarStatusBotTexto(ultimo);
+  const statusTxt = ultimo?.status ? `Seu último pedido está com status *${ultimo.status}*${ultimo.id ? ` (#${ultimo.id})` : ''}.` : 'Ainda não encontrei um pedido recente por aqui.';
   const pixTxt = perfil.pixChave ? `Você pode pagar por PIX pela chave: *${perfil.pixChave}*.` : 'No momento aceitamos PIX e dinheiro. Se quiser, já te passo os dados do PIX.';
   const enderecoTxt = perfil.end ? `Estamos em *${perfil.end}*.` : 'Me fala seu bairro/endereço que eu confirmo a entrega para você.';
   const horarioTxt = 'Nosso atendimento segue pelo WhatsApp e pelo sistema. Se quiser pedir agora, já posso te ajudar por aqui.';
-  const cardapioTxt = montarCardapioBotTexto();
+  const cardapioTxt = 'Posso te mandar as opções do dia e montar seu pedido por aqui. Se preferir, me diga quantas sopas ou acompanhamentos você quer.';
   const base = {
-    saudacao: `${saudacao}
-
-Seja bem-vindo à *Sabor da Sopa*. Como posso te ajudar hoje?`,
-    cardapio: `${saudacao}
-
-${cardapioTxt}`,
-    status: `${saudacao}
-
-${statusTxt}`,
-    horario: `${saudacao}
-
-${horarioTxt}`,
-    endereco: `${saudacao}
-
-${enderecoTxt}`,
-    pix: `${saudacao}
-
-${pixTxt}`
+    saudacao: `${saudacao}\n\nSeja bem-vindo à *Sabor da Sopa*. Como posso te ajudar hoje?`,
+    cardapio: `${saudacao}\n\n${cardapioTxt}`,
+    status: `${saudacao}\n\n${statusTxt}`,
+    horario: `${saudacao}\n\n${horarioTxt}`,
+    endereco: `${saudacao}\n\n${enderecoTxt}`,
+    pix: `${saudacao}\n\n${pixTxt}`
   };
   return base[chave] || base.saudacao;
 }
@@ -1113,15 +1052,13 @@ function gerarRespostaBotPorMensagem(msg){
   const texto = semAcento(msg);
   if(!texto) return montarRespostaBot('saudacao');
   if(/status|pedido|saiu|entrega|entregue|preparo|preparando/.test(texto)) return montarRespostaBot('status');
-  if(/cardapio|menu|opcoes|opcao|sopa|sabores|caldo|preco|precos|valor|valores|quanto custa|acompanhamento|bebida/.test(texto)) return montarRespostaBot('cardapio');
+  if(/cardapio|menu|opcoes|opcao|sopa|sabores|caldo/.test(texto)) return montarRespostaBot('cardapio');
   if(/pix|pagamento|pagar|chave/.test(texto)) return montarRespostaBot('pix');
   if(/endereco|localizacao|onde fica|bairro/.test(texto)) return montarRespostaBot('endereco');
   if(/horario|hora|aberto|funciona/.test(texto)) return montarRespostaBot('horario');
   if(/oi|ola|bom dia|boa tarde|boa noite/.test(texto)) return montarRespostaBot('saudacao');
   const nome = (document.getElementById('botNome')?.value || '').trim() || 'cliente';
-  return `Olá ${nome}! 🍲
-
-Recebi sua mensagem. Já vou te ajudar por aqui. Se quiser agilizar, me diga seu pedido, endereço e a forma de pagamento.`;
+  return `Olá ${nome}! 🍲\n\nRecebi sua mensagem. Já vou te ajudar por aqui. Se quiser agilizar, me diga seu pedido, endereço e a forma de pagamento.`;
 }
 window.gerarRespostaBot = function(){
   const input = document.getElementById('botMensagemCliente');
@@ -2120,6 +2057,13 @@ function showView(v){
   else if(v==='pedidos'){ ve?.classList.remove('hide'); ne?.classList.add('active'); }
   else if(v==='cozinha'){ vcoz?.classList.remove('hide'); ncoz?.classList.add('active'); }
   else if(v==='clientes'){ vc?.classList.remove('hide'); nc?.classList.add('active'); }
+  else if(v==='atendimento'){
+    va?.classList.remove('hide');
+    na?.classList.add('active');
+    renderBotClienteSelect(document.getElementById('botClienteSelect')?.value || '');
+    renderBotResumo();
+    renderBotHistorico();
+  }
   else if(v==='pdv'){ vd?.classList.remove('hide'); nd?.classList.add('active'); renderPDVProdutos(); renderCarrinhoPDV(); renderPDVClienteSelect(); }
   else if(v==='config'){ vcfg?.classList.remove('hide'); ncfg?.classList.add('active'); renderPerfilConfig(); }
   else if(v==='relatorios'){ vr?.classList.remove('hide'); nr?.classList.add('active'); renderRelatorios(); }
