@@ -288,16 +288,6 @@ header{
   }
 }
 
-
-.successModal{position:fixed;inset:0;display:none;align-items:center;justify-content:center;padding:18px;background:rgba(2,6,23,.72);backdrop-filter:blur(8px);z-index:60}
-.successModal.show{display:flex}
-.successCard{width:min(100%,520px);background:linear-gradient(180deg,rgba(15,23,42,.96),rgba(8,13,28,.96));border:1px solid var(--line);border-radius:24px;box-shadow:var(--shadow),var(--glow);padding:22px;display:grid;gap:14px}
-.successCode{display:inline-flex;align-items:center;gap:8px;width:max-content;padding:10px 14px;border-radius:999px;background:rgba(34,197,94,.14);border:1px solid rgba(34,197,94,.28);color:#d1fae5;font-weight:1100}
-.successList{display:grid;gap:8px}
-.successRow{display:flex;justify-content:space-between;gap:10px;padding:10px 12px;border-radius:14px;border:1px solid var(--line);background:rgba(2,6,23,.45)}
-.successActions{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-@media(max-width:560px){.successActions{grid-template-columns:1fr}}
-
 </style>
 </head>
 <body>
@@ -308,7 +298,7 @@ header{
       <div class="logo"></div>
       <div>
         <b>Sabor da Sopa</b>
-        <div class="small">Cardápio online • número do pedido + WhatsApp</div>
+        <div class="small">Cardápio online • pedido no WhatsApp</div>
       </div>
     </div>
     <div class="pill" id="statusPill">🔄 carregando…</div>
@@ -383,7 +373,7 @@ header{
         <div class="line"><span>Frete</span><b id="frete">R$ 0,00</b></div>
         <div class="line"><span>Total</span><b id="tot">R$ 0,00</b></div>
         <button class="btn primary" onclick="finalizar()">Finalizar e enviar no WhatsApp</button>
-        <div class="small">O pedido é salvo online, recebe um número e depois segue para o WhatsApp.</div>
+        <div class="small">O pedido é salvo online e abre a conversa no WhatsApp.</div>
       </div>
     </div>
   </aside>
@@ -392,26 +382,6 @@ header{
 <div class="overlay" id="cartOverlay" onclick="toggleCart(false)"></div>
 <div class="cartBar" id="cartBar"><button onclick="toggleCart(true)"><span>🛒 Carrinho <span class="badge" id="barQtd">0</span></span><span id="barTot">R$ 0,00</span></button></div>
 <div class="toast" id="toast"></div>
-
-
-<div class="successModal" id="pedidoModal">
-  <div class="successCard">
-    <div>
-      <div class="successCode" id="pedidoCodigo">🧾 Pedido #--</div>
-      <h3 style="margin:12px 0 6px;font-size:24px">Pedido salvo com sucesso</h3>
-      <div class="small" id="pedidoModalTexto">Agora é só abrir o WhatsApp para enviar a mensagem para a loja.</div>
-    </div>
-    <div class="successList">
-      <div class="successRow"><span>Cliente</span><b id="pedidoCliente">-</b></div>
-      <div class="successRow"><span>Total</span><b id="pedidoTotal">R$ 0,00</b></div>
-      <div class="successRow"><span>Status inicial</span><b id="pedidoStatus">NOVO</b></div>
-    </div>
-    <div class="successActions">
-      <button class="btn primary" type="button" onclick="abrirWhatsPedidoConfirmado()">Abrir WhatsApp da loja</button>
-      <button class="btn ghost" type="button" onclick="fecharPedidoModal()">Fechar</button>
-    </div>
-  </div>
-</div>
 
 <script type="module">
 import { firebaseConfig } from "./firebase-config.js";
@@ -458,29 +428,6 @@ function toast(msg){
   clearTimeout(window.__tt);
   window.__tt = setTimeout(()=>t.style.display='none', 1800);
 }
-let ultimoWhatsPedidoUrl = '';
-function mostrarPedidoConfirmado(info){
-  const modal = document.getElementById('pedidoModal');
-  if(!modal) return;
-  document.getElementById('pedidoCodigo').textContent = info.codigo ? `🧾 Pedido #${info.codigo}` : '🧾 Pedido salvo';
-  document.getElementById('pedidoCliente').textContent = info.nome || '-';
-  document.getElementById('pedidoTotal').textContent = moneyBR(info.total || 0);
-  document.getElementById('pedidoStatus').textContent = info.status || 'NOVO';
-  document.getElementById('pedidoModalTexto').textContent = info.salvo
-    ? 'Seu pedido foi salvo online e está pronto para ser enviado no WhatsApp da loja.'
-    : 'Seu pedido será enviado no WhatsApp, mas o salvamento online falhou neste momento.';
-  ultimoWhatsPedidoUrl = info.whatsUrl || '';
-  modal.classList.add('show');
-}
-function fecharPedidoModal(){
-  document.getElementById('pedidoModal')?.classList.remove('show');
-}
-function abrirWhatsPedidoConfirmado(){
-  if(ultimoWhatsPedidoUrl) window.open(ultimoWhatsPedidoUrl, '_blank');
-  fecharPedidoModal();
-}
-window.fecharPedidoModal = fecharPedidoModal;
-window.abrirWhatsPedidoConfirmado = abrirWhatsPedidoConfirmado;
 function maskTel(raw){
   const digits = String(raw||'').replace(/\D/g,'').slice(0,11);
   if(digits.length <= 2) return digits;
@@ -735,18 +682,11 @@ async function finalizar(){
     frete,
     distanciaKm: Number(distanciaCliente || 0),
     total: totalFinal,
-    status: 'NOVO',
-    origem: 'cardapio_online',
-    canal: 'whatsapp',
     criadoEm: serverTimestamp()
   };
 
-  let pedidoDocId = '';
-  let pedidoSalvo = false;
   try{
-    const ref = await addDoc(collection(db,'pedidos'), pedido);
-    pedidoDocId = String(ref.id || '');
-    pedidoSalvo = !!pedidoDocId;
+    await addDoc(collection(db,'pedidos'), pedido);
   }catch(e){
     console.warn('Falha ao salvar pedido', e);
   }
@@ -754,7 +694,6 @@ async function finalizar(){
   const linhas = [];
   linhas.push('*NOVO PEDIDO ONLINE - Sabor da Sopa* 🍲');
   linhas.push('');
-  if(pedidoDocId) linhas.push(`*Pedido:* #${pedidoDocId}`);
   linhas.push(`*Cliente:* ${c.nome}`);
   linhas.push(`*Origem:* Cardápio online`);
   linhas.push(`*WhatsApp:* ${c.tel}`);
