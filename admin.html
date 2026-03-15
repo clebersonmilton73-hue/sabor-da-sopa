@@ -2127,6 +2127,7 @@ function showView(v){
   else if(v==='pedidos'){ ve?.classList.remove('hide'); ne?.classList.add('active'); }
   else if(v==='cozinha'){ vcoz?.classList.remove('hide'); ncoz?.classList.add('active'); }
   else if(v==='clientes'){ vc?.classList.remove('hide'); nc?.classList.add('active'); }
+  else if(v==='atendimento'){ va?.classList.remove('hide'); na?.classList.add('active'); renderBotClienteSelect(document.getElementById('botClienteSelect')?.value || ''); renderBotResumo(); renderBotHistorico(); }
   else if(v==='pdv'){ vd?.classList.remove('hide'); nd?.classList.add('active'); renderPDVProdutos(); renderCarrinhoPDV(); renderPDVClienteSelect(); }
   else if(v==='config'){ vcfg?.classList.remove('hide'); ncfg?.classList.add('active'); renderPerfilConfig(); }
   else if(v==='relatorios'){ vr?.classList.remove('hide'); nr?.classList.add('active'); renderRelatorios(); }
