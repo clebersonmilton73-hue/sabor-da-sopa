@@ -215,7 +215,7 @@
               </div>
               <div class="card" style="margin-top:14px">
                 <b>Impressão automática</b>
-                <div class="muted" style="font-size:12px;margin-top:6px">Ative para abrir a impressão do cupom automaticamente ao finalizar venda presencial.</div>
+                <div class="muted" style="font-size:12px;margin-top:6px">Ative para imprimir automaticamente pedidos online novos e também o cupom ao finalizar venda presencial.</div>
                 <label style="display:flex;align-items:center;gap:10px;margin-top:10px" class="muted">
                   <input type="checkbox" id="autoPrintToggle"> Ativar impressão automática
                 </label>
@@ -604,6 +604,7 @@ let stopPedidos = null;
 let allProdutos = [];
 let lastSeenPedidoIds = new Set();
 let firstPedidosLoad = true;
+let pedidoPrintQueue = Promise.resolve();
 
 function now(){ return Date.now(); }
 function getLock(){ try{ return JSON.parse(localStorage.getItem(LOCK_KEY) || "{}"); }catch(e){ return {}; } }
@@ -866,6 +867,38 @@ const MOV_CAIXA_KEY = 'SABOR_MOVIMENTO_CAIXA';
 const AUTO_PRINT_KEY = 'SABOR_AUTO_PRINT';
 function getAutoPrint(){ return localStorage.getItem(AUTO_PRINT_KEY) === '1'; }
 function setAutoPrint(v){ localStorage.setItem(AUTO_PRINT_KEY, v ? '1' : '0'); }
+
+function falarNovoPedido(qtd=1){
+  try{
+    if(!('speechSynthesis' in window)) return;
+    const texto = Number(qtd||1) > 1 ? `Chegaram ${Number(qtd||1)} novos pedidos` : 'Novo pedido chegou';
+    window.speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(texto);
+    u.lang = 'pt-BR';
+    u.rate = 1;
+    u.pitch = 1;
+    u.volume = 1;
+    window.speechSynthesis.speak(u);
+  }catch(e){ console.warn(e); }
+}
+function enfileirarImpressaoPedido(exec){
+  pedidoPrintQueue = pedidoPrintQueue.then(()=> Promise.resolve().then(exec)).catch((e)=>{ console.warn('Falha na fila de impressão', e); });
+  return pedidoPrintQueue;
+}
+function pedidoJaImpresso(pedido){
+  return !!(pedido?.impresso || pedido?.impressoAuto || pedido?.impressoEm);
+}
+async function marcarPedidoImpresso(id){
+  try{
+    await updateDoc(doc(db,'pedidos', String(id)), {
+      impresso: true,
+      impressoAuto: true,
+      impressoEm: new Date().toISOString()
+    });
+  }catch(e){
+    console.warn('Não conseguiu marcar pedido como impresso', e);
+  }
+}
 
 const BOT_ATENDIMENTO_KEY = 'SABOR_BOT_ATENDIMENTO_V1';
 function getBotStore(){
@@ -1138,6 +1171,130 @@ function tocarSomNovoPedidoForte(){
     play(1174,0.22, 0.18);
     play(1568,0.44, 0.22);
   }catch(e){ console.warn(e); }
+}
+
+function formatarItemPedidoParaCupom(item){
+  const base = String(item?.nome || '-').trim() || '-';
+  const extras = Array.isArray(item?.extras) ? item.extras.filter(Boolean).map(ex => {
+    const grupo = String(ex?.grupo || '').trim();
+    const nome = String(ex?.nome || '').trim();
+    if(!nome) return '';
+    return grupo ? `${grupo}: ${nome}` : nome;
+  }).filter(Boolean) : [];
+  return extras.length ? `${base} | + ${extras.join('; + ')}` : base;
+}
+function montarCupomPedidoOnlineHtml(pedidoId, pedido){
+  const perfil = getPerfilLoja();
+  const loja = perfil.nome || 'Sabor da Sopa';
+  const telLoja = perfil.tel || '';
+  const endLoja = perfil.end || '';
+  const logo = perfil.logo || '';
+  const dataObj = pedido?.criadoEm?.toDate ? pedido.criadoEm.toDate() : new Date();
+  const data = dataObj.toLocaleString('pt-BR');
+  const cliente = pedido?.cliente || {};
+  const itens = Array.isArray(pedido?.itens) ? pedido.itens : [];
+  const subtotal = Number(pedido?.subtotal || 0);
+  const frete = Number(pedido?.frete || 0);
+  const total = Number(pedido?.total || subtotal + frete);
+  const pagamento = String(pedido?.metodo || pedido?.pagamento || 'PIX');
+  const obs = String(pedido?.obs || '').trim();
+  const troco = String(pedido?.troco || '').trim();
+  const entregaTipo = String(pedido?.entregaTipo || 'ENTREGA');
+
+  const itensHtml = itens.map(i => {
+    const nome = escHtml(formatarItemPedidoParaCupom(i));
+    const qtd = Number(i?.qtd || 1);
+    const preco = dinheiro(i?.totalLinha || ((Number(i?.preco || 0)) * qtd));
+    return `<div class="item"><div class="item-nome">${qtd}x ${nome}</div><div class="item-preco">R$ ${preco}</div></div>`;
+  }).join('');
+
+  const detalhes = [
+    `<div><b>Pedido:</b> #${escHtml(pedidoId || '-')}</div>`,
+    `<div><b>Tipo:</b> ${escHtml(entregaTipo)}</div>`,
+    cliente?.nome ? `<div><b>Cliente:</b> ${escHtml(cliente.nome)}</div>` : '',
+    cliente?.tel ? `<div><b>Tel:</b> ${escHtml(cliente.tel)}</div>` : '',
+    cliente?.endereco ? `<div><b>End:</b> ${escHtml(cliente.endereco)}</div>` : ''
+  ].filter(Boolean).join('');
+
+  const resumo = [
+    subtotal ? `<div class="bloco bloco-left"><b>Subtotal:</b> R$ ${dinheiro(subtotal)}</div>` : '',
+    frete ? `<div class="bloco bloco-left"><b>Frete:</b> R$ ${dinheiro(frete)}</div>` : '',
+    `<div class="bloco bloco-left"><b>Pagamento:</b> ${escHtml(pagamento)}</div>`,
+    troco ? `<div class="bloco bloco-left"><b>Troco para:</b> ${escHtml(troco)}</div>` : '',
+    obs ? `<div class="bloco bloco-left"><b>Obs:</b> ${escHtml(obs)}</div>` : ''
+  ].filter(Boolean).join('');
+
+  return `<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Pedido Online</title>
+<style>
+  @page{ size: 58mm auto; margin: 0; }
+  html,body{ margin:0; padding:0; background:#fff; color:#000; }
+  body{ width:58mm; font-family:'Courier New', Courier, monospace; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .cupom{ width:58mm; padding:3mm 2.2mm 8mm; box-sizing:border-box; color:#000; }
+  .topo{ text-align:center; }
+  .logo-wrap{ text-align:center; margin-bottom:3mm; }
+  .logo{ max-width:42mm; max-height:20mm; object-fit:contain; }
+  .loja{ font-size:18px; font-weight:700; line-height:22px; }
+  .meta{ font-size:16px; line-height:20px; word-break:break-word; }
+  .linha{ border-top:1px dashed #000; margin:3mm 0; }
+  .bloco{ font-size:16px; line-height:20px; }
+  .bloco-left{ text-align:left; }
+  .titulo{ text-align:center; font-size:18px; font-weight:700; line-height:22px; }
+  .item{ display:flex; align-items:flex-start; justify-content:space-between; gap:2mm; font-size:16px; line-height:20px; margin:1.8mm 0; }
+  .item-nome{ flex:1; text-align:left; word-break:break-word; padding-right:2mm; }
+  .item-preco{ width:19mm; text-align:right; white-space:nowrap; }
+  .total{ display:flex; justify-content:space-between; gap:2mm; font-size:20px; line-height:24px; font-weight:700; margin-top:2mm; }
+  .rodape{ text-align:center; font-size:16px; line-height:20px; margin-top:3mm; }
+</style>
+</head>
+<body>
+  <div class="cupom">
+    ${logo ? `<div class="logo-wrap"><img class="logo" src="${escHtml(logo)}" alt="Logo"></div>` : ''}
+    <div class="topo">
+      <div class="loja">${escHtml(loja)}</div>
+      ${telLoja ? `<div class="meta">${escHtml(telLoja)}</div>` : ''}
+      ${endLoja ? `<div class="meta">${escHtml(endLoja)}</div>` : ''}
+      <div class="meta">${escHtml(data)}</div>
+    </div>
+    <div class="linha"></div>
+    <div class="titulo">PEDIDO ONLINE</div>
+    <div class="linha"></div>
+    <div class="bloco bloco-left">${detalhes}</div>
+    <div class="linha"></div>
+    ${itensHtml || '<div class="bloco">Sem itens.</div>'}
+    <div class="linha"></div>
+    ${resumo}
+    <div class="total"><span>TOTAL</span><span>R$ ${dinheiro(total)}</span></div>
+    <div class="linha"></div>
+    <div class="rodape">Novo pedido chegou</div>
+  </div>
+</body>
+</html>`;
+}
+async function imprimirCupomHtmlPadrao(html, jobName='pedido-sabor-da-sopa'){
+  if(window.desktopApp?.printHtml){
+    try{
+      const result = await window.desktopApp.printHtml(html, jobName);
+      if(result?.ok) return true;
+      if(result?.error) console.warn(result.error);
+    }catch(e){
+      console.warn('Falha na impressão desktop', e);
+    }
+  }
+  return new Promise(resolve => {
+    imprimirHtmlCupom58mm(html, ()=> resolve(true));
+  });
+}
+async function imprimirPedidoOnlineAutomatico(pedidoId, pedido){
+  if(!getAutoPrint()) return false;
+  if(!pedidoId || !pedido || pedidoJaImpresso(pedido)) return false;
+  const html = montarCupomPedidoOnlineHtml(pedidoId, pedido);
+  const ok = await imprimirCupomHtmlPadrao(html, `pedido-${pedidoId}`);
+  if(ok) await marcarPedidoImpresso(pedidoId);
+  return !!ok;
 }
 
 function renderCozinha(docs){
@@ -1444,7 +1601,7 @@ function montarCupomPDVHtml(venda){
 </body>
 </html>`;
 }
-function imprimirHtmlCupom58mm(html){
+function imprimirHtmlCupom58mm(html, onDone){
   const iframe = document.createElement('iframe');
   iframe.style.position = 'fixed';
   iframe.style.right = '0';
@@ -1455,16 +1612,26 @@ function imprimirHtmlCupom58mm(html){
   document.body.appendChild(iframe);
   const frameWin = iframe.contentWindow;
   const doc = frameWin.document;
+  let finalizado = false;
+  const finish = () => {
+    if(finalizado) return;
+    finalizado = true;
+    setTimeout(() => { if(iframe.parentNode) iframe.parentNode.removeChild(iframe); }, 1200);
+    if(typeof onDone === 'function'){
+      try{ onDone(); }catch(e){ console.warn(e); }
+    }
+  };
   doc.open();
   doc.write(html);
   doc.close();
   const doPrint = () => {
     try{ frameWin.focus(); }catch(e){}
     try{ frameWin.print(); }catch(e){ console.warn(e); }
-    setTimeout(() => { if(iframe.parentNode) iframe.parentNode.removeChild(iframe); }, 1500);
+    setTimeout(finish, 1800);
   };
   if (iframe.onload !== undefined) iframe.onload = () => setTimeout(doPrint, 250);
   setTimeout(doPrint, 1200);
+  setTimeout(finish, 3200);
 }
 function imprimirVenda58mm(venda){
   imprimirHtmlCupom58mm(montarCupomPDVHtml(venda));
@@ -1940,16 +2107,18 @@ Recebemos seu pedido${pedidoId ? ` *#${pedidoId}*` : ''} com sucesso. Já vamos 
 function ouvirPedidos(){
   if(stopPedidos) stopPedidos();
   const qy = query(collection(db,'pedidos'), orderBy('criadoEm','desc'), limit(120));
-  stopPedidos = onSnapshot(qy, (snap)=>{
+  stopPedidos = onSnapshot(qy, async (snap)=>{
     const docs = snap.docs;
     const ids = new Set(docs.map(d=>d.id));
     let primeiroNovo = null;
+    let novos = [];
     if(!firstPedidosLoad){
-      const novos = docs.filter(d=>!lastSeenPedidoIds.has(d.id));
+      novos = docs.filter(d=>!lastSeenPedidoIds.has(d.id));
       if(novos.length){
         primeiroNovo = novos[0];
         tocarNovoPedido();
         tocarSomNovoPedidoForte();
+        falarNovoPedido(novos.length);
         alert(`Novo pedido recebido: ${novos.length}`);
       }
     }
@@ -1961,6 +2130,14 @@ function ouvirPedidos(){
     renderBotResumo();
     renderCozinha(docs);
     renderDashboardHoje(docs);
+
+    if(novos.length && getAutoPrint()){
+      const fila = [...novos].reverse();
+      for(const pedidoDoc of fila){
+        const pedido = pedidoDoc.data() || {};
+        await enfileirarImpressaoPedido(()=> imprimirPedidoOnlineAutomatico(pedidoDoc.id, pedido));
+      }
+    }
 
     if(primeiroNovo){
       const p = primeiroNovo.data() || {};
