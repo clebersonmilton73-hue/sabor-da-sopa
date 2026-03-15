@@ -868,10 +868,13 @@ const AUTO_PRINT_KEY = 'SABOR_AUTO_PRINT';
 function getAutoPrint(){ return localStorage.getItem(AUTO_PRINT_KEY) === '1'; }
 function setAutoPrint(v){ localStorage.setItem(AUTO_PRINT_KEY, v ? '1' : '0'); }
 
-function falarNovoPedido(qtd=1){
+function falarNovoPedido(qtd=1, nomeCliente=''){
   try{
     if(!('speechSynthesis' in window)) return;
-    const texto = Number(qtd||1) > 1 ? `Chegaram ${Number(qtd||1)} novos pedidos` : 'Novo pedido chegou';
+    const nome = String(nomeCliente || '').trim();
+    const texto = Number(qtd||1) > 1
+      ? `Chegaram ${Number(qtd||1)} novos pedidos`
+      : (nome ? `Novo pedido de ${nome}` : 'Novo pedido chegou');
     window.speechSynthesis.cancel();
     const u = new SpeechSynthesisUtterance(texto);
     u.lang = 'pt-BR';
@@ -2118,7 +2121,7 @@ function ouvirPedidos(){
         primeiroNovo = novos[0];
         tocarNovoPedido();
         tocarSomNovoPedidoForte();
-        falarNovoPedido(novos.length);
+        falarNovoPedido(novos.length, (primeiroNovo?.data()?.cliente?.nome || primeiroNovo?.data()?.clienteNome || primeiroNovo?.data()?.nome || ''));
         alert(`Novo pedido recebido: ${novos.length}`);
       }
     }
